@@ -312,6 +312,8 @@ namespace MediaInfoKeeper.Services
                     UserAgent = "MediaInfoKeeper",
                     EnableDefaultUserAgent = false,
                     TimeoutMs = 10000,
+                    CacheMode = (CacheMode)1,
+                    CacheLength = TheIntroDbSuccessCacheDuration,
                     ThrowOnErrorResponse = false
                 };
 
