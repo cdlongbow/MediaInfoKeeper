@@ -66,7 +66,7 @@ namespace MediaInfoKeeper.Store
             var document = documents.FirstOrDefault() ?? new MediaInfoDocument();
             document.Chapters = CreateForPersist(item);
             SaveDocuments(documents, document, mediaInfoJsonPath);
-            this.logger.Debug($"ChaptersStore 覆盖写入章节信息成功: {(item.FileName ?? item.Path)}");
+            this.logger.Debug($"ChaptersStore 写入章节信息成功: {(item.FileName ?? item.Path)}");
         }
 
         private List<ChapterInfo> CreateForPersist(BaseItem item)
@@ -111,12 +111,16 @@ namespace MediaInfoKeeper.Store
 
             try
             {
-                IntroMarkerProtect.SaveChapters(
-                    this.itemRepository,
-                    item,
-                    chapters ?? new List<ChapterInfo>(),
-                    new[] { MarkerType.IntroStart, MarkerType.IntroEnd, MarkerType.CreditsStart },
-                    clearExtractionFailureResult: true);
+                using (ChapterJsonSync.SkipPersisting())
+                {
+                    IntroMarkerProtect.SaveChapters(
+                        this.itemRepository,
+                        item,
+                        chapters ?? new List<ChapterInfo>(),
+                        new[] { MarkerType.IntroStart, MarkerType.IntroEnd, MarkerType.CreditsStart },
+                        clearExtractionFailureResult: true);
+                }
+
                 this.logger.Debug($"ChaptersStore 恢复章节到条目完成: {(item.FileName ?? item.Path)}");
                 return MediaInfoDocument.MediaInfoRestoreResult.Restored;
             }

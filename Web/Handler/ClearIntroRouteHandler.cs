@@ -54,7 +54,7 @@ namespace MediaInfoKeeper.Web.Handler
                 response.Processed++;
                 try
                 {
-                    introSkipApi.RemoveIntroMarkers(item);
+                    introSkipApi.RemoveIntroMarkers(item, allowDatabaseClear: true);
                     response.Succeeded++;
                     Plugin.Instance.Logger.Info($"ShortcutMenu 清除片头片尾成功: {item.Path ?? item.Name}");
                 }

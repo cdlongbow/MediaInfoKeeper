@@ -242,7 +242,6 @@ namespace MediaInfoKeeper.Patch
             currentStreams.AddRange(externalSubtitleStreams);
             currentStreams.AddRange(externalAudioStreams);
             this.itemRepository.SaveMediaStreams(item.InternalId, currentStreams, cancellationToken);
-            Plugin.MediaSourceInfoStore?.OverWriteToFile(item);
         }
 
         private bool HasExternalStreamChanged(

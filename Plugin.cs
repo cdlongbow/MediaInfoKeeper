@@ -617,7 +617,7 @@ namespace MediaInfoKeeper
                                     CancellationToken.None)
                                 .ConfigureAwait(false);
                             this.logger.Info(extracted
-                                ? $"入库媒体信息: 提取完成并写入 JSON item={e.Item.FileName ?? e.Item.Path}"
+                                ? $"入库媒体信息: 提取完成 item={e.Item.FileName ?? e.Item.Path}"
                                 : $"入库媒体信息: 提取失败 item={e.Item.FileName ?? e.Item.Path}");
                         }
                     }
@@ -674,13 +674,6 @@ namespace MediaInfoKeeper
                         }
                     }
                 }
-                // 已有 MediaInfo 时，直接用媒体信息覆盖写入 JSON，保持最新。
-                else
-                {
-                    this.logger.Debug("已有 MediaInfo，覆盖写入 JSON");
-                    MediaInfoPersist.OverWritePersistedMedia(e.Item);
-                }
-                
                 // 入库加入扫描片头队列
                 if (this.Options.IntroSkip?.ScanIntroOnItemAdded == true && e.Item is Episode episode)
                 {

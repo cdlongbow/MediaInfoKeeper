@@ -14,6 +14,8 @@ namespace MediaInfoKeeper.Patch
 {
     /// <summary>
     /// 在 ProviderManager 刷新媒体项期间按条目类型临时放行 ffprobe/ffmpeg。
+    /// 常规刷新只放行真实音视频文件；strm/shortcut 保持拦截，避免 Emby 用远端探测结果覆盖已保存的 MediaInfo。
+    /// 插件主动提取时外层会先开显式 scope，此处继承外层放行。
     /// </summary>
     public static class ProviderManager
     {

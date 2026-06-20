@@ -13,6 +13,7 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.Serialization;
+using MediaInfoKeeper.Patch;
 
 namespace MediaInfoKeeper.Store
 {
@@ -84,21 +85,21 @@ namespace MediaInfoKeeper.Store
             return true;
         }
 
-        public void OverWriteToFile(BaseItem item)
+        public void OverWriteToFile(BaseItem item, List<MediaStream> streams = null)
         {
             var mediaInfoJsonPath = MediaInfoDocument.GetMediaInfoJsonPath(item);
             var documents = ReadDocuments(mediaInfoJsonPath);
             var document = documents.FirstOrDefault() ?? new MediaInfoDocument();
-            var mediaSourceInfo = CreateForPersist(item);
+            var mediaSourceInfo = CreateForPersist(item, streams);
             if (!HasPersistablePrimaryStream(mediaSourceInfo))
             {
-                this.logger.Debug($"MediaSourceInfoStore 覆盖写入媒体源信息跳过: {(item.FileName ?? item.Path)} 无有效音视频流");
+                this.logger.Debug($"MediaSourceInfoStore 写入媒体源信息跳过: {(item.FileName ?? item.Path)} 无有效音视频流");
                 return;
             }
 
             document.MediaSourceInfo = mediaSourceInfo;
             SaveDocuments(documents, document, mediaInfoJsonPath);
-            this.logger.Debug($"MediaSourceInfoStore 覆盖写入媒体源信息成功: {(item.FileName ?? item.Path)}");
+            this.logger.Debug($"MediaSourceInfoStore 写入媒体源信息成功: {(item.FileName ?? item.Path)}");
         }
 
         public bool DeleteFromFile(BaseItem item)
@@ -159,7 +160,10 @@ namespace MediaInfoKeeper.Store
                         this.fileSystem.GetFileInfo(subtitle.Path).Name);
                 }
 
-                this.itemRepository.SaveMediaStreams(item.InternalId, streamsToRestore, CancellationToken.None);
+                using (MediaInfoJsonSync.SkipPersisting())
+                {
+                    this.itemRepository.SaveMediaStreams(item.InternalId, streamsToRestore, CancellationToken.None);
+                }
 
                 item.Size = mediaSourceInfo.Size.GetValueOrDefault();
                 item.RunTimeTicks = mediaSourceInfo.RunTimeTicks;
@@ -201,23 +205,29 @@ namespace MediaInfoKeeper.Store
             this.jsonSerializer.SerializeToFile(documents, mediaInfoJsonPath);
         }
 
-        private MediaSourceInfo CreateForPersist(BaseItem item)
+        private MediaSourceInfo CreateForPersist(BaseItem item, List<MediaStream> streams = null)
         {
             var mediaSource = Plugin.MediaInfoService?
                 .GetStaticMediaSources(item, false)
                 ?.FirstOrDefault(source =>
                     source?.RunTimeTicks.HasValue == true &&
-                    (source.MediaStreams ?? new List<MediaStream>()).Any(stream =>
-                        stream.Type == MediaStreamType.Video || stream.Type == MediaStreamType.Audio));
+                    (streams != null ||
+                     (source.MediaStreams ?? new List<MediaStream>()).Any(stream =>
+                         stream.Type == MediaStreamType.Video || stream.Type == MediaStreamType.Audio)));
             if (mediaSource == null)
             {
                 return null;
             }
 
+            mediaSource = this.jsonSerializer.DeserializeFromString<MediaSourceInfo>(
+                this.jsonSerializer.SerializeToString(mediaSource));
             mediaSource.Id = null;
             mediaSource.ItemId = null;
             mediaSource.Path = null;
             mediaSource.Chapters = null;
+            mediaSource.MediaStreams = (streams ?? mediaSource.MediaStreams ?? new List<MediaStream>())
+                .Where(stream => stream != null)
+                .ToList();
 
             foreach (var subtitle in mediaSource.MediaStreams.Where(m =>
                          m.IsExternal && m.Type == MediaStreamType.Subtitle &&

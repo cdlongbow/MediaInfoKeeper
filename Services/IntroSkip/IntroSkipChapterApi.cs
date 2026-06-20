@@ -125,7 +125,6 @@ namespace MediaInfoKeeper.Services.IntroSkip
                     chapters,
                     new[] { MarkerType.IntroStart, MarkerType.IntroEnd });
 
-                Plugin.ChaptersStore.OverWriteToFile(episode);
                 updatedEpisodes.Add(episode.FileName ?? episode.Path ?? episode.Name);
             }
 
@@ -197,7 +196,6 @@ namespace MediaInfoKeeper.Services.IntroSkip
                     chapters,
                     new[] { MarkerType.CreditsStart });
 
-                Plugin.ChaptersStore.OverWriteToFile(episode);
                 updatedEpisodes.Add(episode.FileName ?? episode.Path ?? episode.Name);
             }
 
@@ -223,7 +221,7 @@ namespace MediaInfoKeeper.Services.IntroSkip
             _ = Plugin.NotificationApi.CreditsUpdateSendNotification(item, session, creditsDuration);
         }
 
-        public void RemoveIntroMarkers(BaseItem item)
+        public void RemoveIntroMarkers(BaseItem item, bool allowDatabaseClear = false)
         {
             if (item == null)
             {
@@ -247,13 +245,24 @@ namespace MediaInfoKeeper.Services.IntroSkip
                 return;
             }
 
-            IntroMarkerProtect.SaveChapters(
-                itemRepository,
-                item,
-                chapters,
-                new[] { MarkerType.IntroStart, MarkerType.IntroEnd, MarkerType.CreditsStart });
-
-            Plugin.ChaptersStore.OverWriteToFile(item);
+            if (allowDatabaseClear)
+            {
+                using (IntroMarkerProtect.Allow(item.InternalId))
+                using (ChapterJsonSync.AllowClearing())
+                {
+                    itemRepository.DeleteChapters(
+                        item.InternalId,
+                        new[] { MarkerType.IntroStart, MarkerType.IntroEnd, MarkerType.CreditsStart });
+                }
+            }
+            else
+            {
+                IntroMarkerProtect.SaveChapters(
+                    itemRepository,
+                    item,
+                    chapters,
+                    new[] { MarkerType.IntroStart, MarkerType.IntroEnd, MarkerType.CreditsStart });
+            }
 
             logger.Info("ShortcutMenu 清理片头片尾标记: " + (item.FileName ?? item.Path));
         }

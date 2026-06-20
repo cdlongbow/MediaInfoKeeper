@@ -16,13 +16,20 @@ namespace MediaInfoKeeper.Patch
     /// </summary>
     public static class IntroMarkerProtect
     {
-        private static readonly AsyncLocal<long> AllowItem = new AsyncLocal<long>();
+        private static readonly AsyncLocal<AllowSaveState> AllowState = new AsyncLocal<AllowSaveState>();
         private static Harmony harmony;
         private static ILogger logger;
         private static MethodInfo saveChapters;
         private static MethodInfo deleteChapters;
         private static bool isEnabled;
         private static bool isPatched;
+        private static readonly MarkerType[] ProtectedMarkerTypes =
+        {
+            MarkerType.IntroStart,
+            MarkerType.IntroEnd,
+            MarkerType.CreditsStart
+        };
+
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
         private static bool ShouldFilterPlainChapters =>
@@ -57,7 +64,7 @@ namespace MediaInfoKeeper.Patch
                         ParameterTypes = new[] { typeof(long), typeof(bool), typeof(List<ChapterInfo>) }
                     },
                     logger,
-                    "IntroMarkerProtect.SaveChapters(bool)");
+                    "IntroMarkerProtect.SaveChapters(long,bool,List<ChapterInfo>)");
                 deleteChapters = PatchMethodResolver.Resolve(
                     sqliteItemRepository,
                     version,
@@ -142,15 +149,16 @@ namespace MediaInfoKeeper.Patch
 
         public static IDisposable Allow(long itemId)
         {
-            AllowItem.Value = itemId;
-            return new AllowSaveScope();
+            var previousState = AllowState.Value;
+            AllowState.Value = new AllowSaveState(itemId);
+            return new AllowSaveScope(previousState);
         }
 
         public static void SaveChapters(
             IItemRepository itemRepository,
             BaseItem item,
             List<ChapterInfo> chapters,
-            IEnumerable<MarkerType> managedMarkerTypes = null,
+            IEnumerable<MarkerType> updatedMarkerTypes = null,
             bool clearExtractionFailureResult = false,
             bool filterPlainChapters = true)
         {
@@ -164,69 +172,70 @@ namespace MediaInfoKeeper.Patch
                 throw new ArgumentNullException(nameof(item));
             }
 
-            var mergedChapters = BuildMergedChapters(
+            var chaptersToSave = PreparePluginChaptersForSave(
                 item,
                 chapters,
-                managedMarkerTypes,
+                updatedMarkerTypes,
                 filterPlainChapters,
-                out _);
+                out var preservedMarkerCount);
+            if (preservedMarkerCount > 0)
+            {
+                logger?.Debug($"片头片尾保护 - 保留已有片头片尾标记 {preservedMarkerCount} 个: {item.FileName ?? item.Path ?? item.InternalId.ToString()}");
+            }
+
+            if (WillClearChapters(chaptersToSave))
+            {
+                logger?.Debug($"片头片尾保护 - 插件未写入空章节: {item.FileName ?? item.Path ?? item.InternalId.ToString()}");
+                return;
+            }
 
             using (Allow(item.InternalId))
             {
                 if (clearExtractionFailureResult)
                 {
-                    itemRepository.SaveChapters(item.InternalId, true, mergedChapters);
+                    itemRepository.SaveChapters(item.InternalId, true, chaptersToSave);
                     return;
                 }
 
-                itemRepository.SaveChapters(item.InternalId, mergedChapters);
+                itemRepository.SaveChapters(item.InternalId, chaptersToSave);
             }
         }
 
         [HarmonyPrefix]
-        private static bool SaveChaptersPrefix(long itemId, List<ChapterInfo> chapters)
+        private static bool SaveChaptersPrefix(long itemId, bool clearExtractionFailureResult, List<ChapterInfo> chapters)
         {
             if (!isEnabled)
             {
                 return true;
             }
 
-            if (AllowItem.Value != 0 && AllowItem.Value == itemId)
+            if (IsAllowed(itemId))
             {
                 return true;
             }
 
             var item = Plugin.LibraryManager?.GetItemById(itemId);
+            if (WillClearChapters(chapters))
+            {
+                return BlockEmptyChapterSave(itemId, item, "提交的章节列表为空");
+            }
+
             var removedPlainChapters = ShouldFilterPlainChapters ? RemovePlainChapters(chapters) : 0;
             if (removedPlainChapters > 0)
             {
-                logger?.Debug($"片头片尾保护 - SaveChapters 过滤普通章节 {removedPlainChapters} 个。item: {item?.FileName ?? item?.Path ?? itemId.ToString()}, itemId: {itemId}");
+                logger?.Debug($"片头片尾保护 - 已过滤普通章节 {removedPlainChapters} 个: {FormatItem(item, itemId)}");
             }
 
-            if (chapters == null || chapters.Count == 0)
+            if (WillClearChapters(chapters))
             {
-                // 避免用空的章节列表覆盖现有章节数据。
-                logger?.Debug($"片头保护 - 拦截 SaveChapters：提交的章节列表为空，禁止清空现有章节。item: {item?.FileName ?? item?.Path ?? itemId.ToString()}, itemId: {itemId}");
-                // 根据普通章节保留开关，清理之前的章节信息
-                CleanupPlainChapters(itemId, item);
-                return false;
+                return BlockEmptyChapterSave(itemId, item, "过滤普通章节后无可保存章节");
             }
 
-            var preservedProtectedMarkers = MergeProtectedMarkers(item, chapters);
-            if (preservedProtectedMarkers > 0)
+            var mergedProtectedMarkerCount = PreserveNotUpdatedProtectedMarkers(item, chapters, updatedMarkerTypes: null);
+            if (mergedProtectedMarkerCount > 0)
             {
-                chapters.Sort((left, right) => left.StartPositionTicks.CompareTo(right.StartPositionTicks));
-                logger?.Debug($"片头片尾保护 - SaveChapters 合并缺失标记 {preservedProtectedMarkers} 个。item: {item?.FileName ?? item?.Path ?? itemId.ToString()}, itemId: {itemId}");
-            }
-
-            if (!chapters.Any(IsProtectedMarker))
-            {
-                if (HasProtectedMarkers(itemId))
-                {
-                    // 当前已有片头或片尾标记时，不允许被一份不含片头片尾标记的结果覆盖。
-                    logger?.Debug($"片头片尾保护 - 拦截 SaveChapters：当前已存在片头或片尾标记，禁止被不含片头片尾标记的结果覆盖。item: {item?.FileName ?? item?.Path ?? itemId.ToString()}, itemId: {itemId}");
-                    return false;
-                }
+                SortChapters(chapters);
+                logger?.Debug($"片头片尾保护 - 保留已有片头片尾标记 {mergedProtectedMarkerCount} 个: {FormatItem(item, itemId)}");
             }
 
             return true;
@@ -240,14 +249,14 @@ namespace MediaInfoKeeper.Patch
                 return true;
             }
 
-            if (AllowItem.Value != 0 && AllowItem.Value == itemId)
+            if (IsAllowed(itemId))
             {
                 return true;
             }
             var item = Plugin.LibraryManager?.GetItemById(itemId);
 
             if (markerTypes != null && markerTypes.Length > 0 &&
-                !markerTypes.Any(t => t == MarkerType.IntroStart || t == MarkerType.IntroEnd || t == MarkerType.CreditsStart))
+                !markerTypes.Any(IsProtectedMarkerType))
             {
                 return true;
             }
@@ -255,7 +264,7 @@ namespace MediaInfoKeeper.Patch
             if (HasProtectedMarkers(itemId, markerTypes))
             {
                 // 当前存在本次请求要删除的片头或片尾标记时，不允许删除相关标记。
-                logger?.Info($"片头片尾保护 - 拦截 DeleteChapters：当前存在待删除的片头或片尾标记，禁止删除相关标记。item: {item?.FileName ?? item?.Path ?? itemId.ToString()}, itemId: {itemId}");
+                logger?.Info($"已阻止章节信息丢失: {FormatItem(item, itemId)}, 原因: 删除片头片尾标记");
                 return false;
             }
 
@@ -279,79 +288,65 @@ namespace MediaInfoKeeper.Patch
             return requestedTypes.Any(markerType => HasProtectedMarker(item, markerType));
         }
 
-        private static int MergeProtectedMarkers(BaseItem item, List<ChapterInfo> chapters)
-        {
-            var mergedChapters = BuildMergedChapters(
-                item,
-                chapters,
-                managedMarkerTypes: null,
-                filterPlainChapters: false,
-                out var addedCount);
-
-            chapters.Clear();
-            chapters.AddRange(mergedChapters);
-            return addedCount;
-        }
-
-        private static List<ChapterInfo> BuildMergedChapters(
+        private static List<ChapterInfo> PreparePluginChaptersForSave(
             BaseItem item,
-            List<ChapterInfo> chapters,
-            IEnumerable<MarkerType> managedMarkerTypes,
+            List<ChapterInfo> requestedChapters,
+            IEnumerable<MarkerType> updatedMarkerTypes,
             bool filterPlainChapters,
-            out int addedProtectedMarkerCount)
+            out int preservedMarkerCount)
         {
-            var result = (chapters ?? new List<ChapterInfo>())
-                .Where(chapter => chapter != null)
-                .Select(CloneChapter)
-                .ToList();
-
-            addedProtectedMarkerCount = 0;
-
-            if (Plugin.IntroSkipChapterApi != null && item != null)
-            {
-                var existingChapters = Plugin.IntroSkipChapterApi.GetChapters(item) ?? new List<ChapterInfo>();
-                var managedTypes = new HashSet<MarkerType>(NormalizeManagedProtectedMarkerTypes(managedMarkerTypes));
-
-                foreach (var markerType in GetProtectedMarkerTypes())
-                {
-                    if (managedTypes.Contains(markerType) || result.Any(c => c.MarkerType == markerType))
-                    {
-                        continue;
-                    }
-
-                    var existingMarkers = existingChapters
-                        .Where(c => c?.MarkerType == markerType)
-                        .Select(CloneChapter)
-                        .ToList();
-                    if (existingMarkers.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    result.AddRange(existingMarkers);
-                    addedProtectedMarkerCount += existingMarkers.Count;
-                }
-            }
+            var result = CloneChapters(requestedChapters);
+            preservedMarkerCount = PreserveNotUpdatedProtectedMarkers(item, result, updatedMarkerTypes);
 
             if (filterPlainChapters)
             {
                 result.RemoveAll(chapter => chapter == null || chapter.MarkerType == MarkerType.Chapter);
             }
 
-            result.Sort((left, right) => left.StartPositionTicks.CompareTo(right.StartPositionTicks));
+            SortChapters(result);
             return result;
         }
 
-        private static IEnumerable<MarkerType> GetProtectedMarkerTypes()
+        private static int PreserveNotUpdatedProtectedMarkers(
+            BaseItem item,
+            List<ChapterInfo> targetChapters,
+            IEnumerable<MarkerType> updatedMarkerTypes)
         {
-            yield return MarkerType.IntroStart;
-            yield return MarkerType.IntroEnd;
-            yield return MarkerType.CreditsStart;
+            if (Plugin.IntroSkipChapterApi == null || item == null || targetChapters == null)
+            {
+                return 0;
+            }
+
+            var existingChapters = Plugin.IntroSkipChapterApi.GetChapters(item) ?? new List<ChapterInfo>();
+            var updatedTypes = BuildUpdatedMarkerTypeSet(updatedMarkerTypes);
+            var preservedMarkerCount = 0;
+
+            foreach (var markerType in ProtectedMarkerTypes)
+            {
+                if (updatedTypes.Contains(markerType) || targetChapters.Any(c => c?.MarkerType == markerType))
+                {
+                    continue;
+                }
+
+                var existingMarkers = existingChapters
+                    .Where(c => c?.MarkerType == markerType)
+                    .Select(CloneChapter)
+                    .ToList();
+                if (existingMarkers.Count == 0)
+                {
+                    continue;
+                }
+
+                targetChapters.AddRange(existingMarkers);
+                preservedMarkerCount += existingMarkers.Count;
+            }
+
+            return preservedMarkerCount;
         }
 
         private static IEnumerable<MarkerType> ResolveRequestedProtectedMarkerTypes(IEnumerable<MarkerType> requestedMarkerTypes)
         {
-            var protectedMarkerTypes = new HashSet<MarkerType>(GetProtectedMarkerTypes());
+            var protectedMarkerTypes = new HashSet<MarkerType>(ProtectedMarkerTypes);
             var requested = requestedMarkerTypes?
                 .Where(protectedMarkerTypes.Contains)
                 .Distinct()
@@ -362,13 +357,12 @@ namespace MediaInfoKeeper.Patch
                 : protectedMarkerTypes;
         }
 
-        private static IEnumerable<MarkerType> NormalizeManagedProtectedMarkerTypes(IEnumerable<MarkerType> managedMarkerTypes)
+        private static HashSet<MarkerType> BuildUpdatedMarkerTypeSet(IEnumerable<MarkerType> updatedMarkerTypes)
         {
-            var protectedMarkerTypes = new HashSet<MarkerType>(GetProtectedMarkerTypes());
-            return managedMarkerTypes?
+            var protectedMarkerTypes = new HashSet<MarkerType>(ProtectedMarkerTypes);
+            return new HashSet<MarkerType>(updatedMarkerTypes?
                 .Where(protectedMarkerTypes.Contains)
-                .Distinct()
-                .ToArray() ?? Array.Empty<MarkerType>();
+                .Distinct() ?? Array.Empty<MarkerType>());
         }
 
         private static bool HasProtectedMarker(BaseItem item, MarkerType markerType)
@@ -385,6 +379,14 @@ namespace MediaInfoKeeper.Patch
                 MarkerType.CreditsStart => Plugin.IntroSkipChapterApi.GetCreditsStart(item).HasValue,
                 _ => false
             };
+        }
+
+        private static List<ChapterInfo> CloneChapters(IEnumerable<ChapterInfo> chapters)
+        {
+            return (chapters ?? Array.Empty<ChapterInfo>())
+                .Where(chapter => chapter != null)
+                .Select(CloneChapter)
+                .ToList();
         }
 
         private static ChapterInfo CloneChapter(ChapterInfo chapter)
@@ -406,21 +408,9 @@ namespace MediaInfoKeeper.Patch
             };
         }
 
-        private static bool IsProtectedMarker(ChapterInfo chapter)
+        private static bool IsProtectedMarkerType(MarkerType markerType)
         {
-            if (chapter == null)
-            {
-                return false;
-            }
-
-            if (chapter.MarkerType != MarkerType.IntroStart &&
-                chapter.MarkerType != MarkerType.IntroEnd &&
-                chapter.MarkerType != MarkerType.CreditsStart)
-            {
-                return false;
-            }
-
-            return true;
+            return ProtectedMarkerTypes.Contains(markerType);
         }
 
         private static int RemovePlainChapters(List<ChapterInfo> chapters)
@@ -433,30 +423,68 @@ namespace MediaInfoKeeper.Patch
             return chapters.RemoveAll(chapter => chapter?.MarkerType == MarkerType.Chapter);
         }
 
-        private static void CleanupPlainChapters(long itemId, BaseItem item)
+        private static bool WillClearChapters(List<ChapterInfo> chapters)
         {
-            if (!ShouldFilterPlainChapters || item == null || Plugin.Instance?.ItemRepository == null || Plugin.IntroSkipChapterApi == null)
+            return chapters == null || chapters.Count == 0;
+        }
+
+        private static void SortChapters(List<ChapterInfo> chapters)
+        {
+            chapters?.Sort((left, right) => left.StartPositionTicks.CompareTo(right.StartPositionTicks));
+        }
+
+        private static bool IsAllowed(long itemId)
+        {
+            var state = AllowState.Value;
+            return state != null && state.ItemId == itemId;
+        }
+
+        private static bool BlockEmptyChapterSave(long itemId, BaseItem item, string reason)
+        {
+            var displayName = FormatItem(item, itemId);
+            if (HasAnyStoredChapters(item))
             {
-                return;
+                logger?.Info($"已阻止章节信息丢失: {displayName}, 原因: {reason}");
+                return false;
             }
 
-            var itemChapters = Plugin.IntroSkipChapterApi.GetChapters(item) ?? new List<ChapterInfo>();
-            var removedPlainChapters = RemovePlainChapters(itemChapters);
-            if (removedPlainChapters <= 0)
+            logger?.Debug($"片头片尾保护 - 跳过空章节保存: {displayName}, 原因: {reason}");
+            return false;
+        }
+
+        private static string FormatItem(BaseItem item, long itemId)
+        {
+            return $"{item?.FileName ?? item?.Path ?? itemId.ToString()}, itemId: {itemId}";
+        }
+
+        private static bool HasAnyStoredChapters(BaseItem item)
+        {
+            return item != null &&
+                   Plugin.IntroSkipChapterApi?.GetChapters(item)?.Any(chapter => chapter != null) == true;
+        }
+
+        private sealed class AllowSaveState
+        {
+            public AllowSaveState(long itemId)
             {
-                return;
+                ItemId = itemId;
             }
 
-            SaveChapters(Plugin.Instance.ItemRepository, item, itemChapters, new[] { MarkerType.IntroStart, MarkerType.IntroEnd, MarkerType.CreditsStart });
-
-            logger?.Info($"片头片尾保护 - 已清理历史普通章节 {removedPlainChapters} 个。item: {item.FileName ?? item.Path ?? itemId.ToString()}, itemId: {itemId}");
+            public long ItemId { get; }
         }
 
         private sealed class AllowSaveScope : IDisposable
         {
+            private readonly AllowSaveState previousState;
+
+            public AllowSaveScope(AllowSaveState previousState)
+            {
+                this.previousState = previousState;
+            }
+
             public void Dispose()
             {
-                AllowItem.Value = 0;
+                AllowState.Value = previousState;
             }
         }
     }

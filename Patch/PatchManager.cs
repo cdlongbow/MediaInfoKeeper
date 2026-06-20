@@ -335,6 +335,33 @@ namespace MediaInfoKeeper.Patch
 
             registrations.Add(new PatchRegistration
             {
+                Name = "ChapterJsonSync",
+                Initialize = _ => ChapterJsonSync.Initialize(logger, true),
+                Configure = options => ChapterJsonSync.Configure(IsPluginEnabled(options)),
+                IsEnabled = options => IsPluginEnabled(options),
+                IsReady = () => ChapterJsonSync.IsReady
+            });
+
+            registrations.Add(new PatchRegistration
+            {
+                Name = "MediaInfoJsonSync",
+                Initialize = _ => MediaInfoJsonSync.Initialize(logger, true),
+                Configure = options => MediaInfoJsonSync.Configure(IsPluginEnabled(options)),
+                IsEnabled = options => IsPluginEnabled(options),
+                IsReady = () => MediaInfoJsonSync.IsReady
+            });
+
+            registrations.Add(new PatchRegistration
+            {
+                Name = "EmbeddedImageJsonSync",
+                Initialize = _ => EmbeddedImageJsonSync.Initialize(logger, true),
+                Configure = options => EmbeddedImageJsonSync.Configure(IsPluginEnabled(options)),
+                IsEnabled = options => IsPluginEnabled(options),
+                IsReady = () => EmbeddedImageJsonSync.IsReady
+            });
+
+            registrations.Add(new PatchRegistration
+            {
                 Name = "EmbeddedChapterMarkerMap",
                 Initialize = options => EmbeddedChapterMarkerMap.Initialize(logger, IsPluginEnabled(options)),
                 Configure = options => EmbeddedChapterMarkerMap.Configure(IsPluginEnabled(options)),

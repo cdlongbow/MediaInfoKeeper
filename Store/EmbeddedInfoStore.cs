@@ -70,9 +70,34 @@ namespace MediaInfoKeeper.Store
             var documents = ReadDocuments(mediaInfoJsonPath);
             var document = documents.FirstOrDefault() ?? new MediaInfoDocument();
             document.EmbeddedInfo = CreateForPersist(item);
-            document.EmbeddedImage = GetPrimaryImageBase64(item as Audio);
+            var embeddedImage = GetPrimaryImageBase64(item as Audio);
+            if (!string.IsNullOrWhiteSpace(embeddedImage))
+            {
+                document.EmbeddedImage = embeddedImage;
+            }
             SaveDocuments(documents, document, mediaInfoJsonPath);
-            this.logger.Debug($"EmbeddedInfoStore 覆盖写入音乐元数据成功: {(item.FileName ?? item.Path)}");
+            this.logger.Debug($"EmbeddedInfoStore 写入音乐元数据成功: {(item.FileName ?? item.Path)}");
+        }
+
+        public void OverWriteImageToFile(BaseItem item)
+        {
+            if (item is not Audio audio)
+            {
+                return;
+            }
+
+            var mediaInfoJsonPath = MediaInfoDocument.GetMediaInfoJsonPath(item);
+            var documents = ReadDocuments(mediaInfoJsonPath);
+            var document = documents.FirstOrDefault() ?? new MediaInfoDocument();
+            var embeddedImage = GetPrimaryImageBase64(audio);
+            if (string.IsNullOrWhiteSpace(embeddedImage))
+            {
+                return;
+            }
+
+            document.EmbeddedImage = embeddedImage;
+            SaveDocuments(documents, document, mediaInfoJsonPath);
+            this.logger.Debug($"EmbeddedInfoStore 写入音乐主图成功: {(item.FileName ?? item.Path)}");
         }
 
         public MediaInfoDocument.MediaInfoRestoreResult ApplyToItem(BaseItem item)

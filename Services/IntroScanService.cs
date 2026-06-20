@@ -246,7 +246,6 @@ namespace MediaInfoKeeper.Services
                 else if (hasMarkersAfterDetect)
                 {
                     this.logger.Debug($"片头检测成功: marker 已写入, item={displayName}");
-                    Plugin.ChaptersStore.OverWriteToFile(episode);
                 }
                 else
                 {

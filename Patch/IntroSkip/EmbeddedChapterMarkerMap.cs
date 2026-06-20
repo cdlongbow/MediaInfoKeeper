@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -17,6 +16,9 @@ namespace MediaInfoKeeper.Patch
     /// </summary>
     public static class EmbeddedChapterMarkerMap
     {
+        private const string ProbeChaptersMemberName = "chapters";
+        private const string ProbeChapterEndTimeMemberName = "end_time";
+
         private static readonly HashSet<string> IntroNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "intro",
@@ -72,6 +74,11 @@ namespace MediaInfoKeeper.Patch
                 var probeResultNormalizerType = mediaEncodingAssembly?.GetType("Emby.Server.MediaEncoding.Probing.ProbeResultNormalizer");
                 var version = mediaEncodingAssembly?.GetName().Version;
                 var probeResultType = Assembly.Load("Emby.Media.Model")?.GetType("Emby.Media.Model.ProbeModel.ProbeResult");
+                if (probeResultNormalizerType == null || probeResultType == null)
+                {
+                    PatchLog.InitFailed(logger, nameof(EmbeddedChapterMarkerMap), "ProbeResultNormalizer 或 ProbeResult 类型缺失");
+                    return;
+                }
 
                 getMediaInfo = PatchMethodResolver.Resolve(
                     probeResultNormalizerType,
@@ -184,16 +191,9 @@ namespace MediaInfoKeeper.Patch
 
         private static List<object> GetProbeChapters(object probeResult)
         {
-            var field = probeResult.GetType().GetField("chapters", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var property = probeResult.GetType().GetProperty("chapters", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var value = field?.GetValue(probeResult) ?? property?.GetValue(probeResult);
-
-            if (value is IEnumerable enumerable)
-            {
-                return enumerable.Cast<object>().Where(i => i != null).ToList();
-            }
-
-            return null;
+            return GetPropertyValue(probeResult, ProbeChaptersMemberName) is Array chapters
+                ? chapters.Cast<object>().Where(i => i != null).ToList()
+                : null;
         }
 
         private static void ApplyMarkerMapping(List<ChapterInfo> chapters, List<object> probeChapters)
@@ -223,57 +223,85 @@ namespace MediaInfoKeeper.Patch
 
                 if (IntroNames.Contains(normalizedName))
                 {
-                    var hasIntroStart = pair.Chapter.MarkerType == MarkerType.IntroStart;
-                    if (pair.Chapter.MarkerType == MarkerType.Chapter)
-                    {
-                        pair.Chapter.MarkerType = MarkerType.IntroStart;
-                        addedMarkers++;
-                        hasIntroStart = true;
-                        mappedMarkers.Add($"IntroStart={FormatTicks(pair.Chapter.StartPositionTicks)}");
-                    }
-
-                    if (hasIntroStart)
-                    {
-                        var introEndTicks = ResolveIntroEndTicks(orderedPairs, i, pair);
-                        if (introEndTicks.HasValue &&
-                            introEndTicks.Value > pair.Chapter.StartPositionTicks &&
-                            !chapters.Any(c => c != null &&
-                                               c.MarkerType == MarkerType.IntroEnd &&
-                                               c.StartPositionTicks == introEndTicks.Value))
-                        {
-                            chapters.Add(new ChapterInfo
-                            {
-                                Name = "IntroEnd",
-                                StartPositionTicks = introEndTicks.Value,
-                                MarkerType = MarkerType.IntroEnd
-                            });
-                            addedMarkers++;
-                            mappedMarkers.Add($"IntroEnd={FormatTicks(introEndTicks.Value)}");
-                        }
-                    }
+                    addedMarkers += ApplyIntroMarker(chapters, orderedPairs, i, pair, mappedMarkers);
 
                     continue;
                 }
 
-                if (CreditsNames.Contains(normalizedName) &&
-                    pair.Chapter.MarkerType == MarkerType.Chapter)
-                {
-                    pair.Chapter.MarkerType = MarkerType.CreditsStart;
-                    addedMarkers++;
-                    mappedMarkers.Add($"CreditsStart={FormatTicks(pair.Chapter.StartPositionTicks)}");
-                }
+                addedMarkers += ApplyCreditsMarker(pair, normalizedName, mappedMarkers);
             }
 
             if (addedMarkers > 0)
             {
                 chapters.Sort((left, right) => left.StartPositionTicks.CompareTo(right.StartPositionTicks));
-                logger?.Info("EmbeddedChapterMarkerMap 内嵌章节信息映射完成: {0}", mappedMarkers.Count == 0 ? "<none>" : string.Join(", ", mappedMarkers));
+                logger?.Info("内嵌章节已识别为片头片尾标记: {0}", mappedMarkers.Count == 0 ? "<none>" : string.Join(", ", mappedMarkers));
             }
+        }
+
+        private static int ApplyIntroMarker(
+            List<ChapterInfo> chapters,
+            IReadOnlyList<ChapterPair> orderedPairs,
+            int index,
+            ChapterPair pair,
+            List<string> mappedMarkers)
+        {
+            var addedMarkers = 0;
+            var hasIntroStart = pair.Chapter.MarkerType == MarkerType.IntroStart;
+
+            if (pair.Chapter.MarkerType == MarkerType.Chapter)
+            {
+                pair.Chapter.MarkerType = MarkerType.IntroStart;
+                addedMarkers++;
+                hasIntroStart = true;
+                mappedMarkers.Add($"IntroStart={FormatTicks(pair.Chapter.StartPositionTicks)}");
+            }
+
+            if (!hasIntroStart)
+            {
+                return addedMarkers;
+            }
+
+            var introEndTicks = ResolveIntroEndTicks(orderedPairs, index, pair);
+            if (introEndTicks.HasValue &&
+                introEndTicks.Value > pair.Chapter.StartPositionTicks &&
+                !HasMarkerAt(chapters, MarkerType.IntroEnd, introEndTicks.Value))
+            {
+                chapters.Add(new ChapterInfo
+                {
+                    Name = "IntroEnd",
+                    StartPositionTicks = introEndTicks.Value,
+                    MarkerType = MarkerType.IntroEnd
+                });
+                addedMarkers++;
+                mappedMarkers.Add($"IntroEnd={FormatTicks(introEndTicks.Value)}");
+            }
+
+            return addedMarkers;
+        }
+
+        private static int ApplyCreditsMarker(ChapterPair pair, string normalizedName, List<string> mappedMarkers)
+        {
+            if (!CreditsNames.Contains(normalizedName) ||
+                pair.Chapter.MarkerType != MarkerType.Chapter)
+            {
+                return 0;
+            }
+
+            pair.Chapter.MarkerType = MarkerType.CreditsStart;
+            mappedMarkers.Add($"CreditsStart={FormatTicks(pair.Chapter.StartPositionTicks)}");
+            return 1;
+        }
+
+        private static bool HasMarkerAt(IEnumerable<ChapterInfo> chapters, MarkerType markerType, long ticks)
+        {
+            return chapters.Any(c => c != null &&
+                                     c.MarkerType == markerType &&
+                                     c.StartPositionTicks == ticks);
         }
 
         private static long? ResolveIntroEndTicks(IReadOnlyList<ChapterPair> orderedPairs, int index, ChapterPair pair)
         {
-            var endTicks = GetProbeChapterTicks(pair.ProbeChapter, "end_time");
+            var endTicks = GetProbeChapterTicks(pair.ProbeChapter, ProbeChapterEndTimeMemberName);
             if (endTicks.HasValue && endTicks.Value > pair.Chapter.StartPositionTicks)
             {
                 return endTicks.Value;
@@ -295,8 +323,7 @@ namespace MediaInfoKeeper.Patch
                 return null;
             }
 
-            var property = probeChapter.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var value = property?.GetValue(probeChapter);
+            var value = GetPropertyValue(probeChapter, propertyName);
             if (value == null)
             {
                 return null;
@@ -313,6 +340,17 @@ namespace MediaInfoKeeper.Patch
             }
 
             return null;
+        }
+
+        private static object GetPropertyValue(object instance, string propertyName)
+        {
+            if (instance == null || string.IsNullOrWhiteSpace(propertyName))
+            {
+                return null;
+            }
+
+            var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            return instance.GetType().GetProperty(propertyName, flags)?.GetValue(instance);
         }
 
         private static string NormalizeName(string name)

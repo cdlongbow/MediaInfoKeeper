@@ -38,28 +38,14 @@ namespace MediaInfoKeeper.Services
         /// <summary>判断条目是否已存在可用的 MediaInfo。</summary>
         public bool HasMediaInfo(BaseItem item)
         {
-            if (item is not IHasMediaSources)
+            if (item is not IHasMediaSources || !item.RunTimeTicks.HasValue)
             {
                 return false;
             }
 
-            foreach (var source in GetStaticMediaSources(item, false))
-            {
-                if (source?.RunTimeTicks.HasValue != true)
-                {
-                    continue;
-                }
-
-                foreach (var stream in source.MediaStreams ?? Enumerable.Empty<MediaStream>())
-                {
-                    if (stream.Type == MediaStreamType.Audio || stream.Type == MediaStreamType.Video)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return this.mediaSourceManager.GetMediaStreams(item.InternalId)
+                .Any(stream => stream != null &&
+                               (stream.Type == MediaStreamType.Audio || stream.Type == MediaStreamType.Video));
         }
 
         /// <summary>判断条目当前 MediaInfo 中是否存在音频流。</summary>
@@ -404,23 +390,13 @@ namespace MediaInfoKeeper.Services
 
         private bool HasStreamType(BaseItem item, MediaStreamType streamType)
         {
-            if (item is not IHasMediaSources)
+            if (item is not IHasMediaSources || !item.RunTimeTicks.HasValue)
             {
                 return false;
             }
 
-            foreach (var source in GetStaticMediaSources(item, false))
-            {
-                foreach (var stream in source?.MediaStreams ?? Enumerable.Empty<MediaStream>())
-                {
-                    if (stream.Type == streamType)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return this.mediaSourceManager.GetMediaStreams(item.InternalId)
+                .Any(stream => stream?.Type == streamType);
         }
 
         private static bool IsMissingLocalFile(string filePath, IDirectoryService directoryService)

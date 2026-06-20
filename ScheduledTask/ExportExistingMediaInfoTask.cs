@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Tasks;
-using MediaInfoKeeper.Store;
 
 namespace MediaInfoKeeper.ScheduledTask
 {
@@ -29,7 +29,10 @@ namespace MediaInfoKeeper.ScheduledTask
         {
             this.logger.Info("计划任务执行(仅导出已有 MediaInfo)");
 
-            var items = FetchScopedItems();
+            var items = Plugin.LibraryService.FetchScheduledTaskLibraryItems(
+                Plugin.Instance.Options.MainPage.ScheduledTasksEditor.ExportExistingMediaInfo.ExportExistingMediaInfoLibraries,
+                includeAudio: true);
+            this.logger.Info($"计划任务条目数 {items.Count}");
             var total = items.Count;
             if (total == 0)
             {
@@ -57,11 +60,17 @@ namespace MediaInfoKeeper.ScheduledTask
 
                 try
                 {
-                    if (Plugin.MediaInfoService.HasMediaInfo(item))
+                    Plugin.MediaSourceInfoStore?.OverWriteToFile(item);
+                    if (item is Audio)
                     {
-                        MediaInfoPersist.OverWritePersistedMedia(item);
-                        hasMediaInfo++;
+                        Plugin.EmbeddedInfoStore?.OverWriteToFile(item);
                     }
+                    else
+                    {
+                        Plugin.ChaptersStore?.OverWriteToFile(item);
+                    }
+
+                    hasMediaInfo++;
                 }
                 catch (OperationCanceledException)
                 {
@@ -91,15 +100,6 @@ namespace MediaInfoKeeper.ScheduledTask
                 DayOfWeek = DayOfWeek.Thursday,
                 TimeOfDayTicks = TimeSpan.FromHours(1).Ticks
             };
-        }
-
-        private List<BaseItem> FetchScopedItems()
-        {
-            var items = Plugin.LibraryService.FetchScheduledTaskLibraryItems(
-                Plugin.Instance.Options.MainPage.ScheduledTasksEditor.ExportExistingMediaInfo.ExportExistingMediaInfoLibraries,
-                includeAudio: true);
-            this.logger.Info($"计划任务条目数 {items.Count}");
-            return items;
         }
     }
 }

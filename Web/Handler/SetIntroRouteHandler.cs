@@ -94,18 +94,6 @@ namespace MediaInfoKeeper.Web.Handler
                                 MediaBrowser.Model.Entities.MarkerType.IntroEnd
                             });
 
-                    try
-                    {
-                        // 持久化片头片尾信息
-                        Plugin.ChaptersStore.OverWriteToFile(episode);
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Instance.Logger.Error($"ShortcutMenu 设置片头片尾后写入JSON失败: {episode.Path ?? episode.Name}");
-                        Plugin.Instance.Logger.Error(ex.Message);
-                        Plugin.Instance.Logger.Debug(ex.StackTrace);
-                    }
-
                     response.Succeeded++;
                     Plugin.Instance.Logger.Info($"ShortcutMenu 设置片头片尾成功: {episode.Path ?? episode.Name}, IntroStart={request.IntroStartTicks}, IntroEnd={request.IntroEndTicks}, CreditsStart={(creditsStartTicks.HasValue ? creditsStartTicks.Value.ToString() : "unchanged")}");
                 }

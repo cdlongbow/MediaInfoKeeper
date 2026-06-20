@@ -12,6 +12,8 @@ namespace MediaInfoKeeper.Patch
 {
     /// <summary>
     /// 在播放信息与直播打开入口期间临时放行 ffprobe/ffmpeg，不拦截视频与直播启播分析媒体信息。
+    /// 播放信息入口允许 Emby 补探缺失 MediaInfo，避免无媒体流项目无法顺利启播。
+    /// 直播打开链路没有稳定的库条目上下文，只在当前调用 scope 内放行 ffprobe/ffmpeg。
     /// </summary>
     public static class PlaybackFfprocess
     {

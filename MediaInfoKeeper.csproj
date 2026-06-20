@@ -69,6 +69,9 @@
     <PackageReference Include="System.Memory" Version="4.6.3" />
     <PackageReference Include="TinyPinyin" Version="1.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Patch\DataBase\" />
+  </ItemGroup>
 
   <Target Name="CopyHarmony" BeforeTargets="PostBuildEvent">
     <PropertyGroup>
