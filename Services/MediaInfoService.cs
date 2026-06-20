@@ -274,8 +274,7 @@ namespace MediaInfoKeeper.Services
             }
 
             var displayName = item.FileName ?? item.Path ?? item.Name;
-            var retryCount = Math.Max(0, Plugin.Instance?.Options?.MediaInfo?.ExtractMediaInfoRetryCount ?? 0);
-            var maxAttempts = retryCount + 1;
+            var maxAttempts = Math.Max(1, Plugin.Instance.Options.MediaInfo.ExtractMediaInfoAttemptCount);
 
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
@@ -309,7 +308,7 @@ namespace MediaInfoKeeper.Services
 
                 if (attempt < maxAttempts)
                 {
-                    this.logger.Info($"{source} 提取媒体信息出队前仍无媒体流，准备重试 {attempt}/{retryCount}: {displayName}");
+                    this.logger.Info($"{source} 提取媒体信息刷新后仍无媒体流，准备重试 第 {attempt + 1}/{maxAttempts} 次: {displayName}");
                 }
             }
 

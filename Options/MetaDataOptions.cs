@@ -38,8 +38,8 @@ namespace MediaInfoKeeper.Options
         [DisplayName("允许提取 Strm 封面")]
         [Description("为 strm 音视频启用封面/缩略图提取，ImageCapture。")]
         public bool EnableImageCapture { get; set; } = true;
-
-        [DisplayName("刷新最多并发数")]
+        
+        [DisplayName("刷新元数据并发数")]
         [Description("设置插件刷新元数据任务的最大并发数，默认 3。")]
         [MinValue(1), MaxValue(20)]
         public int MaxConcurrentCount { get; set; } = 3;
