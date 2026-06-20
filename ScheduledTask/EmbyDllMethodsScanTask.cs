@@ -114,9 +114,8 @@ namespace MediaInfoKeeper.ScheduledTask
                         var assembly = loadContext.LoadFromAssemblyPath(dllPath);
                         var dllName = Path.GetFileName(dllPath);
                         var dllVersion = assembly.GetName().Version?.ToString() ?? "Unknown";
-                        var safeDllVersion = SanitizeForFileName(dllVersion);
                         var safeDllName = SanitizeForFileName(Path.GetFileNameWithoutExtension(dllPath));
-                        var outputFileName = $"{safeDllName}_{safeDllVersion}_methods.txt";
+                        var outputFileName = $"{safeDllName}_methods.txt";
                         var outputFilePath = Path.Combine(outputDirectory, outputFileName);
                         var exportedMethods = 0;
                         var types = SafeGetTypes(assembly)

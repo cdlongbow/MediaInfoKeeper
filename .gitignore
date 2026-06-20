@@ -43,4 +43,8 @@ x86/
 *.idb
 *.ipch
 
+# 本地 Emby 签名快照
+Docs/emby_*/
+Docs/**/*_methods.txt
+
 # 不排除

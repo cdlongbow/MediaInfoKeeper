@@ -5,30 +5,32 @@
 - Prefer exact signature matching over heuristic reflection.
 
 ## Source Of Truth
-- `EMBY_DOCS_DIR` selects the active method-signature snapshot under `Docs/`.
-- Default: `emby_4.9.3.0`
-- Signature source of truth: `Docs/${EMBY_DOCS_DIR}/`
+- `EMBY_DOCS_DIR` selects the active method-signature snapshot under `~/Documents/Emby/dlls/<emby_version>/`.
+- Default: `emby_4.9.5.0`
+- Default version suffix comes from `EMBY_DOCS_DIR`, for example `emby_4.9.5.0` -> `4.9.5.0`
+- Signature source of truth: `~/Documents/Emby/dlls/<emby_version>/`
 - Primary inputs: `*_methods.txt`
 
 ## Local Dependency Layout
-- DLL root directory: `/Users/honue/Documents/Emby/dlls`
-- Versioned DLL directory: `/Users/honue/Documents/Emby/dlls/<emby_version>`
-- Decompiled source directory: `/Users/honue/Documents/Emby/dlls/<emby_version>/source`
+- DLL root directory: `~/Documents/Emby/dlls`
+- Versioned DLL directory: `~/Documents/Emby/dlls/<emby_version>`
+- Method-signature files: `~/Documents/Emby/dlls/<emby_version>/<AssemblyName>_methods.txt`
+- Decompiled source directory: `~/Documents/Emby/dlls/<emby_version>/source`
 - Decompiled folder format: `<AssemblyName>_<version>`
-- Default version suffix comes from `EMBY_DOCS_DIR`, for example `emby_4.9.3.0` -> `4.9.3.0`
 
 ## Required Research Order
-1. Read `Docs/${EMBY_DOCS_DIR}/<Assembly>_methods.txt` for exact method signatures.
-2. Read decompiled source under `/Users/honue/Documents/Emby/dlls/<emby_version>/source/<AssemblyName>_<version>/` for real behavior, access modifiers, inheritance, and usable entry points.
+1. Read `~/Documents/Emby/dlls/<emby_version>/<Assembly>_methods.txt` for exact method signatures.
+2. Read decompiled source under `~/Documents/Emby/dlls/<emby_version>/source/<AssemblyName>_<version>/` for real behavior, access modifiers, inheritance, and usable entry points.
 3. Use both before changing any patch that targets Emby internals.
 
 ## Missing Dependency Workflow
 - Do not stop at "file missing" if the repo scripts can populate the dependency.
-- If a DLL is missing, fetch it with `bash Scripts/get_emby_dll.sh <DllName.dll>`.
-- If decompiled source is missing, generate it with `bash Scripts/decompile_emby_dlls.sh <DllName.dll>`.
+- If a DLL is missing, fetch it with `bash Scripts/pull-dll <DllName.dll>`.
+- If method signatures are missing, fetch them with `bash Scripts/pull-methods --emby-docs-dir ${EMBY_DOCS_DIR}`.
+- If decompiled source is missing, generate it with `bash Scripts/decompile <DllName.dll>`.
 - Pass explicit DLL names by default. Do not use the full default set unless all default DLLs are actually needed.
-- Invoke scripts with `bash Scripts/...` by default. Do not assume the executable bit is present.
-- `Scripts/decompile_emby_dlls.sh` only writes source folders under `/Users/honue/Documents/Emby/dlls/<emby_version>/source/`; it does not generate Markdown index files.
+- Invoke scripts with `bash Scripts/<name>` by default. Do not assume the executable bit is present.
+- `bash Scripts/decompile` only writes source folders under `~/Documents/Emby/dlls/<emby_version>/source/`; it does not generate Markdown index files.
 
 ## macOS Decompile Notes
 - `ilspycmd` may require .NET 8 even if newer runtimes are installed.
@@ -38,7 +40,7 @@
 ```bash
 export DOTNET_ROOT="/opt/homebrew/opt/dotnet@8/libexec"
 export PATH="$DOTNET_ROOT:$PATH"
-bash Scripts/decompile_emby_dlls.sh Emby.Providers.dll
+bash Scripts/decompile Emby.Providers.dll
 ```
 
 ## Patch Rules
@@ -52,7 +54,7 @@ bash Scripts/decompile_emby_dlls.sh Emby.Providers.dll
 - Keep prefix/postfix signatures compatible with every patched overload.
 
 ## Patch Workflow
-1. Locate the target in `Docs/${EMBY_DOCS_DIR}/<Assembly>_methods.txt`.
+1. Locate the target in `~/Documents/Emby/dlls/<emby_version>/<Assembly>_methods.txt`.
 2. Copy the exact parameter type order from docs.
 3. Resolve dependent runtime types by full name, for example `Assembly.GetType("Namespace.Type")`.
 4. Build `MethodSignatureProfile` with exact `BindingFlags`, `ParameterTypes`, and `ReturnType` when needed.
@@ -62,9 +64,9 @@ bash Scripts/decompile_emby_dlls.sh Emby.Providers.dll
 
 ## High-Value Decompiled Entry Points
 - External subtitle scanning usually starts from:
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Providers_4.9.3.0/Emby.Providers.MediaInfo/BaseTrackResolver.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Providers_4.9.3.0/Emby.Providers.MediaInfo/SubtitleResolver.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Providers_4.9.3.0/Emby.Providers.MediaInfo/FFProbeSubtitleInfo.cs`
+  - `~/Documents/Emby/dlls/4.9.5.0/source/Emby.Providers_4.9.5.0/Emby.Providers.MediaInfo/BaseTrackResolver.cs`
+  - `~/Documents/Emby/dlls/4.9.5.0/source/Emby.Providers_4.9.5.0/Emby.Providers.MediaInfo/SubtitleResolver.cs`
+  - `~/Documents/Emby/dlls/4.9.5.0/source/Emby.Providers_4.9.5.0/Emby.Providers.MediaInfo/FFProbeSubtitleInfo.cs`
 
 ## Project Map
 - `Patch/`: Harmony patches and method-resolution logic
@@ -72,7 +74,7 @@ bash Scripts/decompile_emby_dlls.sh Emby.Providers.dll
 - `ScheduledTask/`: operational tasks
 - `Services/`: runtime business services
 - `Configuration/` and `Options/`: plugin config models and UI wiring
-- `Docs/${EMBY_DOCS_DIR}/`: signature docs
+- `~/Documents/Emby/dlls/<emby_version>/*_methods.txt`: signature docs
 - `Scripts/`: dependency and helper scripts
 
 ## Don’ts
