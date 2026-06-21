@@ -5,8 +5,10 @@ using System.Reflection;
 using System.Threading;
 using HarmonyLib;
 using MediaInfoKeeper.Services;
+using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.MediaInfo;
 
 namespace MediaInfoKeeper.Patch
 {
@@ -154,7 +156,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool SaveMediaStreamsPrefix(long itemId, List<MediaStream> streams)
+        private static bool SaveMediaStreamsPrefix(long itemId, ref List<MediaStream> streams, CancellationToken cancellationToken)
         {
             if (!isEnabled)
             {
@@ -169,8 +171,14 @@ namespace MediaInfoKeeper.Patch
             var item = Plugin.LibraryManager?.GetItemById(itemId);
             var itemPath = item?.Path ?? item?.FileName;
 
-            if (item == null || !LibraryService.IsFileShortcut(itemPath) || !WillClearMediaInfo(streams))
+            if (item == null || !LibraryService.IsFileShortcut(itemPath) || !WillClearPrimaryMediaInfo(streams))
             {
+                return true;
+            }
+
+            if (PreserveExistingPrimaryStreams(itemId, ref streams, cancellationToken))
+            {
+                logger?.Info($"已保留媒体信息并追加外挂字幕: {item.FileName ?? item.Path}");
                 return true;
             }
 
@@ -178,9 +186,69 @@ namespace MediaInfoKeeper.Patch
             return false;
         }
 
-        private static bool WillClearMediaInfo(List<MediaStream> streams)
+        private static bool WillClearPrimaryMediaInfo(List<MediaStream> streams)
         {
-            return streams == null || !streams.Any(stream => stream.Type == MediaStreamType.Video || stream.Type == MediaStreamType.Audio);
+            return streams == null ||
+                   !streams.Any(stream =>
+                       !stream.IsExternal &&
+                       (stream.Type == MediaStreamType.Video || stream.Type == MediaStreamType.Audio));
+        }
+
+        private static bool PreserveExistingPrimaryStreams(long itemId, ref List<MediaStream> streams, CancellationToken cancellationToken)
+        {
+            if (streams == null || !streams.Any(IsExternalFileStream))
+            {
+                return false;
+            }
+
+            try
+            {
+                var existingStreams = Plugin.Instance?.ItemRepository
+                    ?.GetMediaStreams(new MediaStreamQuery { ItemId = itemId }, cancellationToken);
+                if (existingStreams == null ||
+                    !existingStreams.Any(stream => stream?.Type == MediaStreamType.Video || stream?.Type == MediaStreamType.Audio))
+                {
+                    return false;
+                }
+
+                var incomingSubtitlePaths = new HashSet<string>(
+                    streams.Where(IsExternalFileStream).Select(stream => stream.Path.Trim()),
+                    StringComparer.OrdinalIgnoreCase);
+                var mergedStreams = existingStreams
+                    .Where(stream => stream != null &&
+                                     (!IsExternalFileStream(stream) ||
+                                      !incomingSubtitlePaths.Contains(stream.Path.Trim())))
+                    .ToList();
+                var nextIndex = mergedStreams.Count == 0 ? 0 : mergedStreams.Max(stream => stream.Index) + 1;
+
+                foreach (var subtitle in streams.Where(IsExternalFileStream))
+                {
+                    subtitle.Index = nextIndex++;
+                    mergedStreams.Add(subtitle);
+                }
+
+                streams = mergedStreams;
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger?.Warn($"合并外挂字幕保存失败，继续阻止媒体信息丢失: {ex.Message}");
+                logger?.Debug(ex.StackTrace);
+                return false;
+            }
+        }
+
+        private static bool IsExternalFileStream(MediaStream stream)
+        {
+            return stream != null &&
+                   stream.IsExternal &&
+                   (stream.Type == MediaStreamType.Subtitle || stream.Type == MediaStreamType.Audio) &&
+                   stream.Protocol == MediaProtocol.File &&
+                   !string.IsNullOrWhiteSpace(stream.Path);
         }
     }
 }
