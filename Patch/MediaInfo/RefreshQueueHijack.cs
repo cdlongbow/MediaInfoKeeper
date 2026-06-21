@@ -1,7 +1,5 @@
 using System;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using HarmonyLib;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -164,11 +162,15 @@ namespace MediaInfoKeeper.Patch
             var runner = SelectRunner(__0, __1);
             if (runner == RefreshQueueHijackKind.MediaInfo)
             {
-                _ = Task.Run(() => ExtractMediaInfoAsync(__0));
+                _ = MediaInfoRunner.ExtractMediaInfoAsync(
+                    __0,
+                    "Emby刷新队列",
+                    priority: __2,
+                    replaceQueued: __3);
             }
             else
             {
-                _ = Task.Run(() => RefreshMetadataAsync(__0, __1));
+                _ = MetaDataRunner.RefreshMetaDataAsync(__0, __1, priority: __2, replaceQueued: __3);
             }
 
             return false;
@@ -216,38 +218,6 @@ namespace MediaInfoKeeper.Patch
                    !options.ReplaceAllImages &&
                    !options.EnableThumbnailImageExtraction &&
                    !options.EnableSubtitleDownloading;
-        }
-
-        private static async Task RefreshMetadataAsync(long itemId, MetadataRefreshOptions options)
-        {
-            try
-            {
-                await MetaDataRunner
-                    .RefreshMetaDataAsync(itemId, options, CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                logger?.Error($"RefreshQueueHijack 刷新失败 itemid={itemId}");
-                logger?.Error(ex.Message);
-                logger?.Debug(ex.StackTrace);
-            }
-        }
-
-        private static async Task ExtractMediaInfoAsync(long itemId)
-        {
-            try
-            {
-                await MediaInfoRunner
-                    .ExtractMediaInfoAsync(itemId, "Emby刷新队列", CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                logger?.Error($"RefreshQueueHijack 媒体信息提取失败 itemid={itemId}");
-                logger?.Error(ex.Message);
-                logger?.Debug(ex.StackTrace);
-            }
         }
 
         private enum RefreshQueueHijackKind

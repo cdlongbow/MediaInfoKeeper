@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 
 namespace MediaInfoKeeper.Services
@@ -36,15 +37,27 @@ namespace MediaInfoKeeper.Services
 
             public string Source { get; set; }
 
+            public RefreshPriority Priority { get; set; }
+
             public CancellationToken CancellationToken { get; set; }
 
             public MediaStreamType[] RequiredStreamTypes { get; set; }
 
             public TaskCompletionSource<bool> Completion { get; set; }
+
+            public bool Started { get; set; }
+
+            public bool Disabled { get; set; }
         }
 
         private static readonly object QueueSync = new object();
-        private static readonly Queue<ExtractionRequest> ExtractionQueue =
+        private static readonly Queue<ExtractionRequest> HighestExtractionQueue =
+            new Queue<ExtractionRequest>();
+        private static readonly Queue<ExtractionRequest> HighExtractionQueue =
+            new Queue<ExtractionRequest>();
+        private static readonly Queue<ExtractionRequest> NormalExtractionQueue =
+            new Queue<ExtractionRequest>();
+        private static readonly Queue<ExtractionRequest> LowExtractionQueue =
             new Queue<ExtractionRequest>();
         private static readonly Dictionary<long, ExtractionRequest> InFlightExtractions =
             new Dictionary<long, ExtractionRequest>();
@@ -92,33 +105,62 @@ namespace MediaInfoKeeper.Services
             long internalId,
             string source = "媒体信息提取",
             CancellationToken cancellationToken = default,
-            MediaStreamType[] requiredStreamTypes = null)
+            MediaStreamType[] requiredStreamTypes = null,
+            RefreshPriority priority = RefreshPriority.Normal,
+            bool replaceQueued = false)
         {
             if (internalId <= 0)
             {
                 return false;
             }
 
-            var item = Plugin.LibraryManager?.GetItemById(internalId) as BaseItem;
-            if (item == null)
-            {
-                return false;
-            }
-
-            var extractionTask = EnqueueExtraction(internalId, source, cancellationToken, requiredStreamTypes);
+            var extractionTask = QueueExtraction(
+                internalId,
+                source,
+                cancellationToken,
+                requiredStreamTypes,
+                priority,
+                replaceQueued);
             return await extractionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private static Task<bool> EnqueueExtraction(
+        private static Task<bool> QueueExtraction(
             long internalId,
             string source,
             CancellationToken cancellationToken,
-            MediaStreamType[] requiredStreamTypes)
+            MediaStreamType[] requiredStreamTypes,
+            RefreshPriority priority = RefreshPriority.Normal,
+            bool replaceQueued = false)
         {
             lock (QueueSync)
             {
                 if (InFlightExtractions.TryGetValue(internalId, out var existing))
                 {
+                    if (!existing.Started &&
+                        !existing.Disabled &&
+                        (replaceQueued || priority < existing.Priority))
+                    {
+                        existing.Disabled = true;
+                        waitingCount = Math.Max(0, waitingCount - 1);
+                        Volatile.Write(ref waitingCount, waitingCount);
+
+                        var replacement = new ExtractionRequest
+                        {
+                            InternalId = internalId,
+                            Source = source,
+                            Priority = priority,
+                            CancellationToken = cancellationToken,
+                            RequiredStreamTypes = requiredStreamTypes,
+                            Completion = existing.Completion
+                        };
+
+                        InFlightExtractions[internalId] = replacement;
+                        GetQueue(priority).Enqueue(replacement);
+                        waitingCount++;
+                        Volatile.Write(ref waitingCount, waitingCount);
+                        StartWorkersInsideLock();
+                    }
+
                     return existing.Completion.Task;
                 }
 
@@ -126,23 +168,41 @@ namespace MediaInfoKeeper.Services
                 {
                     InternalId = internalId,
                     Source = source,
+                    Priority = priority,
                     CancellationToken = cancellationToken,
                     RequiredStreamTypes = requiredStreamTypes,
                     Completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously)
                 };
 
                 InFlightExtractions[internalId] = request;
-                ExtractionQueue.Enqueue(request);
-                UpdateWaitingCountInsideLock();
+                GetQueue(priority).Enqueue(request);
+                waitingCount++;
+                Volatile.Write(ref waitingCount, waitingCount);
                 StartWorkersInsideLock();
                 return request.Completion.Task;
+            }
+        }
+
+        private static Queue<ExtractionRequest> GetQueue(RefreshPriority priority)
+        {
+            switch (priority)
+            {
+                case RefreshPriority.Highest:
+                    return HighestExtractionQueue;
+                case RefreshPriority.High:
+                    return HighExtractionQueue;
+                case RefreshPriority.Low:
+                    return LowExtractionQueue;
+                case RefreshPriority.Normal:
+                default:
+                    return NormalExtractionQueue;
             }
         }
 
         private static void StartWorkersInsideLock()
         {
             var maxConcurrent = GetMaxConcurrent();
-            while (activeCount < maxConcurrent && ExtractionQueue.Count > 0)
+            while (activeCount < maxConcurrent && waitingCount > 0)
             {
                 activeCount++;
                 Volatile.Write(ref activeCount, activeCount);
@@ -157,22 +217,55 @@ namespace MediaInfoKeeper.Services
                 ExtractionRequest request;
                 lock (QueueSync)
                 {
-                    if (ExtractionQueue.Count == 0 || activeCount > GetMaxConcurrent())
+                    if (waitingCount == 0 || activeCount > GetMaxConcurrent())
                     {
                         activeCount = Math.Max(0, activeCount - 1);
                         Volatile.Write(ref activeCount, activeCount);
                         return;
                     }
 
-                    request = ExtractionQueue.Dequeue();
-                    UpdateWaitingCountInsideLock();
+                    request = TakeNextRequestInsideLock();
                 }
 
-                await ExecuteExtractionRequestAsync(request).ConfigureAwait(false);
+                await ProcessExtractionAsync(request).ConfigureAwait(false);
             }
         }
 
-        private static async Task ExecuteExtractionRequestAsync(ExtractionRequest request)
+        private static ExtractionRequest TakeNextRequestInsideLock()
+        {
+            while (true)
+            {
+                var request = GetNextQueueInsideLock().Dequeue();
+                if (request.Disabled)
+                {
+                    continue;
+                }
+
+                request.Started = true;
+                waitingCount--;
+                Volatile.Write(ref waitingCount, waitingCount);
+                return request;
+            }
+        }
+
+        private static Queue<ExtractionRequest> GetNextQueueInsideLock()
+        {
+            if (HighestExtractionQueue.Count > 0)
+            {
+                return HighestExtractionQueue;
+            }
+
+            if (HighExtractionQueue.Count > 0)
+            {
+                return HighExtractionQueue;
+            }
+
+            return NormalExtractionQueue.Count > 0
+                ? NormalExtractionQueue
+                : LowExtractionQueue;
+        }
+
+        private static async Task ProcessExtractionAsync(ExtractionRequest request)
         {
             try
             {
@@ -202,7 +295,7 @@ namespace MediaInfoKeeper.Services
                 Plugin.SharedLogger?.Error($"{request.Source} 媒体信息提取失败 item={displayName}");
                 Plugin.SharedLogger?.Error(ex.Message);
                 Plugin.SharedLogger?.Debug(ex.StackTrace);
-                request.Completion.TrySetException(ex);
+                request.Completion.TrySetResult(false);
             }
             finally
             {
@@ -217,12 +310,6 @@ namespace MediaInfoKeeper.Services
                     StartWorkersInsideLock();
                 }
             }
-        }
-
-        private static void UpdateWaitingCountInsideLock()
-        {
-            waitingCount = ExtractionQueue.Count;
-            Volatile.Write(ref waitingCount, waitingCount);
         }
 
         private static int GetMaxConcurrent()

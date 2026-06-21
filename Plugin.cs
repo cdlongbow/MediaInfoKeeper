@@ -614,7 +614,7 @@ namespace MediaInfoKeeper
                 this.logger.Info($"新入库事件 {e.Item.FileName ?? e.Item.Path}");
                 
                 // 异步刷新一次元数据，让 Emby 刮削。
-                _ = MetaDataRunner.RefreshMetaDataAsync(e.Item.InternalId);
+                _ = MetaDataRunner.RefreshMetaDataAsync(e.Item.InternalId, priority:RefreshPriority.Highest);
                 
                 if (!LibraryService.IsItemInCatchupLibraryScope(e.Item))
                 {

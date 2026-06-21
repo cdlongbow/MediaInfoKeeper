@@ -77,7 +77,7 @@ namespace MediaInfoKeeper.ScheduledTask
                 this.logger.Info($"计划刷新元数据 {item.FileName ?? item.Path} 入库日期 = {created}");
 
                 var options = BuildRefreshOptions(replaceMetadata, replaceImages, replaceThumbnails);
-                _ = MetaDataRunner.RefreshMetaDataAsync(item.InternalId, options, CancellationToken.None);
+                _ = MetaDataRunner.RefreshMetaDataAsync(item.InternalId, options, CancellationToken.None, priority:RefreshPriority.High);
                 ReportProgress(totalWork, progress, ++submitted);
             }
 
@@ -92,12 +92,10 @@ namespace MediaInfoKeeper.ScheduledTask
                     this.logger.Info($"计划任务已取消 itemid={target.ItemId}");
                     break;
                 }
-
-                this.logger.Info($"计划刷新演员角色元数据 {FormatItemLabel(target.Name, target.ProductionYear)}");
-
+                
                 var roleOptions = BuildRefreshOptions(replaceMetadata: true, replaceImages: false, replaceThumbnails: false);
                 roleOptions.Recursive = false;
-                _ = MetaDataRunner.RefreshMetaDataAsync(target.ItemId, roleOptions, CancellationToken.None);
+                _ = MetaDataRunner.RefreshMetaDataAsync(target.ItemId, roleOptions, CancellationToken.None, priority:RefreshPriority.High);
                 ReportProgress(totalWork, progress, ++submitted);
             }
 

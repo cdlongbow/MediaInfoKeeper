@@ -38,13 +38,25 @@ namespace MediaInfoKeeper.Services
 
             public MetadataRefreshOptions Options { get; set; }
 
+            public RefreshPriority Priority { get; set; }
+
             public CancellationToken CancellationToken { get; set; }
 
             public TaskCompletionSource<bool> Completion { get; set; }
+
+            public bool Started { get; set; }
+
+            public bool Disabled { get; set; }
         }
 
         private static readonly object QueueSync = new object();
-        private static readonly Queue<RefreshRequest> RefreshQueue =
+        private static readonly Queue<RefreshRequest> HighestRefreshQueue =
+            new Queue<RefreshRequest>();
+        private static readonly Queue<RefreshRequest> HighRefreshQueue =
+            new Queue<RefreshRequest>();
+        private static readonly Queue<RefreshRequest> NormalRefreshQueue =
+            new Queue<RefreshRequest>();
+        private static readonly Queue<RefreshRequest> LowRefreshQueue =
             new Queue<RefreshRequest>();
         private static readonly Dictionary<long, RefreshRequest> InFlightRefreshes =
             new Dictionary<long, RefreshRequest>();
@@ -89,32 +101,82 @@ namespace MediaInfoKeeper.Services
         public static async Task RefreshMetaDataAsync(
             long internalId,
             MetadataRefreshOptions options,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            RefreshPriority priority = RefreshPriority.Normal,
+            bool replaceQueued = false)
         {
             if (internalId <= 0 || options == null)
             {
                 return;
             }
 
-            var item = Plugin.LibraryManager?.GetItemById(internalId) as BaseItem;
-            if (item == null)
-            {
-                return;
-            }
-
-            var refreshTask = EnqueueRefresh(internalId, options, cancellationToken);
+            var refreshTask = QueueRefresh(internalId, options, cancellationToken, priority, replaceQueued);
             await refreshTask.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private static Task EnqueueRefresh(
+        /// <summary>
+        /// 使用插件默认的入库元数据刷新选项刷新单个条目。
+        /// </summary>
+        /// <param name="internalId">Emby 条目内部 ID。</param>
+        /// <param name="cancellationToken">取消标记。</param>
+        public static async Task RefreshMetaDataAsync(
+            long internalId,
+            CancellationToken cancellationToken = default,
+            RefreshPriority priority = RefreshPriority.Normal)
+        {
+            await RefreshMetaDataAsync(internalId, GetRefreshOptions(), cancellationToken, priority)
+                .ConfigureAwait(false);
+        }
+
+        private static MetadataRefreshOptions GetRefreshOptions()
+        {
+            return new MetadataRefreshOptions(new DirectoryService(Plugin.SharedLogger, Plugin.FileSystem))
+            {
+                EnableRemoteContentProbe = false,
+                MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
+                ReplaceAllMetadata = true,
+                ImageRefreshMode = MetadataRefreshMode.FullRefresh,
+                ReplaceAllImages = true,
+                EnableThumbnailImageExtraction = Plugin.Instance?.Options?.MetaData?.EnableImageCapture ?? true,
+                EnableSubtitleDownloading = false
+            };
+        }
+
+        private static Task QueueRefresh(
             long internalId,
             MetadataRefreshOptions options,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            RefreshPriority priority = RefreshPriority.Normal,
+            bool replaceQueued = false)
         {
             lock (QueueSync)
             {
                 if (InFlightRefreshes.TryGetValue(internalId, out var existing))
                 {
+                    if (!existing.Started &&
+                        !existing.Disabled &&
+                        (replaceQueued || priority < existing.Priority))
+                    {
+                        existing.Disabled = true;
+                        waitingCount = Math.Max(0, waitingCount - 1);
+                        Volatile.Write(ref waitingCount, waitingCount);
+
+                        var replacement = new RefreshRequest
+                        {
+                            InternalId = internalId,
+                            Options = options,
+                            Priority = priority,
+                            CancellationToken = cancellationToken,
+                            Completion = existing.Completion
+                        };
+
+                        InFlightRefreshes[internalId] = replacement;
+                        GetQueue(priority).Enqueue(replacement);
+                        waitingCount++;
+                        Volatile.Write(ref waitingCount, waitingCount);
+                        StartWorkersInsideLock();
+                    }
+
                     return existing.Completion.Task;
                 }
 
@@ -122,22 +184,40 @@ namespace MediaInfoKeeper.Services
                 {
                     InternalId = internalId,
                     Options = options,
+                    Priority = priority,
                     CancellationToken = cancellationToken,
                     Completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously)
                 };
 
                 InFlightRefreshes[internalId] = request;
-                RefreshQueue.Enqueue(request);
-                UpdateWaitingCountInsideLock();
+                GetQueue(priority).Enqueue(request);
+                waitingCount++;
+                Volatile.Write(ref waitingCount, waitingCount);
                 StartWorkersInsideLock();
                 return request.Completion.Task;
+            }
+        }
+
+        private static Queue<RefreshRequest> GetQueue(RefreshPriority priority)
+        {
+            switch (priority)
+            {
+                case RefreshPriority.Highest:
+                    return HighestRefreshQueue;
+                case RefreshPriority.High:
+                    return HighRefreshQueue;
+                case RefreshPriority.Low:
+                    return LowRefreshQueue;
+                case RefreshPriority.Normal:
+                default:
+                    return NormalRefreshQueue;
             }
         }
 
         private static void StartWorkersInsideLock()
         {
             var maxConcurrent = GetMaxConcurrent();
-            while (activeCount < maxConcurrent && RefreshQueue.Count > 0)
+            while (activeCount < maxConcurrent && waitingCount > 0)
             {
                 activeCount++;
                 Volatile.Write(ref activeCount, activeCount);
@@ -152,22 +232,55 @@ namespace MediaInfoKeeper.Services
                 RefreshRequest request;
                 lock (QueueSync)
                 {
-                    if (RefreshQueue.Count == 0 || activeCount > GetMaxConcurrent())
+                    if (waitingCount == 0 || activeCount > GetMaxConcurrent())
                     {
                         activeCount = Math.Max(0, activeCount - 1);
                         Volatile.Write(ref activeCount, activeCount);
                         return;
                     }
 
-                    request = RefreshQueue.Dequeue();
-                    UpdateWaitingCountInsideLock();
+                    request = TakeNextRequestInsideLock();
                 }
 
-                await ExecuteRefreshRequestAsync(request).ConfigureAwait(false);
+                await ProcessRefreshAsync(request).ConfigureAwait(false);
             }
         }
 
-        private static async Task ExecuteRefreshRequestAsync(RefreshRequest request)
+        private static RefreshRequest TakeNextRequestInsideLock()
+        {
+            while (true)
+            {
+                var request = GetNextQueueInsideLock().Dequeue();
+                if (request.Disabled)
+                {
+                    continue;
+                }
+
+                request.Started = true;
+                waitingCount--;
+                Volatile.Write(ref waitingCount, waitingCount);
+                return request;
+            }
+        }
+
+        private static Queue<RefreshRequest> GetNextQueueInsideLock()
+        {
+            if (HighestRefreshQueue.Count > 0)
+            {
+                return HighestRefreshQueue;
+            }
+
+            if (HighRefreshQueue.Count > 0)
+            {
+                return HighRefreshQueue;
+            }
+
+            return NormalRefreshQueue.Count > 0
+                ? NormalRefreshQueue
+                : LowRefreshQueue;
+        }
+
+        private static async Task ProcessRefreshAsync(RefreshRequest request)
         {
             try
             {
@@ -176,8 +289,38 @@ namespace MediaInfoKeeper.Services
                 var item = Plugin.LibraryManager?.GetItemById(request.InternalId) as BaseItem;
                 if (item != null)
                 {
-                    await RefreshMetaDataCoreAsync(item, request.Options, request.CancellationToken)
-                        .ConfigureAwait(false);
+                    if (ShouldExpandRecursive(request.Options) && item is Folder folder)
+                    {
+                        var itemOptions = new MetadataRefreshOptions(request.Options)
+                        {
+                            Recursive = false
+                        };
+                        await RefreshItemAsync(folder, itemOptions, request.CancellationToken)
+                            .ConfigureAwait(false);
+
+                        foreach (var child in folder.GetRecursiveChildren())
+                        {
+                            if (child == null || child.InternalId == folder.InternalId)
+                            {
+                                continue;
+                            }
+
+                            var childOptions = new MetadataRefreshOptions(request.Options)
+                            {
+                                Recursive = false
+                            };
+                            _ = QueueRefresh(
+                                child.InternalId,
+                                childOptions,
+                                CancellationToken.None,
+                                request.Priority);
+                        }
+                    }
+                    else
+                    {
+                        await RefreshItemAsync(item, request.Options, request.CancellationToken)
+                            .ConfigureAwait(false);
+                    }
                 }
 
                 request.Completion.TrySetResult(true);
@@ -194,7 +337,7 @@ namespace MediaInfoKeeper.Services
                 Plugin.SharedLogger?.Error($"元数据刷新失败 item={displayName}");
                 Plugin.SharedLogger?.Error(ex.Message);
                 Plugin.SharedLogger?.Debug(ex.StackTrace);
-                request.Completion.TrySetException(ex);
+                request.Completion.TrySetResult(true);
             }
             finally
             {
@@ -211,49 +354,7 @@ namespace MediaInfoKeeper.Services
             }
         }
 
-        private static async Task RefreshMetaDataCoreAsync(
-            BaseItem item,
-            MetadataRefreshOptions options,
-            CancellationToken cancellationToken)
-        {
-            if (ShouldExpandRecursive(options) && item is Folder folder)
-            {
-                await RefreshRecursiveFolderAsync(folder, options, cancellationToken).ConfigureAwait(false);
-                return;
-            }
-
-            await RefreshSingleMetaDataAsync(item, options, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        private static async Task RefreshRecursiveFolderAsync(
-            Folder folder,
-            MetadataRefreshOptions options,
-            CancellationToken cancellationToken)
-        {
-            var itemOptions = new MetadataRefreshOptions(options)
-            {
-                Recursive = false
-            };
-            await RefreshSingleMetaDataAsync(folder, itemOptions, cancellationToken)
-                .ConfigureAwait(false);
-
-            foreach (var child in folder.GetRecursiveChildren())
-            {
-                if (child == null || child.InternalId == folder.InternalId)
-                {
-                    continue;
-                }
-
-                var childOptions = new MetadataRefreshOptions(options)
-                {
-                    Recursive = false
-                };
-                _ = EnqueueRefresh(child.InternalId, childOptions, CancellationToken.None);
-            }
-        }
-
-        private static async Task RefreshSingleMetaDataAsync(
+        private static async Task RefreshItemAsync(
             BaseItem item,
             MetadataRefreshOptions options,
             CancellationToken cancellationToken)
@@ -275,58 +376,6 @@ namespace MediaInfoKeeper.Services
                     options.ImageRefreshMode != MetadataRefreshMode.Default ||
                     options.ReplaceAllMetadata ||
                     options.ReplaceAllImages);
-        }
-
-        /// <summary>
-        /// 使用插件默认的入库元数据刷新选项刷新单个条目。
-        /// </summary>
-        /// <param name="internalId">Emby 条目内部 ID。</param>
-        /// <param name="cancellationToken">取消标记。</param>
-        public static async Task RefreshMetaDataAsync(
-            long internalId,
-            CancellationToken cancellationToken = default)
-        {
-            var item = Plugin.LibraryManager?.GetItemById(internalId) as BaseItem;
-            if (item == null)
-            {
-                return;
-            }
-
-            var displayName = item.FileName ?? item.Path ?? item.Name;
-            var logger = Plugin.SharedLogger;
-            var refreshOptions = GetRefreshOptions();
-
-            try
-            {
-                await RefreshMetaDataAsync(internalId, refreshOptions, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                logger?.Error($"入库元数据: 刷新失败 item={displayName}");
-                logger?.Error(ex.Message);
-                logger?.Debug(ex.StackTrace);
-            }
-        }
-
-        private static MetadataRefreshOptions GetRefreshOptions()
-        {
-            return new MetadataRefreshOptions(new DirectoryService(Plugin.SharedLogger, Plugin.FileSystem))
-            {
-                EnableRemoteContentProbe = false,
-                MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
-                ReplaceAllMetadata = true,
-                ImageRefreshMode = MetadataRefreshMode.FullRefresh,
-                ReplaceAllImages = true,
-                EnableThumbnailImageExtraction = Plugin.Instance?.Options?.MetaData?.EnableImageCapture ?? true,
-                EnableSubtitleDownloading = false
-            };
-        }
-
-        private static void UpdateWaitingCountInsideLock()
-        {
-            waitingCount = RefreshQueue.Count;
-            Volatile.Write(ref waitingCount, waitingCount);
         }
 
         private static int GetMaxConcurrent()
