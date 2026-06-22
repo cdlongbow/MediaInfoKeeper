@@ -68,6 +68,14 @@ namespace MediaInfoKeeper.Services
 
             public string CacheKey { get; set; }
 
+            public bool FromCache { get; set; }
+        }
+
+        private sealed class DoubanSubjectResolution
+        {
+            public string SubjectId { get; set; }
+
+            public bool FromCache { get; set; }
         }
 
         private sealed class DoubanSubjectCacheEntry
@@ -137,7 +145,7 @@ namespace MediaInfoKeeper.Services
             }
 
             var context = BuildLookupContext(lookupInfo);
-            if (context == null || string.IsNullOrWhiteSpace(context.DoubanSubjectId))
+            if (context == null || string.IsNullOrWhiteSpace(context.DoubanSubjectId) || context.FromCache)
             {
                 return null;
             }
@@ -174,7 +182,7 @@ namespace MediaInfoKeeper.Services
                     JsonOptions);
             if (diskCachedCelebrities != null)
             {
-                return null;
+                return diskCachedCelebrities;
             }
 
             var body = DoubanApiClient.GetJson(DoubanApiClient.BuildCelebritiesUrl(context.DoubanSubjectType, context.DoubanSubjectId));
@@ -287,18 +295,23 @@ namespace MediaInfoKeeper.Services
         {
             var providerId = GetProviderId(providerIdsOverride ?? info.ProviderIds, "Douban", "douban", "DoubanId", "doubanid");
             var subjectId = NormalizeDoubanSubjectId(providerId);
+            var fromCache = false;
             if (string.IsNullOrWhiteSpace(subjectId))
             {
                 var imdbId = GetProviderId(providerIdsOverride ?? info.ProviderIds, MetadataProviders.Imdb.ToString(), "Imdb", "imdb");
                 if (!string.IsNullOrWhiteSpace(imdbId))
                 {
-                    subjectId = GetDoubanSubjectFromImdb(imdbId);
+                    var imdbLookup = GetDoubanSubjectFromImdb(imdbId);
+                    subjectId = imdbLookup?.SubjectId;
+                    fromCache = imdbLookup?.FromCache == true;
                 }
             }
 
             if (string.IsNullOrWhiteSpace(subjectId))
             {
-                subjectId = SearchDoubanSubject(nameOverride ?? info.Name, info.Year, subjectType);
+                var searchResult = SearchDoubanSubject(nameOverride ?? info.Name, info.Year, subjectType);
+                subjectId = searchResult?.SubjectId;
+                fromCache = searchResult?.FromCache == true;
             }
 
             if (string.IsNullOrWhiteSpace(subjectId))
@@ -310,7 +323,8 @@ namespace MediaInfoKeeper.Services
             {
                 DoubanSubjectId = subjectId,
                 DoubanSubjectType = subjectType,
-                CacheKey = subjectType + ":" + subjectId
+                CacheKey = subjectType + ":" + subjectId,
+                FromCache = fromCache
             };
         }
 
@@ -326,23 +340,27 @@ namespace MediaInfoKeeper.Services
             if (!string.IsNullOrWhiteSpace(imdbId))
             {
                 var imdbLookup = GetDoubanSubjectFromImdb(imdbId);
-                if (!string.IsNullOrWhiteSpace(imdbLookup))
+                if (!string.IsNullOrWhiteSpace(imdbLookup?.SubjectId))
                 {
-                    PersistDoubanSubjectId(item, imdbLookup);
-                    return imdbLookup;
+                    if (!imdbLookup.FromCache)
+                    {
+                        PersistDoubanSubjectId(item, imdbLookup.SubjectId);
+                    }
+
+                    return imdbLookup.SubjectId;
                 }
             }
 
             var searchResult = SearchDoubanSubject(item, subjectType);
-            if (!string.IsNullOrWhiteSpace(searchResult))
+            if (!string.IsNullOrWhiteSpace(searchResult?.SubjectId) && !searchResult.FromCache)
             {
-                PersistDoubanSubjectId(item, searchResult);
+                PersistDoubanSubjectId(item, searchResult.SubjectId);
             }
 
-            return searchResult;
+            return searchResult?.SubjectId;
         }
 
-        private static string GetDoubanSubjectFromImdb(string imdbId)
+        private static DoubanSubjectResolution GetDoubanSubjectFromImdb(string imdbId)
         {
             var diskCachedSubject = PluginDiskCache.GetJson<DoubanSubjectCacheEntry>(
                     DoubanImdbSubjectCacheScope,
@@ -351,7 +369,11 @@ namespace MediaInfoKeeper.Services
                     JsonOptions);
             if (!string.IsNullOrWhiteSpace(diskCachedSubject?.SubjectId))
             {
-                return null;
+                return new DoubanSubjectResolution
+                {
+                    SubjectId = diskCachedSubject.SubjectId,
+                    FromCache = true
+                };
             }
 
             var body = DoubanApiClient.PostImdbLookup(imdbId);
@@ -370,7 +392,10 @@ namespace MediaInfoKeeper.Services
                     imdbId,
                     rawSubjectId ?? string.Empty,
                     subjectId ?? string.Empty);
-                return subjectId;
+                return new DoubanSubjectResolution
+                {
+                    SubjectId = subjectId
+                };
             }
             catch (Exception)
             {
@@ -378,13 +403,13 @@ namespace MediaInfoKeeper.Services
             }
         }
 
-        private static string SearchDoubanSubject(BaseItem item, string subjectType)
+        private static DoubanSubjectResolution SearchDoubanSubject(BaseItem item, string subjectType)
         {
             var title = item?.Name?.Trim();
             return SearchDoubanSubject(title, item?.ProductionYear, subjectType);
         }
 
-        private static string SearchDoubanSubject(string title, int? productionYear, string subjectType)
+        private static DoubanSubjectResolution SearchDoubanSubject(string title, int? productionYear, string subjectType)
         {
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -400,7 +425,11 @@ namespace MediaInfoKeeper.Services
                     JsonOptions);
             if (!string.IsNullOrWhiteSpace(cachedSearch?.SubjectId))
             {
-                return null;
+                return new DoubanSubjectResolution
+                {
+                    SubjectId = cachedSearch.SubjectId,
+                    FromCache = true
+                };
             }
 
             var body = DoubanApiClient.GetJson(DoubanApiClient.BuildSearchUrl(query));
@@ -435,7 +464,10 @@ namespace MediaInfoKeeper.Services
                     {
                         var subjectId = NormalizeDoubanSubjectId(candidate.target.id);
                         SetDoubanSearchSubjectCache(cacheKey, subjectId);
-                        return subjectId;
+                        return new DoubanSubjectResolution
+                        {
+                            SubjectId = subjectId
+                        };
                     }
                 }
             }
