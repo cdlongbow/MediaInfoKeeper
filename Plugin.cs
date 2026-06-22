@@ -183,7 +183,7 @@ namespace MediaInfoKeeper
 
             LibraryService = new LibraryService(libraryManager, fileSystem, userManager, userDataManager, mediaMountManager);
             MediaInfoService = new MediaInfoService(libraryManager, mediaSourceManager, fileSystem);
-            MetaDataService = new MetaDataService(libraryManager, providerManager);
+            MetaDataService = new MetaDataService(providerManager);
             ChaptersStore = new ChaptersStore(itemRepository, fileSystem, jsonSerializer);
             MediaSourceInfoStore = new MediaSourceInfoStore(libraryManager, itemRepository, fileSystem, jsonSerializer);
             EmbeddedInfoStore = new EmbeddedInfoStore(jsonSerializer);

@@ -291,30 +291,8 @@ namespace MediaInfoKeeper.Services
                 {
                     if (ShouldExpandRecursive(request.Options) && item is Folder folder)
                     {
-                        var itemOptions = new MetadataRefreshOptions(request.Options)
-                        {
-                            Recursive = false
-                        };
-                        await RefreshItemAsync(folder, itemOptions, request.CancellationToken)
+                        await RefreshRecursiveFolderAsync(folder, request)
                             .ConfigureAwait(false);
-
-                        foreach (var child in folder.GetRecursiveChildren())
-                        {
-                            if (child == null || child.InternalId == folder.InternalId)
-                            {
-                                continue;
-                            }
-
-                            var childOptions = new MetadataRefreshOptions(request.Options)
-                            {
-                                Recursive = false
-                            };
-                            _ = QueueRefresh(
-                                child.InternalId,
-                                childOptions,
-                                CancellationToken.None,
-                                request.Priority);
-                        }
                     }
                     else
                     {
@@ -369,13 +347,48 @@ namespace MediaInfoKeeper.Services
                 .ConfigureAwait(false);
         }
 
+        private static async Task RefreshRecursiveFolderAsync(Folder folder, RefreshRequest request)
+        {
+            var parentOptions = new MetadataRefreshOptions(request.Options)
+            {
+                Recursive = false
+            };
+            await RefreshItemAsync(folder, parentOptions, request.CancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var child in folder.GetRecursiveChildren())
+            {
+                if (child == null ||
+                    child.InternalId == folder.InternalId ||
+                    !request.Options.RefreshItem(child))
+                {
+                    continue;
+                }
+
+                var childOptions = new MetadataRefreshOptions(request.Options)
+                {
+                    Recursive = false
+                };
+                _ = QueueRefresh(
+                    child.InternalId,
+                    childOptions,
+                    CancellationToken.None,
+                    request.Priority);
+            }
+        }
+
         private static bool ShouldExpandRecursive(MetadataRefreshOptions options)
         {
-            return options.Recursive &&
-                   (options.MetadataRefreshMode != MetadataRefreshMode.Default ||
-                    options.ImageRefreshMode != MetadataRefreshMode.Default ||
-                    options.ReplaceAllMetadata ||
-                    options.ReplaceAllImages);
+            return options.Recursive && HasRecursiveChildRefreshWork(options);
+        }
+
+        private static bool HasRecursiveChildRefreshWork(MetadataRefreshOptions options)
+        {
+            return options.MetadataRefreshMode == MetadataRefreshMode.FullRefresh ||
+                   options.ImageRefreshMode == MetadataRefreshMode.FullRefresh ||
+                   options.ReplaceAllMetadata ||
+                   options.ReplaceAllImages ||
+                   options.ReplaceThumbnailImages;
         }
 
         private static int GetMaxConcurrent()
