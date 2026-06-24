@@ -37,7 +37,7 @@
 ⏬ 安装
 --------
 
-1. 下载 dll 文件：<https://github.com/honue/MediaInfoKeeper/releases/latest>
+1. 下载 dll 文件：[Releases](https://github.com/honue/MediaInfoKeeper/releases) 不带后缀的是通用版本，[最新通用版本](https://github.com/honue/MediaInfoKeeper/releases/latest/download/MediaInfoKeeper.dll)。
 2. 放入 Emby 配置目录中的 `plugins` 目录。
 3. 务必重命名为 `MediaInfoKeeper.dll`，否则后续自动更新会有两个 dll 存在。
 4. 重启 Emby，在插件页面完成配置。
@@ -64,10 +64,8 @@
 🙏 致谢
 ----
 
-本项目在部分功能设计与架构思路上参考了开源项目：
+本项目在部分功能设计、补丁思路与资源集成上参考或使用了以下开源项目，感谢各位对 Emby 社区的长期贡献：
 
-部分功能 Patch https://github.com/sjtuross/StrmAssistant
+- [StrmAssistant](https://github.com/sjtuross/StrmAssistant)：部分功能 Patch 思路以及 `simple` 分词器文件来源。
 
-弹幕 ede.js https://github.com/l429609201/dd-danmaku
-
-感谢各位大佬对社区的贡献！
+- [dd-danmaku](https://github.com/l429609201/dd-danmaku)：弹幕资源 `ede.js` 来源。
