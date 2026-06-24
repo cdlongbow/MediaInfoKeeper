@@ -49,6 +49,7 @@ namespace MediaInfoKeeper.Patch
                 logger = pluginLogger;
                 activityManager = pluginActivityManager;
                 var safeOptions = EnsureOptions(options);
+                HarmonyDirectory.Initialize(logger);
 
                 if (!initialized)
                 {
