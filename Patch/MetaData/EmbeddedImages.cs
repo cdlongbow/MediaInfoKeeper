@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HarmonyLib;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
@@ -12,18 +13,17 @@ using MediaBrowser.Model.Logging;
 namespace MediaInfoKeeper.Patch
 {
     /// <summary>
-    /// 在刷新快捷方式媒体时临时放开音视频图片抓取能力。
+    /// 在刷新快捷方式音频时临时放开 Embedded Images 提取能力。
     /// </summary>
-    public static class ImageCapture
+    public static class EmbeddedImages
     {
         private static readonly AsyncLocal<BaseItem> ShortcutItem = new AsyncLocal<BaseItem>();
 
         private static Harmony harmony;
         private static ILogger logger;
         private static MethodInfo isShortcutGetter;
-        private static MethodInfo supportsVideoImageCapture;
+        private static MethodInfo supportsAudioEmbeddedImages;
         private static MethodInfo getImage;
-        private static MethodInfo supportsThumbnailsGetter;
         private static bool isEnabled;
         private static bool isPatched;
 
@@ -44,7 +44,7 @@ namespace MediaInfoKeeper.Patch
             {
                 var embyProviders = Assembly.Load("Emby.Providers");
                 var assemblyVersion = embyProviders?.GetName().Version;
-                var videoImageProvider = embyProviders?.GetType("Emby.Providers.MediaInfo.VideoImageProvider");
+                var audioImageProvider = embyProviders?.GetType("Emby.Providers.MediaInfo.AudioImageProvider");
                 var controllerVersion = typeof(BaseItem).Assembly.GetName().Version;
 
                 isShortcutGetter = PatchMethodResolver.Resolve(
@@ -60,13 +60,13 @@ namespace MediaInfoKeeper.Patch
                         IsStatic = false
                     },
                     logger,
-                    "ImageCapture.BaseItem.get_IsShortcut");
-                supportsVideoImageCapture = PatchMethodResolver.Resolve(
-                    videoImageProvider,
+                    "EmbeddedImages.BaseItem.get_IsShortcut");
+                supportsAudioEmbeddedImages = PatchMethodResolver.Resolve(
+                    audioImageProvider,
                     assemblyVersion,
                     new MethodSignatureProfile
                     {
-                        Name = "videoimageprovider-supports-exact",
+                        Name = "audioimageprovider-supports-exact",
                         MethodName = "Supports",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
                         ParameterTypes = new[] { typeof(BaseItem) },
@@ -74,13 +74,13 @@ namespace MediaInfoKeeper.Patch
                         IsStatic = false
                     },
                     logger,
-                    "ImageCapture.VideoImageProvider.Supports");
+                    "EmbeddedImages.AudioImageProvider.Supports");
                 getImage = PatchMethodResolver.Resolve(
-                    videoImageProvider,
+                    audioImageProvider,
                     assemblyVersion,
                     new MethodSignatureProfile
                     {
-                        Name = "videoimageprovider-getimage-exact",
+                        Name = "audioimageprovider-getimage-exact",
                         MethodName = "GetImage",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
                         ParameterTypes = new[]
@@ -95,37 +95,21 @@ namespace MediaInfoKeeper.Patch
                         IsStatic = false
                     },
                     logger,
-                    "ImageCapture.VideoImageProvider.GetImage");
-                supportsThumbnailsGetter = PatchMethodResolver.Resolve(
-                    typeof(Video),
-                    controllerVersion,
-                    new MethodSignatureProfile
-                    {
-                        Name = "video-get-supportsthumbnails-exact",
-                        MethodName = "get_SupportsThumbnails",
-                        BindingFlags = BindingFlags.Instance | BindingFlags.Public,
-                        ParameterTypes = Type.EmptyTypes,
-                        ReturnType = typeof(bool),
-                        IsStatic = false
-                    },
-                    logger,
-                    "ImageCapture.Video.get_SupportsThumbnails");
+                    "EmbeddedImages.AudioImageProvider.GetImage");
 
                 if (isShortcutGetter == null ||
-                    supportsVideoImageCapture == null ||
-                    getImage == null ||
-                    supportsThumbnailsGetter == null)
+                    supportsAudioEmbeddedImages == null ||
+                    getImage == null)
                 {
-                    PatchLog.InitFailed(logger, nameof(ImageCapture), "目标方法缺失");
+                    PatchLog.InitFailed(logger, nameof(EmbeddedImages), "目标方法缺失");
                     return;
                 }
 
-                PatchLog.Patched(logger, nameof(ImageCapture), isShortcutGetter);
-                PatchLog.Patched(logger, nameof(ImageCapture), supportsVideoImageCapture);
-                PatchLog.Patched(logger, nameof(ImageCapture), getImage);
-                PatchLog.Patched(logger, nameof(ImageCapture), supportsThumbnailsGetter);
+                PatchLog.Patched(logger, nameof(EmbeddedImages), isShortcutGetter);
+                PatchLog.Patched(logger, nameof(EmbeddedImages), supportsAudioEmbeddedImages);
+                PatchLog.Patched(logger, nameof(EmbeddedImages), getImage);
 
-                harmony = new Harmony("mediainfokeeper.imagecapture");
+                harmony = new Harmony("mediainfokeeper.embeddedimages");
 
                 if (isEnabled)
                 {
@@ -134,7 +118,7 @@ namespace MediaInfoKeeper.Patch
             }
             catch (Exception ex)
             {
-                logger?.Error("ImageCapture 初始化失败。");
+                logger?.Error("EmbeddedImages 初始化失败。");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
                 harmony = null;
@@ -169,16 +153,13 @@ namespace MediaInfoKeeper.Patch
             }
 
             harmony.Patch(isShortcutGetter,
-                prefix: new HarmonyMethod(typeof(ImageCapture), nameof(IsShortcutPrefix)));
-            harmony.Patch(supportsVideoImageCapture,
-                prefix: new HarmonyMethod(typeof(ImageCapture), nameof(SupportsImageCapturePrefix)),
-                postfix: new HarmonyMethod(typeof(ImageCapture), nameof(SupportsImageCapturePostfix)));
+                prefix: new HarmonyMethod(typeof(EmbeddedImages), nameof(IsShortcutPrefix)));
+            harmony.Patch(supportsAudioEmbeddedImages,
+                prefix: new HarmonyMethod(typeof(EmbeddedImages), nameof(SupportsPrefix)),
+                postfix: new HarmonyMethod(typeof(EmbeddedImages), nameof(SupportsPostfix)));
             harmony.Patch(getImage,
-                prefix: new HarmonyMethod(typeof(ImageCapture), nameof(GetImagePrefix)),
-                postfix: new HarmonyMethod(typeof(ImageCapture), nameof(GetImagePostfix)));
-            harmony.Patch(supportsThumbnailsGetter,
-                prefix: new HarmonyMethod(typeof(ImageCapture), nameof(SupportsThumbnailsGetterPrefix)),
-                postfix: new HarmonyMethod(typeof(ImageCapture), nameof(SupportsThumbnailsGetterPostfix)));
+                prefix: new HarmonyMethod(typeof(EmbeddedImages), nameof(GetImagePrefix)),
+                postfix: new HarmonyMethod(typeof(EmbeddedImages), nameof(GetImagePostfix)));
 
             isPatched = true;
         }
@@ -191,12 +172,10 @@ namespace MediaInfoKeeper.Patch
             }
 
             harmony.Unpatch(isShortcutGetter, HarmonyPatchType.Prefix, harmony.Id);
-            harmony.Unpatch(supportsVideoImageCapture, HarmonyPatchType.Prefix, harmony.Id);
-            harmony.Unpatch(supportsVideoImageCapture, HarmonyPatchType.Postfix, harmony.Id);
+            harmony.Unpatch(supportsAudioEmbeddedImages, HarmonyPatchType.Prefix, harmony.Id);
+            harmony.Unpatch(supportsAudioEmbeddedImages, HarmonyPatchType.Postfix, harmony.Id);
             harmony.Unpatch(getImage, HarmonyPatchType.Prefix, harmony.Id);
             harmony.Unpatch(getImage, HarmonyPatchType.Postfix, harmony.Id);
-            harmony.Unpatch(supportsThumbnailsGetter, HarmonyPatchType.Prefix, harmony.Id);
-            harmony.Unpatch(supportsThumbnailsGetter, HarmonyPatchType.Postfix, harmony.Id);
 
             isPatched = false;
         }
@@ -224,7 +203,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool SupportsImageCapturePrefix(BaseItem item, out bool __state)
+        private static bool SupportsPrefix(BaseItem item, out bool __state)
         {
             __state = false;
 
@@ -240,7 +219,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void SupportsImageCapturePostfix(BaseItem item, bool __result, bool __state)
+        private static void SupportsPostfix(BaseItem item, bool __result, bool __state)
         {
             if (__state)
             {
@@ -280,7 +259,6 @@ namespace MediaInfoKeeper.Patch
                 if (restoredStreams != null && restoredStreams.Length > 0)
                 {
                     itemResult.MediaStreams = restoredStreams;
-                    streams = restoredStreams;
                 }
             }
 
@@ -291,18 +269,8 @@ namespace MediaInfoKeeper.Patch
                 if (restoredMediaSource != null)
                 {
                     Traverse.Create(itemResult).Property("MediaSource").SetValue(restoredMediaSource);
-                    mediaSource = restoredMediaSource;
                 }
             }
-
-            if (streams == null)
-            {
-                return true;
-            }
-
-            itemResult.MediaStreams = streams
-                .Where(ms => ms.Type != MediaStreamType.EmbeddedImage)
-                .ToArray();
 
             return true;
         }
@@ -335,52 +303,6 @@ namespace MediaInfoKeeper.Patch
             finally
             {
                 FfProcessGuard.EndAllow(allowance);
-            }
-        }
-
-        [HarmonyPrefix]
-        private static bool SupportsThumbnailsGetterPrefix(BaseItem __instance, out (bool, ExtraType?) __state)
-        {
-            __state = (false, __instance?.ExtraType);
-
-            if (__instance == null)
-            {
-                return true;
-            }
-
-            if (isEnabled && __instance.IsShortcut)
-            {
-                PatchIsShortcutInstance(__instance);
-                __state.Item1 = true;
-            }
-
-            if (__instance.ExtraType.HasValue)
-            {
-                __instance.ExtraType = null;
-            }
-
-            return true;
-        }
-
-        [HarmonyPostfix]
-        private static void SupportsThumbnailsGetterPostfix(BaseItem __instance, ref bool __result,
-            (bool, ExtraType?) __state)
-        {
-            if (__state.Item1)
-            {
-                UnpatchIsShortcutInstance();
-            }
-
-            if (__instance == null || !__result || !__state.Item2.HasValue)
-            {
-                return;
-            }
-
-            __instance.ExtraType = __state.Item2;
-
-            if (__state.Item2 == ExtraType.Trailer || __state.Item2 == ExtraType.ThemeVideo)
-            {
-                __result = false;
             }
         }
     }
