@@ -635,6 +635,7 @@ namespace MediaInfoKeeper
                     {
                         // 条目不在选定媒体库范围内。
                         this.logger.Info("跳过处理: 不在选定媒体库范围，不提取媒体信息");
+                        _ = MetaDataRunner.RefreshMetaDataAsync(itemId, priority: RefreshPriority.Highest, allowFfProcess:true);
                         return;
                     }
 
@@ -734,7 +735,7 @@ namespace MediaInfoKeeper
                     // 所有需要媒体信息的任务启动完成后，后台等待媒体信息队列清空，再刷新元数据。
                     _ = Task.Run(async () =>
                     {
-                            await MediaInfoRunner.WaitForItemFinishAsync(itemId, CancellationToken.None).ConfigureAwait(false);
+                        await MediaInfoRunner.WaitForItemFinishAsync(itemId, CancellationToken.None).ConfigureAwait(false);
                         _ = MetaDataRunner.RefreshMetaDataAsync(itemId, priority: RefreshPriority.Highest, allowFfProcess:true);
                     });
                 }
