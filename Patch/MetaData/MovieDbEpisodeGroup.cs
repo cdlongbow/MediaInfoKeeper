@@ -354,14 +354,9 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool CanRefreshMetadataPrefix(object[] __args)
+        private static bool CanRefreshMetadataPrefix([HarmonyArgument(0)] IMetadataProvider provider, [HarmonyArgument(1)] BaseItem item)
         {
-            if (!isEnabled || !localEpisodeGroupEnabled || __args == null || __args.Length < 2)
-            {
-                return true;
-            }
-
-            if (!(__args[0] is IMetadataProvider provider) || !(__args[1] is BaseItem item))
+            if (!isEnabled || !localEpisodeGroupEnabled || provider == null || item == null)
             {
                 return true;
             }

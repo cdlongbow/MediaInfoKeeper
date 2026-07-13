@@ -119,14 +119,14 @@ namespace MediaInfoKeeper.Patch
             // 一次性安装，运行期直接读取配置。
         }
 
-        private static void IsSupportedPostfix(string __0, ref bool __result)
+        private static void IsSupportedPostfix([HarmonyArgument(0)] string path, ref bool __result)
         {
             if (__result)
             {
                 return;
             }
 
-            if (!IsoFfprobeRouting.LooksLikeIsoPath(__0))
+            if (!IsoFfprobeRouting.LooksLikeIsoPath(path))
             {
                 return;
             }
@@ -214,16 +214,16 @@ namespace MediaInfoKeeper.Patch
             // 一次性安装，运行期直接读取配置。
         }
 
-        private static void GetMediaInfoPrefix(object __instance, object __0, CancellationToken __1)
+        private static void GetMediaInfoPrefix(object __instance, [HarmonyArgument(0)] object request, [HarmonyArgument(1)] CancellationToken cancellationToken)
         {
-            if (__instance == null || __0 == null)
+            if (__instance == null || request == null)
             {
                 return;
             }
 
             try
             {
-                var mediaSource = GetRequestMediaSource(__0);
+                var mediaSource = GetRequestMediaSource(request);
                 if (mediaSource == null)
                 {
                     return;
@@ -252,8 +252,8 @@ namespace MediaInfoKeeper.Patch
 
                 SetProperty(mediaSource, "ProbePath", remappedPath);
                 SetProperty(mediaSource, "ProbeProtocol", MediaProtocol.File);
-                tempProbeInputs.Remove(__0);
-                tempProbeInputs.Add(__0, new StrongBox<string>(remappedPath));
+                tempProbeInputs.Remove(request);
+                tempProbeInputs.Add(request, new StrongBox<string>(remappedPath));
 
                 logger?.Debug("ISO probe 输入改写：source={0} probePath={1}", path, remappedPath);
             }
@@ -263,9 +263,9 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        private static void GetMediaInfoPostfix(object __0, ref object __result)
+        private static void GetMediaInfoPostfix([HarmonyArgument(0)] object request, ref object __result)
         {
-            if (__0 == null || __result == null || mediaInfoType == null)
+            if (request == null || __result == null || mediaInfoType == null)
             {
                 return;
             }
@@ -283,7 +283,7 @@ namespace MediaInfoKeeper.Patch
                 return;
             }
 
-            __result = genericWrapMethod.Invoke(null, new[] { __result, __0 });
+            __result = genericWrapMethod.Invoke(null, new[] { __result, request });
         }
 
         private static async Task<T> WrapTask<T>(Task<T> task, object request)

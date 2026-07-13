@@ -219,7 +219,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool NamedLoggerLogPrefix(object __instance, ref LogSeverity __0, string __1)
+        private static bool NamedLoggerLogPrefix(object __instance, [HarmonyArgument(0)] ref LogSeverity severity, [HarmonyArgument(1)] string message)
         {
             if (!isEnabled)
             {
@@ -231,9 +231,9 @@ namespace MediaInfoKeeper.Patch
                 return false;
             }
 
-            if (IsBlockedMessage(__0, __1))
+            if (IsBlockedMessage(severity, message))
             {
-                __0 = LogSeverity.Debug;
+                severity = LogSeverity.Debug;
             }
 
             return !IsLoggerNameBlocked(__instance);
@@ -251,7 +251,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool NamedLoggerLogExceptionPrefix(object __instance, ref LogSeverity __0, string __1)
+        private static bool NamedLoggerLogExceptionPrefix(object __instance, [HarmonyArgument(0)] ref LogSeverity level, [HarmonyArgument(1)] string message)
         {
             if (!isEnabled)
             {
@@ -263,9 +263,9 @@ namespace MediaInfoKeeper.Patch
                 return false;
             }
 
-            if (IsBlockedMessage(__0, __1))
+            if (IsBlockedMessage(level, message))
             {
-                __0 = LogSeverity.Debug;
+                level = LogSeverity.Debug;
             }
 
             return !IsLoggerNameBlocked(__instance);

@@ -205,34 +205,32 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static void SendAsyncInternalPrefix(object[] __args)
+        private static void SendAsyncInternalPrefix([HarmonyArgument(0)] object options, [HarmonyArgument(1)] string httpMethod)
         {
-            if (!isEnabled || __args == null || __args.Length == 0 || __args[0] == null)
+            if (!isEnabled || options == null)
             {
                 return;
             }
 
             var pluginOptions = Plugin.Instance.Options;
-            var options = pluginOptions.GetNetWorkOptions();
+            var networkOptions = pluginOptions.GetNetWorkOptions();
             var enhanceOptions = pluginOptions.Enhance ?? new Options.EnhanceOptions();
-            var httpMethod = __args.Length > 1 ? __args[1] as string : null;
-            var requestOptions = __args[0];
-            var urlProperty = requestOptions.GetType().GetProperty("Url", BindingFlags.Instance | BindingFlags.Public);
-            var originalUrl = urlProperty?.CanRead == true ? urlProperty.GetValue(requestOptions) as string : null;
+            var urlProperty = options.GetType().GetProperty("Url", BindingFlags.Instance | BindingFlags.Public);
+            var originalUrl = urlProperty?.CanRead == true ? urlProperty.GetValue(options) as string : null;
             var finalUrl = originalUrl;
             if (urlProperty != null &&
                 urlProperty.CanRead &&
                 urlProperty.CanWrite &&
                 Uri.TryCreate(originalUrl, UriKind.Absolute, out var uri))
             {
-                if (options != null && HasAnyTmdbOverride(options))
+                if (networkOptions != null && HasAnyTmdbOverride(networkOptions))
                 {
-                    var rewritten = RewriteTmdbUri(uri, options);
+                    var rewritten = RewriteTmdbUri(uri, networkOptions);
                     if (!ReferenceEquals(rewritten, uri) && rewritten != uri)
                     {
                         finalUrl = rewritten.ToString();
                         // logger?.Debug("TMDB 请求已替换: {0} -> {1}", originalUrl, finalUrl);
-                        urlProperty.SetValue(requestOptions, finalUrl);
+                        urlProperty.SetValue(options, finalUrl);
                     }
                 }
             }

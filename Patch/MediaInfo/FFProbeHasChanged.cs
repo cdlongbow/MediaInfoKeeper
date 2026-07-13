@@ -130,9 +130,9 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool HasChangedPrefix(BaseMetadataResult __0, ref bool __result)
+        private static bool HasChangedPrefix([HarmonyArgument(0)] BaseMetadataResult itemResult, ref bool __result)
         {
-            var itemPath = __0?.BaseItem?.Path ?? __0?.BaseItem?.FileName;
+            var itemPath = itemResult?.BaseItem?.Path ?? itemResult?.BaseItem?.FileName;
             if (!isEnabled || !FfProcessGuard.HasExplicitAllowance() || !LibraryService.IsFileShortcut(itemPath))
             {
                 return true;

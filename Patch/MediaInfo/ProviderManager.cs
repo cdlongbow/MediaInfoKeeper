@@ -169,32 +169,32 @@ namespace MediaInfoKeeper.Patch
                 postfix: new HarmonyMethod(typeof(ProviderManager), postfix));
         }
 
-        private static void RefreshItemPrefix(BaseItem __0, MetadataRefreshOptions __1, out FfProcessGuard.AllowanceHandle __state)
+        private static void RefreshItemPrefix([HarmonyArgument(0)] BaseItem item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state)
         {
-            __state = BeginRefreshFfprocessAllowance(__0, __1);
+            __state = BeginRefreshFfprocessAllowance(item, options);
         }
 
-        private static void RefreshItemPostfix(BaseItem __0, ref Task __result, FfProcessGuard.AllowanceHandle __state)
+        private static void RefreshItemPostfix([HarmonyArgument(0)] BaseItem item, ref Task __result, FfProcessGuard.AllowanceHandle __state)
         {
-            CompleteRefreshFfprocessAllowance(__0, ref __result, __state);
+            CompleteRefreshFfprocessAllowance(item, ref __result, __state);
         }
 
-        private static void RefreshItemByNameChildrenPrefix(MusicAlbum __0, MetadataRefreshOptions __1, out FfProcessGuard.AllowanceHandle __state)
+        private static void RefreshItemByNameChildrenPrefix([HarmonyArgument(0)] MusicAlbum item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state)
         {
-            __state = BeginRefreshFfprocessAllowance(__0, __1);
+            __state = BeginRefreshFfprocessAllowance(item, options);
         }
 
-        private static void RefreshItemByNameChildrenPostfix(MusicAlbum __0, ref Task __result, FfProcessGuard.AllowanceHandle __state)
+        private static void RefreshItemByNameChildrenPostfix([HarmonyArgument(0)] MusicAlbum item, ref Task __result, FfProcessGuard.AllowanceHandle __state)
         {
-            CompleteRefreshFfprocessAllowance(__0, ref __result, __state);
+            CompleteRefreshFfprocessAllowance(item, ref __result, __state);
         }
 
-        private static void RefreshSingleItemPrefix(BaseItem __0, MetadataRefreshOptions __1, out FfProcessGuard.AllowanceHandle __state)
+        private static void RefreshSingleItemPrefix([HarmonyArgument(0)] BaseItem item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state)
         {
-            __state = BeginRefreshFfprocessAllowance(__0, __1);
+            __state = BeginRefreshFfprocessAllowance(item, options);
         }
 
-        private static void RefreshSingleItemPostfix(BaseItem __0, ref object __result, FfProcessGuard.AllowanceHandle __state)
+        private static void RefreshSingleItemPostfix([HarmonyArgument(0)] BaseItem item, ref object __result, FfProcessGuard.AllowanceHandle __state)
         {
             if (__state == null)
             {

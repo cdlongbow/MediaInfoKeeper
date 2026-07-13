@@ -349,43 +349,43 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static void GetTranslationPrefix(object[] __args)
+        private static void GetTranslationPrefix([HarmonyArgument(0)] object translations, [HarmonyArgument(1)] ref string[] tvdbLanguages, [HarmonyArgument(2)] object field)
         {
-            if (!isEnabled || __args == null || __args.Length < 4)
+            if (!isEnabled)
             {
                 return;
             }
 
             try
             {
-                var translations = __args[0] as IList;
-                var tvdbLanguages = __args[1] as string[] ?? Array.Empty<string>();
-                var field = ToInt32(__args[2]);
+                var translationList = translations as IList;
+                var languages = tvdbLanguages ?? Array.Empty<string>();
+                var fieldValue = ToInt32(field);
 
-                if (translations != null && translations.Count > 0)
+                if (translationList != null && translationList.Count > 0)
                 {
-                    if (field == 0)
+                    if (fieldValue == 0)
                     {
-                        RemoveAliases(translations);
+                        RemoveAliases(translationList);
                     }
 
                     if (HasTvdbJapaneseFallback())
                     {
-                        var considerJapanese = HasPrimaryJapanese(translations);
-                        tvdbLanguages = tvdbLanguages
+                        var considerJapanese = HasPrimaryJapanese(translationList);
+                        languages = languages
                             .Where(l => considerJapanese || !string.Equals(l, "jpn", StringComparison.OrdinalIgnoreCase))
                             .ToArray();
                     }
 
-                    if (field == 0)
+                    if (fieldValue == 0)
                     {
-                        SortTvdbLanguagesByChinesePriority(translations, tvdbLanguages);
+                        SortTvdbLanguagesByChinesePriority(translationList, languages);
                     }
 
-                    SortTranslationsByLanguageOrder(translations, tvdbLanguages);
+                    SortTranslationsByLanguageOrder(translationList, languages);
                 }
 
-                __args[1] = tvdbLanguages;
+                tvdbLanguages = languages;
             }
             catch (Exception ex)
             {
@@ -394,25 +394,24 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void GetTranslationPostfix(object[] __args, ref object __result)
+        private static void GetTranslationPostfix([HarmonyArgument(2)] object field, [HarmonyArgument(3)] bool defaultToFirst, ref object __result)
         {
-            if (!isEnabled || __result == null || __args == null || __args.Length < 4)
+            if (!isEnabled || __result == null)
             {
                 return;
             }
 
             try
             {
-                var defaultToFirst = ToBool(__args[3]);
                 if (defaultToFirst)
                 {
                     return;
                 }
 
-                var field = ToInt32(__args[2]);
+                var fieldValue = ToInt32(field);
                 var name = GetPropertyString(__result, "name");
 
-                if (field == 0)
+                if (fieldValue == 0)
                 {
                     if (BlockTvdbNonFallbackLanguage(name))
                     {
@@ -422,7 +421,7 @@ namespace MediaInfoKeeper.Patch
                     return;
                 }
 
-                if (field != 1)
+                if (fieldValue != 1)
                 {
                     return;
                 }
@@ -446,29 +445,19 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void AddInfoPostfix(object[] __args)
+        private static void AddInfoPostfix([HarmonyArgument(0)] object metadataResult)
         {
-            if (!isEnabled || __args == null)
+            if (!isEnabled || metadataResult == null)
             {
                 return;
             }
 
             try
             {
-                foreach (var arg in __args)
+                var item = TryGetMetadataResultItem(metadataResult);
+                if (item != null && BlockTvdbNonFallbackLanguage(item.Overview))
                 {
-                    var item = TryGetMetadataResultItem(arg);
-                    if (item == null)
-                    {
-                        continue;
-                    }
-
-                    if (BlockTvdbNonFallbackLanguage(item.Overview))
-                    {
-                        item.Overview = null;
-                    }
-
-                    break;
+                    item.Overview = null;
                 }
             }
             catch (Exception ex)
@@ -478,7 +467,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void GetTvdbSeasonPostfix(object[] __args, Task __result)
+        private static void GetTvdbSeasonPostfix([HarmonyArgument(0)] SeasonInfo id, Task __result)
         {
             if (!isEnabled || __result == null)
             {
@@ -487,7 +476,6 @@ namespace MediaInfoKeeper.Patch
 
             try
             {
-                var seasonInfo = __args?.OfType<SeasonInfo>().FirstOrDefault();
                 var tvdbSeason = GetTaskResult(__result);
                 if (tvdbSeason == null)
                 {
@@ -495,10 +483,10 @@ namespace MediaInfoKeeper.Patch
                 }
 
                 var name = GetPropertyString(tvdbSeason, "name");
-                if (seasonInfo?.IndexNumber.HasValue == true &&
+                if (id?.IndexNumber.HasValue == true &&
                     (string.IsNullOrEmpty(name) || BlockTvdbNonFallbackLanguage(name)))
                 {
-                    SetPropertyValue(tvdbSeason, "name", $"第 {seasonInfo.IndexNumber.Value} 季");
+                    SetPropertyValue(tvdbSeason, "name", $"第 {id.IndexNumber.Value} 季");
                 }
             }
             catch (Exception ex)
@@ -508,7 +496,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void FindEpisodePostfix(object[] __args, ref object __result)
+        private static void FindEpisodePostfix(ref object __result)
         {
             if (!isEnabled || __result == null)
             {
@@ -555,7 +543,7 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void GetEpisodeDataPostfix(object[] __args, Task __result)
+        private static void GetEpisodeDataPostfix([HarmonyArgument(0)] EpisodeInfo searchInfo, Task __result)
         {
             if (!isEnabled || __result == null)
             {
@@ -564,7 +552,6 @@ namespace MediaInfoKeeper.Patch
 
             try
             {
-                var episodeInfo = __args?.OfType<EpisodeInfo>().FirstOrDefault();
                 var taskResult = GetTaskResult(__result);
                 if (taskResult == null)
                 {
@@ -580,10 +567,10 @@ namespace MediaInfoKeeper.Patch
                 var name = GetPropertyString(tvdbEpisode, "name");
                 var overview = GetPropertyString(tvdbEpisode, "overview");
 
-                if (episodeInfo?.IndexNumber.HasValue == true &&
+                if (searchInfo?.IndexNumber.HasValue == true &&
                     (string.IsNullOrEmpty(name) || BlockTvdbNonFallbackLanguage(name)))
                 {
-                    SetPropertyValue(tvdbEpisode, "name", $"第 {episodeInfo.IndexNumber.Value} 集");
+                    SetPropertyValue(tvdbEpisode, "name", $"第 {searchInfo.IndexNumber.Value} 集");
                 }
 
                 if (BlockTvdbNonFallbackLanguage(overview))

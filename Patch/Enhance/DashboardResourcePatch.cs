@@ -138,14 +138,13 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void ModifyHtmlPostfix(string __0, ref Task<StreamHandler> __result)
+        private static void ModifyHtmlPostfix([HarmonyArgument(0)] string path, ref Task<StreamHandler> __result)
         {
             if (!enableDanmakuJs)
             {
                 return;
             }
 
-            var path = __0;
             if (!string.Equals(path, "index.html", StringComparison.OrdinalIgnoreCase) || __result == null)
             {
                 return;

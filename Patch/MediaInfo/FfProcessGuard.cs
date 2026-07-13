@@ -170,8 +170,15 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        private static bool RunFfProcessPrefix(object __instance, object __0, string __1, string __2,
-            ref int __3, CancellationToken __4, ref object __result, out bool __state)
+        private static bool RunFfProcessPrefix(
+            object __instance,
+            [HarmonyArgument(0)] object runType,
+            [HarmonyArgument(1)] string processName,
+            [HarmonyArgument(2)] string arguments,
+            [HarmonyArgument(3)] ref int timeoutMs,
+            [HarmonyArgument(4)] CancellationToken cancellationToken,
+            ref object __result,
+            out bool __state)
         {
             __state = false;
             if (!isEnabled)
@@ -179,8 +186,8 @@ namespace MediaInfoKeeper.Patch
                 return true;
             }
 
-            var inputHint = ExtractInputHint(__2);
-            var runTypeText = __0?.ToString() ?? string.Empty;
+            var inputHint = ExtractInputHint(arguments);
+            var runTypeText = runType?.ToString() ?? string.Empty;
             var isFfprobe = runTypeText.IndexOf("ffprobe", StringComparison.OrdinalIgnoreCase) >= 0;
             var isFfmpeg = runTypeText.IndexOf("ffmpeg", StringComparison.OrdinalIgnoreCase) >= 0;
             __state = isFfprobe;
@@ -201,7 +208,7 @@ namespace MediaInfoKeeper.Patch
                     context.WasFfProcessCalled = true;
                 }
                 __state = isFfprobe && context?.ItemInternalId > 0 && context.AllowFfProcess;
-                __3 = Math.Max(__3, 60000);
+                timeoutMs = Math.Max(timeoutMs, 60000);
                 return true;
             }
             logger?.Debug($"拦截 {displayTarget}");
@@ -209,8 +216,16 @@ namespace MediaInfoKeeper.Patch
             return false;
         }
 
-        private static bool DiagnosticsRunFfProcessPrefix(object __instance, object __0, string __1, string __2,
-            ref TimeSpan __3, bool __4, CancellationToken __5, ref object __result, out bool __state)
+        private static bool DiagnosticsRunFfProcessPrefix(
+            object __instance,
+            [HarmonyArgument(0)] object runType,
+            [HarmonyArgument(1)] string processName,
+            [HarmonyArgument(2)] string arguments,
+            [HarmonyArgument(3)] ref TimeSpan timeout,
+            [HarmonyArgument(4)] bool logInfo,
+            [HarmonyArgument(5)] CancellationToken cancellationToken,
+            ref object __result,
+            out bool __state)
         {
             __state = false;
             if (!isEnabled)
@@ -218,8 +233,8 @@ namespace MediaInfoKeeper.Patch
                 return true;
             }
 
-            var inputHint = ExtractInputHint(__2);
-            var runTypeText = __0?.ToString() ?? string.Empty;
+            var inputHint = ExtractInputHint(arguments);
+            var runTypeText = runType?.ToString() ?? string.Empty;
             var isFfprobe = runTypeText.IndexOf("ffprobe", StringComparison.OrdinalIgnoreCase) >= 0;
             var isFfmpeg = runTypeText.IndexOf("ffmpeg", StringComparison.OrdinalIgnoreCase) >= 0;
             __state = isFfprobe;
@@ -240,9 +255,9 @@ namespace MediaInfoKeeper.Patch
                     context.WasFfProcessCalled = true;
                 }
                 __state = isFfprobe && context?.ItemInternalId > 0 && context.AllowFfProcess;
-                if (__3 < TimeSpan.FromSeconds(60))
+                if (timeout < TimeSpan.FromSeconds(60))
                 {
-                    __3 = TimeSpan.FromSeconds(60);
+                    timeout = TimeSpan.FromSeconds(60);
                 }
 
                 return true;
@@ -253,24 +268,21 @@ namespace MediaInfoKeeper.Patch
             return false;
         }
 
-        private static bool RunExtractionPrefix(object[] __args, ref object __result)
+        private static bool RunExtractionLegacyPrefix([HarmonyArgument(0)] string inputPath, ref object __result)
+        {
+            return RunExtractionPrefix(inputPath, ref __result);
+        }
+
+        private static bool RunExtractionCurrentPrefix([HarmonyArgument(1)] string inputPath, ref object __result)
+        {
+            return RunExtractionPrefix(inputPath, ref __result);
+        }
+
+        private static bool RunExtractionPrefix(string inputPath, ref object __result)
         {
             if (!isEnabled)
             {
                 return true;
-            }
-
-            string inputPath = null;
-            if (__args != null && __args.Length > 0)
-            {
-                if (__args[0] is string legacyInputPath)
-                {
-                    inputPath = legacyInputPath;
-                }
-                else if (__args.Length > 1 && __args[1] is string currentInputPath)
-                {
-                    inputPath = currentInputPath;
-                }
             }
 
             var inputHint = ExtractInputHint($"-i file:\"{inputPath ?? string.Empty}\"");
@@ -572,7 +584,10 @@ namespace MediaInfoKeeper.Patch
             foreach (var method in methods)
             {
                 PatchLog.Patched(logger, nameof(FfProcessGuard), method);
-                harmony.Patch(method, prefix: new HarmonyMethod(typeof(FfProcessGuard), nameof(RunExtractionPrefix)));
+                var prefix = method.GetParameters()[0].ParameterType == typeof(string)
+                    ? nameof(RunExtractionLegacyPrefix)
+                    : nameof(RunExtractionCurrentPrefix);
+                harmony.Patch(method, prefix: new HarmonyMethod(typeof(FfProcessGuard), prefix));
             }
         }
 

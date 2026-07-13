@@ -143,38 +143,38 @@ namespace MediaInfoKeeper.Patch
                 prefix: new HarmonyMethod(typeof(RefreshQueueHijack), prefix));
         }
 
-        private static bool QueueRefreshPrefix(long __0, MetadataRefreshOptions __1, RefreshPriority __2)
+        private static bool QueueRefreshPrefix([HarmonyArgument(0)] long id, [HarmonyArgument(1)] MetadataRefreshOptions options, [HarmonyArgument(2)] RefreshPriority priority)
         {
-            return QueueRefreshWithDequeuePrefix(__0, __1, __2, false);
+            return QueueRefreshWithDequeuePrefix(id, options, priority, false);
         }
 
         private static bool QueueRefreshWithDequeuePrefix(
-            long __0,
-            MetadataRefreshOptions __1,
-            RefreshPriority __2,
-            bool __3)
+            [HarmonyArgument(0)] long id,
+            [HarmonyArgument(1)] MetadataRefreshOptions options,
+            [HarmonyArgument(2)] RefreshPriority priority,
+            [HarmonyArgument(3)] bool dequeueIfAlreadyQueued)
         {
-            if (!ShouldTakeOverRefreshQueue(__0, __1))
+            if (!ShouldTakeOverRefreshQueue(id, options))
             {
                 return true;
             }
 
-            var runner = SelectRunner(__0, __1);
+            var runner = SelectRunner(id, options);
             if (runner == RefreshQueueHijackKind.MediaInfo)
             {
                 _ = MediaInfoRunner.ExtractMediaInfoAsync(
-                    __0,
+                    id,
                     "Emby刷新队列",
-                    priority: __2,
-                    replaceQueued: __3);
+                    priority: priority,
+                    replaceQueued: dequeueIfAlreadyQueued);
             }
             else
             {
                 _ = MetaDataRunner.RefreshMetaDataAsync(
-                    __0,
-                    __1,
-                    priority: __2,
-                    replaceQueued: __3,
+                    id,
+                    options,
+                    priority: priority,
+                    replaceQueued: dequeueIfAlreadyQueued,
                     allowFfProcess: MetadataRefreshAllowFfProcess.HasCurrentAllowance);
             }
 

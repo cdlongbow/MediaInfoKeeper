@@ -186,14 +186,14 @@ namespace MediaInfoKeeper.Patch
                 "FirstRefreshRemoteBlock.ProviderManager.CanRefreshImage");
         }
 
-        private static void EnterFirstRefreshScopePrefix(BaseItem __0, MetadataRefreshOptions __1, out FirstRefreshScopeState __state)
+        private static void EnterFirstRefreshScopePrefix([HarmonyArgument(0)] BaseItem item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FirstRefreshScopeState __state)
         {
             __state = null;
             if (!configuredEnabled ||
-                __0 == null ||
-                __1 == null ||
-                __0.DateLastRefreshed != default(DateTimeOffset) ||
-                __1.MetadataRefreshMode != MetadataRefreshMode.Default)
+                item == null ||
+                options == null ||
+                item.DateLastRefreshed != default(DateTimeOffset) ||
+                options.MetadataRefreshMode != MetadataRefreshMode.Default)
             {
                 return;
             }
@@ -202,7 +202,7 @@ namespace MediaInfoKeeper.Patch
             {
                 PreviousItem = CurrentFirstRefreshItem.Value
             };
-            CurrentFirstRefreshItem.Value = __0;
+            CurrentFirstRefreshItem.Value = item;
         }
 
         private static void ExitFirstRefreshScopePostfix(ref object __result, FirstRefreshScopeState __state)

@@ -207,35 +207,35 @@ namespace MediaInfoKeeper.Patch
         [HarmonyPrefix]
         private static bool ProcessRequestPrefix(
             object __instance,
-            object __0,
+            [HarmonyArgument(0)] object request,
             ref Task<object> __result)
         {
-            var itemId = GetPropertyValue<string>(__0, "Id");
+            var itemId = GetPropertyValue<string>(request, "Id");
 
-            if (!isEnabled || __instance == null || __0 == null || videoStreamRequestType == null)
+            if (!isEnabled || __instance == null || request == null || videoStreamRequestType == null)
             {
                 return true;
             }
 
-            if (!videoStreamRequestType.IsInstanceOfType(__0))
+            if (!videoStreamRequestType.IsInstanceOfType(request))
             {
                 return true;
             }
 
-            if (!IsEligibleRequest(__0))
+            if (!IsEligibleRequest(request))
             {
                 return true;
             }
 
             try
             {
-                NormalizeOriginalRequest(__0);
-                if (!GetPropertyValue<bool>(__0, "Static"))
+                NormalizeOriginalRequest(request);
+                if (!GetPropertyValue<bool>(request, "Static"))
                 {
                     return true;
                 }
 
-                var state = GetState(__instance, __0);
+                var state = GetState(__instance, request);
                 if (!CanRedirect(state))
                 {
                     DisposeState(state);

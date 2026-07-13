@@ -127,14 +127,14 @@ namespace MediaInfoKeeper.Patch
             // 跟随 FfProcessGuard 启用状态，此补丁当前为一次性安装。
         }
 
-        private static void PlaybackInfoPrefix(object __0, out FfProcessGuard.AllowanceHandle __state)
+        private static void PlaybackInfoPrefix([HarmonyArgument(0)] object request, out FfProcessGuard.AllowanceHandle __state)
         {
-            var requestType = __0?.GetType();
-            var itemId = requestType?.GetProperty("Id")?.GetValue(__0) as string;
+            var requestType = request?.GetType();
+            var itemId = requestType?.GetProperty("Id")?.GetValue(request) as string;
             __state = FfProcessGuard.BeginAllow(CreatePlaybackContext(ParseItemId(itemId)));
         }
 
-        private static void OpenLiveStreamPrefix(LiveStreamRequest __0, out FfProcessGuard.AllowanceHandle __state)
+        private static void OpenLiveStreamPrefix([HarmonyArgument(0)] LiveStreamRequest request, out FfProcessGuard.AllowanceHandle __state)
         {
             __state = FfProcessGuard.BeginAllow();
         }

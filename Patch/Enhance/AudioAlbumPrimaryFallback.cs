@@ -268,24 +268,24 @@ namespace MediaInfoKeeper.Patch
 
         [HarmonyPrefix]
         private static void GetImagePrefix(
-            object __0,
-            ref long __1,
-            ref BaseItem __2)
+            [HarmonyArgument(0)] object request,
+            [HarmonyArgument(1)] ref long itemId,
+            [HarmonyArgument(2)] ref BaseItem item)
         {
-            if (!isEnabled || __0 == null || __1 == 0)
+            if (!isEnabled || request == null || itemId == 0)
             {
                 return;
             }
 
             try
             {
-                if (!IsPrimaryImageRequest(__0))
+                if (!IsPrimaryImageRequest(request))
                 {
                     return;
                 }
 
-                var item = __2 ?? Plugin.LibraryManager?.GetItemById(__1);
-                if (item is not MusicAlbum musicAlbum || musicAlbum.GetImageInfo(ImageType.Primary, 0) != null)
+                var requestedItem = item ?? Plugin.LibraryManager?.GetItemById(itemId);
+                if (requestedItem is not MusicAlbum musicAlbum || musicAlbum.GetImageInfo(ImageType.Primary, 0) != null)
                 {
                     return;
                 }
@@ -298,8 +298,8 @@ namespace MediaInfoKeeper.Patch
                     return;
                 }
 
-                __1 = imageOwner.InternalId;
-                __2 = imageOwner;
+                itemId = imageOwner.InternalId;
+                item = imageOwner;
             }
             catch (Exception ex)
             {

@@ -162,9 +162,9 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void GetMediaInfoPostfix(object __0, MediaBrowser.Model.MediaInfo.MediaInfo __result)
+        private static void GetMediaInfoPostfix([HarmonyArgument(0)] object data, MediaBrowser.Model.MediaInfo.MediaInfo __result)
         {
-            if (!isEnabled || __0 == null || __result == null)
+            if (!isEnabled || data == null || __result == null)
             {
                 return;
             }
@@ -172,7 +172,7 @@ namespace MediaInfoKeeper.Patch
             try
             {
                 var chapters = __result.Chapters?.ToList();
-                var probeChapters = GetProbeChapters(__0);
+                var probeChapters = GetProbeChapters(data);
                 if (chapters == null || probeChapters == null || chapters.Count == 0 || probeChapters.Count == 0)
                 {
                     return;

@@ -149,16 +149,16 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void AddTabPageInformationPostfix(object __0)
+        private static void AddTabPageInformationPostfix([HarmonyArgument(0)] object uiViewInfo)
         {
             try
             {
-                if (__0 == null || uiViewInfoType == null || !uiViewInfoType.IsInstanceOfType(__0))
+                if (uiViewInfo == null || uiViewInfoType == null || !uiViewInfoType.IsInstanceOfType(uiViewInfo))
                 {
                     return;
                 }
 
-                var tabPageInfos = uiViewInfoTabPageInfosProperty?.GetValue(__0) as IList;
+                var tabPageInfos = uiViewInfoTabPageInfosProperty?.GetValue(uiViewInfo) as IList;
                 if (tabPageInfos == null || tabPageInfos.Count == 0)
                 {
                     return;
@@ -170,7 +170,7 @@ namespace MediaInfoKeeper.Patch
                     return;
                 }
 
-                var currentPageId = uiViewInfoPageIdProperty?.GetValue(__0) as string;
+                var currentPageId = uiViewInfoPageIdProperty?.GetValue(uiViewInfo) as string;
                 var firstTabPageId = uiTabPageInfoPageIdProperty?.GetValue(firstTab) as string;
                 if (!IsMainPluginPageId(currentPageId) && !IsMainPluginPageId(firstTabPageId))
                 {

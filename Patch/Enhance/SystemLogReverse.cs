@@ -130,14 +130,14 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool GetLogFilePrefix(object __instance, object __0, ref Task<object> __result)
+        private static bool GetLogFilePrefix(object __instance, [HarmonyArgument(0)] object request, ref Task<object> __result)
         {
             if (!isEnabled)
             {
                 return true;
             }
 
-            var name = GetPropertyValue<string>(__0, "Name");
+            var name = GetPropertyValue<string>(request, "Name");
             if (!ShouldReverse(name))
             {
                 return true;
@@ -145,7 +145,7 @@ namespace MediaInfoKeeper.Patch
 
             try
             {
-                __result = BuildLogFileResultAsync(__instance, __0, name);
+                __result = BuildLogFileResultAsync(__instance, request, name);
                 return false;
             }
             catch (Exception ex)
@@ -156,14 +156,14 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool GetLogLinesPrefix(object __instance, object __0, ref Task<object> __result)
+        private static bool GetLogLinesPrefix(object __instance, [HarmonyArgument(0)] object request, ref Task<object> __result)
         {
             if (!isEnabled)
             {
                 return true;
             }
 
-            var name = GetPropertyValue<string>(__0, "Name");
+            var name = GetPropertyValue<string>(request, "Name");
             if (!ShouldReverse(name))
             {
                 return true;
@@ -171,7 +171,7 @@ namespace MediaInfoKeeper.Patch
 
             try
             {
-                __result = BuildLogLinesResultAsync(__instance, __0, name);
+                __result = BuildLogLinesResultAsync(__instance, request, name);
                 return false;
             }
             catch (Exception ex)

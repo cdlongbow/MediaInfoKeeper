@@ -1174,9 +1174,9 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool CreateSearchTermPrefix(object[] __args, ref string __result)
+        private static bool CreateSearchTermPrefix([HarmonyArgument(0)] string searchTerm, ref string __result)
         {
-            if (__args == null || __args.Length == 0 || !(__args[0] is string searchTerm))
+            if (searchTerm == null)
             {
                 return true;
             }

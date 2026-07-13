@@ -384,23 +384,23 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static void SendMessagePrefix(ref string __0)
+        private static void SendMessagePrefix([HarmonyArgument(0)] ref string localUrl)
         {
             var configuredAddress = CurrentUdpDiscoveryAddress.Value;
-            if (string.IsNullOrWhiteSpace(configuredAddress) || string.IsNullOrWhiteSpace(__0))
+            if (string.IsNullOrWhiteSpace(configuredAddress) || string.IsNullOrWhiteSpace(localUrl))
             {
                 return;
             }
 
-            if (!TryRewriteDiscoveryMessage(__0, configuredAddress, out var rewrittenMessage))
+            if (!TryRewriteDiscoveryMessage(localUrl, configuredAddress, out var rewrittenMessage))
             {
                 return;
             }
 
-            if (!string.Equals(__0, rewrittenMessage, StringComparison.Ordinal))
+            if (!string.Equals(localUrl, rewrittenMessage, StringComparison.Ordinal))
             {
                 logger?.Debug("UDP 发现响应已改写为自定义地址: {0}", configuredAddress);
-                __0 = rewrittenMessage;
+                localUrl = rewrittenMessage;
             }
         }
 
