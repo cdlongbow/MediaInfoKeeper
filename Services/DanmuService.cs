@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
@@ -242,6 +245,11 @@ namespace MediaInfoKeeper.Services {
             var xmlBytes = await DownloadXmlAsync(baseUrl, episodeId, cancellationToken).ConfigureAwait(false);
             if (xmlBytes == null || xmlBytes.Length == 0) return new DanmuFetchResult { Reason = $"未获取到内容 episodeId={episodeId}" };
 
+            if (!IsDanmuXmlValid(xmlBytes, out var reason)) {
+                logger.Debug($"弹幕下载: 忽略无效弹幕 episodeId={episodeId} reason={reason}");
+                return new DanmuFetchResult { Reason = reason };
+            }
+
             var success = new DanmuFetchResult { XmlBytes = xmlBytes };
             SetFetchCache(cacheKey, success);
             return success;
@@ -281,6 +289,42 @@ namespace MediaInfoKeeper.Services {
 
         private static void SetFetchCache(string cacheKey, DanmuFetchResult result) {
             PluginDiskCache.SetBytes(FetchCacheScope, cacheKey, result?.XmlBytes, ".xml");
+        }
+
+        private static bool IsDanmuXmlValid(byte[] xmlBytes, out string reason) {
+            reason = null;
+            if (xmlBytes == null || xmlBytes.Length == 0) {
+                reason = "未获取到内容";
+                return false;
+            }
+
+            try {
+                using var stream = new MemoryStream(xmlBytes, writable: false);
+                using var reader = XmlReader.Create(stream, new XmlReaderSettings {
+                    DtdProcessing = DtdProcessing.Prohibit,
+                    XmlResolver = null
+                });
+                var document = XDocument.Load(reader, LoadOptions.None);
+                if (!string.Equals(document.Root?.Name.LocalName, "i", StringComparison.OrdinalIgnoreCase)) {
+                    reason = "弹幕 XML 根节点无效";
+                    return false;
+                }
+
+                var danmuCount = document.Root.Elements().Count(node =>
+                    string.Equals(node.Name.LocalName, "d", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(node.Value) &&
+                    !string.IsNullOrWhiteSpace(node.Attribute("p")?.Value));
+                if (danmuCount < 2) {
+                    reason = $"弹幕数量不足 count={danmuCount}";
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex) when (ex is XmlException || ex is InvalidOperationException) {
+                reason = $"弹幕 XML 格式无效: {ex.Message}";
+                return false;
+            }
         }
 
         private async Task<string> SearchEpisodeIdAsync(string baseUrl, string animeTitle, int episodeNumber,
