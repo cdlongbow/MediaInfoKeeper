@@ -9,14 +9,12 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 在 ProviderManager 刷新媒体项期间携带条目上下文。
-    /// 仅继承插件外层显式 ffprobe/ffmpeg 放行；普通 Emby 刷新不因条目类型自动放行。
+    ///     在 ProviderManager 刷新媒体项期间携带条目上下文。
+    ///     仅继承插件外层显式 ffprobe/ffmpeg 放行；普通 Emby 刷新不因条目类型自动放行。
     /// </summary>
-    public static class ProviderManager
-    {
+    public static class ProviderManager {
         private static Harmony harmony;
         private static MethodInfo refreshItem;
         private static MethodInfo refreshItemByNameChildren;
@@ -24,27 +22,19 @@ namespace MediaInfoKeeper.Patch
         private static ILogger logger;
 
         public static bool IsReady => harmony != null &&
-                                      (refreshItem != null || refreshItemByNameChildren != null || refreshSingleItem != null);
+                                      (refreshItem != null || refreshItemByNameChildren != null ||
+                                       refreshSingleItem != null);
 
-        public static void Initialize(ILogger pluginLogger, bool enabled)
-        {
-            if (harmony != null)
-            {
-                return;
-            }
+        public static void Initialize(ILogger pluginLogger, bool enabled) {
+            if (harmony != null) return;
 
             logger = pluginLogger;
-            if (!enabled)
-            {
-                return;
-            }
+            if (!enabled) return;
 
-            try
-            {
+            try {
                 var embyProviders = Assembly.Load("Emby.Providers");
                 var providerManagerType = embyProviders?.GetType("Emby.Providers.Manager.ProviderManager");
-                if (providerManagerType == null)
-                {
+                if (providerManagerType == null) {
                     PatchLog.InitFailed(logger, nameof(ProviderManager), "未找到 ProviderManager 类型");
                     return;
                 }
@@ -55,8 +45,7 @@ namespace MediaInfoKeeper.Patch
                     assemblyVersion,
                     "refresh-item-exact",
                     "RefreshItem",
-                    new[]
-                    {
+                    new[] {
                         typeof(BaseItem),
                         typeof(MetadataRefreshOptions),
                         typeof(CancellationToken)
@@ -68,8 +57,7 @@ namespace MediaInfoKeeper.Patch
                     assemblyVersion,
                     "refresh-item-by-name-children-exact",
                     "RefreshItemByNameChildren",
-                    new[]
-                    {
+                    new[] {
                         typeof(MusicAlbum),
                         typeof(MetadataRefreshOptions),
                         typeof(IProgress<double>),
@@ -79,19 +67,18 @@ namespace MediaInfoKeeper.Patch
                     "ProviderManager.RefreshItemByNameChildren");
                 refreshSingleItem = ResolveRefreshSingleItem(providerManagerType, assemblyVersion);
 
-                if (refreshItem == null && refreshItemByNameChildren == null && refreshSingleItem == null)
-                {
+                if (refreshItem == null && refreshItemByNameChildren == null && refreshSingleItem == null) {
                     PatchLog.InitFailed(logger, nameof(ProviderManager), "未命中任何 Refresh 方法");
                     return;
                 }
 
                 harmony = new Harmony("mediainfokeeper.providermanager");
                 PatchMethod(refreshItem, nameof(RefreshItemPrefix), nameof(RefreshItemPostfix));
-                PatchMethod(refreshItemByNameChildren, nameof(RefreshItemByNameChildrenPrefix), nameof(RefreshItemByNameChildrenPostfix));
+                PatchMethod(refreshItemByNameChildren, nameof(RefreshItemByNameChildrenPrefix),
+                    nameof(RefreshItemByNameChildrenPostfix));
                 PatchMethod(refreshSingleItem, nameof(RefreshSingleItemPrefix), nameof(RefreshSingleItemPostfix));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("ProviderManager patch 初始化失败");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -99,8 +86,7 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enabled)
-        {
+        public static void Configure(bool enabled) {
             // Harmony 安装后不卸载；是否真正放行由外层显式 scope 决定。
         }
 
@@ -111,13 +97,11 @@ namespace MediaInfoKeeper.Patch
             string methodName,
             Type[] parameterTypes,
             Type returnType,
-            string context)
-        {
+            string context) {
             return PatchMethodResolver.Resolve(
                 providerManagerType,
                 assemblyVersion,
-                new MethodSignatureProfile
-                {
+                new MethodSignatureProfile {
                     Name = profileName,
                     MethodName = methodName,
                     BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -128,12 +112,10 @@ namespace MediaInfoKeeper.Patch
                 context);
         }
 
-        private static MethodInfo ResolveRefreshSingleItem(Type providerManagerType, Version assemblyVersion)
-        {
+        private static MethodInfo ResolveRefreshSingleItem(Type providerManagerType, Version assemblyVersion) {
             var itemUpdateType = Assembly.Load("MediaBrowser.Controller")
                 ?.GetType("MediaBrowser.Controller.Library.ItemUpdateType");
-            if (itemUpdateType == null)
-            {
+            if (itemUpdateType == null) {
                 PatchLog.InitFailed(logger, nameof(ProviderManager), "未找到 ItemUpdateType");
                 return null;
             }
@@ -143,8 +125,7 @@ namespace MediaInfoKeeper.Patch
                 assemblyVersion,
                 "refresh-single-item-exact",
                 "RefreshSingleItem",
-                new[]
-                {
+                new[] {
                     typeof(BaseItem),
                     typeof(MetadataRefreshOptions),
                     typeof(BaseItem[]),
@@ -155,54 +136,46 @@ namespace MediaInfoKeeper.Patch
                 "ProviderManager.RefreshSingleItem");
         }
 
-        private static void PatchMethod(MethodInfo method, string prefix, string postfix)
-        {
-            if (method == null)
-            {
-                return;
-            }
+        private static void PatchMethod(MethodInfo method, string prefix, string postfix) {
+            if (method == null) return;
 
             PatchLog.Patched(logger, nameof(ProviderManager), method);
             harmony.Patch(
                 method,
-                prefix: new HarmonyMethod(typeof(ProviderManager), prefix),
-                postfix: new HarmonyMethod(typeof(ProviderManager), postfix));
+                new HarmonyMethod(typeof(ProviderManager), prefix),
+                new HarmonyMethod(typeof(ProviderManager), postfix));
         }
 
-        private static void RefreshItemPrefix([HarmonyArgument(0)] BaseItem item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state)
-        {
+        private static void RefreshItemPrefix([HarmonyArgument(0)] BaseItem item,
+            [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state) {
             __state = BeginRefreshFfprocessAllowance(item, options);
         }
 
-        private static void RefreshItemPostfix([HarmonyArgument(0)] BaseItem item, ref Task __result, FfProcessGuard.AllowanceHandle __state)
-        {
+        private static void RefreshItemPostfix([HarmonyArgument(0)] BaseItem item, ref Task __result,
+            FfProcessGuard.AllowanceHandle __state) {
             CompleteRefreshFfprocessAllowance(item, ref __result, __state);
         }
 
-        private static void RefreshItemByNameChildrenPrefix([HarmonyArgument(0)] MusicAlbum item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state)
-        {
+        private static void RefreshItemByNameChildrenPrefix([HarmonyArgument(0)] MusicAlbum item,
+            [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state) {
             __state = BeginRefreshFfprocessAllowance(item, options);
         }
 
-        private static void RefreshItemByNameChildrenPostfix([HarmonyArgument(0)] MusicAlbum item, ref Task __result, FfProcessGuard.AllowanceHandle __state)
-        {
+        private static void RefreshItemByNameChildrenPostfix([HarmonyArgument(0)] MusicAlbum item, ref Task __result,
+            FfProcessGuard.AllowanceHandle __state) {
             CompleteRefreshFfprocessAllowance(item, ref __result, __state);
         }
 
-        private static void RefreshSingleItemPrefix([HarmonyArgument(0)] BaseItem item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state)
-        {
+        private static void RefreshSingleItemPrefix([HarmonyArgument(0)] BaseItem item,
+            [HarmonyArgument(1)] MetadataRefreshOptions options, out FfProcessGuard.AllowanceHandle __state) {
             __state = BeginRefreshFfprocessAllowance(item, options);
         }
 
-        private static void RefreshSingleItemPostfix([HarmonyArgument(0)] BaseItem item, ref object __result, FfProcessGuard.AllowanceHandle __state)
-        {
-            if (__state == null)
-            {
-                return;
-            }
+        private static void RefreshSingleItemPostfix([HarmonyArgument(0)] BaseItem item, ref object __result,
+            FfProcessGuard.AllowanceHandle __state) {
+            if (__state == null) return;
 
-            if (__result is Task task)
-            {
+            if (__result is Task task) {
                 __result = AwaitWithScope(task, __state);
                 return;
             }
@@ -210,52 +183,36 @@ namespace MediaInfoKeeper.Patch
             FfProcessGuard.EndAllow(__state);
         }
 
-        private static FfProcessGuard.AllowanceHandle BeginRefreshFfprocessAllowance(BaseItem item, MetadataRefreshOptions options)
-        {
-            if (item == null)
-            {
-                return null;
-            }
+        private static FfProcessGuard.AllowanceHandle BeginRefreshFfprocessAllowance(BaseItem item,
+            MetadataRefreshOptions options) {
+            if (item == null) return null;
 
             var itemPath = item.Path ?? item.FileName;
             var allowFfProcess = FfProcessGuard.HasExplicitAllowance();
             if (!allowFfProcess && item is Video && !item.IsShortcut && options?.DirectoryService != null)
-            {
-                allowFfProcess = Plugin.ExternalFiles?.HasExternalFilesChanged(item, options.DirectoryService, true) == true;
-            }
+                allowFfProcess = Plugin.ExternalFiles?.HasExternalFilesChanged(item, options.DirectoryService, true) ==
+                                 true;
 
-            return FfProcessGuard.BeginAllow(new FfProcessGuard.AllowanceContext
-            {
+            return FfProcessGuard.BeginAllow(new FfProcessGuard.AllowanceContext {
                 ItemInternalId = item.InternalId,
                 ItemPath = itemPath,
                 AllowFfProcess = allowFfProcess
             });
         }
 
-        private static void CompleteRefreshFfprocessAllowance(BaseItem item, ref Task task, FfProcessGuard.AllowanceHandle allowance)
-        {
-            if (allowance == null)
-            {
-                return;
-            }
+        private static void CompleteRefreshFfprocessAllowance(BaseItem item, ref Task task,
+            FfProcessGuard.AllowanceHandle allowance) {
+            if (allowance == null) return;
 
             task = task == null ? null : AwaitTask(task, allowance);
-            if (task == null)
-            {
-                FfProcessGuard.EndAllow(allowance);
-            }
+            if (task == null) FfProcessGuard.EndAllow(allowance);
         }
 
-        private static object AwaitWithScope(Task task, FfProcessGuard.AllowanceHandle allowance)
-        {
+        private static object AwaitWithScope(Task task, FfProcessGuard.AllowanceHandle allowance) {
             var taskType = task.GetType();
-            if (taskType == typeof(Task))
-            {
-                return AwaitTask(task, allowance);
-            }
+            if (taskType == typeof(Task)) return AwaitTask(task, allowance);
 
-            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
-            {
+            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>)) {
                 var resultType = taskType.GetGenericArguments()[0];
                 var method = typeof(ProviderManager)
                     .GetMethod(nameof(AwaitGenericTask), BindingFlags.Static | BindingFlags.NonPublic)
@@ -266,26 +223,20 @@ namespace MediaInfoKeeper.Patch
             return task;
         }
 
-        private static async Task AwaitTask(Task task, FfProcessGuard.AllowanceHandle allowance)
-        {
-            try
-            {
+        private static async Task AwaitTask(Task task, FfProcessGuard.AllowanceHandle allowance) {
+            try {
                 await task.ConfigureAwait(false);
             }
-            finally
-            {
+            finally {
                 FfProcessGuard.EndAllow(allowance);
             }
         }
 
-        private static async Task<T> AwaitGenericTask<T>(Task<T> task, FfProcessGuard.AllowanceHandle allowance)
-        {
-            try
-            {
+        private static async Task<T> AwaitGenericTask<T>(Task<T> task, FfProcessGuard.AllowanceHandle allowance) {
+            try {
                 return await task.ConfigureAwait(false);
             }
-            finally
-            {
+            finally {
                 FfProcessGuard.EndAllow(allowance);
             }
         }

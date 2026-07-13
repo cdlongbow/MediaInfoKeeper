@@ -3,12 +3,14 @@ using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 
-namespace MediaInfoKeeper.External
-{
-    public class DoubanExternalId : IExternalId
-    {
-        private const string DoubanAppDispatchUrlTemplate = "https://www.douban.com/doubanapp/dispatch?uri=/movie/{0}?from=mdouban&open=app";
+namespace MediaInfoKeeper.External {
+    public class DoubanExternalId : IExternalId {
+        private const string DoubanAppDispatchUrlTemplate =
+            "https://www.douban.com/doubanapp/dispatch?uri=/movie/{0}?from=mdouban&open=app";
+
         private string subjectId;
+
+        public static string StaticName => "Douban";
 
         public string Name => "Douban";
 
@@ -18,12 +20,9 @@ namespace MediaInfoKeeper.External
             ? DoubanAppDispatchUrlTemplate
             : $"https://www.douban.com/doubanapp/dispatch?uri=/movie/{subjectId}?from=mdouban&open=app";
 
-        public bool Supports(IHasProviderIds item)
-        {
+        public bool Supports(IHasProviderIds item) {
             subjectId = item?.GetProviderId(StaticName)?.Trim();
             return item is Movie || item is Series;
         }
-
-        public static string StaticName => "Douban";
     }
 }

@@ -1,28 +1,23 @@
-namespace MediaInfoKeeper.Options.View
-{
-    using System.Threading.Tasks;
-    using MediaBrowser.Model.Plugins;
-    using MediaBrowser.Model.Plugins.UI.Views;
-    using MediaInfoKeeper.Options;
-    using MediaInfoKeeper.Options.Store;
-    using MediaInfoKeeper.Options.UIBaseClasses.Views;
+using System.Threading.Tasks;
+using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Plugins.UI.Views;
+using MediaInfoKeeper.Options.Store;
+using MediaInfoKeeper.Options.UIBaseClasses.Views;
 
-    internal class IntroSkipPageView : PluginPageView
-    {
+namespace MediaInfoKeeper.Options.View {
+    internal class IntroSkipPageView : PluginPageView {
         private readonly IntroSkipOptionsStore store;
 
         public IntroSkipPageView(PluginInfo pluginInfo, IntroSkipOptionsStore store)
-            : base(pluginInfo.Id)
-        {
+            : base(pluginInfo.Id) {
             this.store = store;
-            this.ContentData = store.GetOptions();
+            ContentData = store.GetOptions();
         }
 
-        public IntroSkipOptions Options => this.ContentData as IntroSkipOptions;
+        public IntroSkipOptions Options => ContentData as IntroSkipOptions;
 
-        public override Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data)
-        {
-            this.store.SetOptions(this.Options);
+        public override Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data) {
+            store.SetOptions(Options);
             return base.OnSaveCommand(itemId, commandId, data);
         }
     }

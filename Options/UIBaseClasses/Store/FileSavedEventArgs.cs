@@ -1,13 +1,10 @@
-namespace MediaInfoKeeper.Options.UIBaseClasses.Store
-{
-    using System;
-    using Emby.Web.GenericEdit;
+using System;
+using Emby.Web.GenericEdit;
 
-    internal class FileSavedEventArgs : EventArgs
-    {
-        public FileSavedEventArgs(EditableOptionsBase options)
-        {
-            this.Options = options;
+namespace MediaInfoKeeper.Options.UIBaseClasses.Store {
+    internal class FileSavedEventArgs : EventArgs {
+        public FileSavedEventArgs(EditableOptionsBase options) {
+            Options = options;
         }
 
         public EditableOptionsBase Options { get; }

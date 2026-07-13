@@ -7,13 +7,11 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 保护条目在图片刷新未产出替代图时不误删外部刮削的本地图片。
+    ///     保护条目在图片刷新未产出替代图时不误删外部刮削的本地图片。
     /// </summary>
-    public static class ImageClearGuard
-    {
+    public static class ImageClearGuard {
         private static Harmony harmony;
         private static MethodInfo clearImages;
         private static ILogger logger;
@@ -21,41 +19,31 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && clearImages != null;
 
-        public static void Initialize(ILogger pluginLogger, bool enableGuard)
-        {
-            if (harmony != null)
-            {
-                return;
-            }
+        public static void Initialize(ILogger pluginLogger, bool enableGuard) {
+            if (harmony != null) return;
 
             logger = pluginLogger;
             isEnabled = enableGuard;
 
-            try
-            {
+            try {
                 var embyProviders = Assembly.Load("Emby.Providers");
                 var providerManager = embyProviders?.GetType("Emby.Providers.Manager.ProviderManager");
-                if (providerManager == null)
-                {
+                if (providerManager == null) {
                     PatchLog.InitFailed(logger, nameof(ImageClearGuard), "未找到 ProviderManager");
                     return;
                 }
 
                 clearImages = ResolveClearImages(providerManager.Assembly);
-                if (clearImages == null)
-                {
+                if (clearImages == null) {
                     PatchLog.InitFailed(logger, nameof(ImageClearGuard), "未找到 ClearImages 重载");
                     return;
                 }
 
                 harmony = new Harmony("mediainfokeeper.itemimageclear");
                 PatchLog.Patched(logger, nameof(ImageClearGuard), clearImages);
-                harmony.Patch(
-                    clearImages,
-                    prefix: new HarmonyMethod(typeof(ImageClearGuard), nameof(ClearImagesPrefix)));
+                harmony.Patch(clearImages, new HarmonyMethod(typeof(ImageClearGuard), nameof(ClearImagesPrefix)));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("ItemImageClearGuard 初始化失败");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -63,26 +51,20 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enableGuard)
-        {
+        public static void Configure(bool enableGuard) {
             isEnabled = enableGuard;
         }
 
-        private static void ClearImagesPrefix(BaseItem item, ref ImageType[] imageTypesToClear, ref int numBackdropToKeep)
-        {
+        private static void ClearImagesPrefix(BaseItem item, ref ImageType[] imageTypesToClear,
+            ref int numBackdropToKeep) {
             if (!isEnabled ||
                 item == null ||
                 item.InternalId == 0 ||
                 imageTypesToClear == null)
-            {
                 return;
-            }
 
             var protectedImages = GetProtectedImages(item);
-            if (protectedImages.Length == 0)
-            {
-                return;
-            }
+            if (protectedImages.Length == 0) return;
 
             var clearTypes = imageTypesToClear;
             var protectedClearTypes = protectedImages
@@ -92,46 +74,30 @@ namespace MediaInfoKeeper.Patch
                 .ToArray();
 
             if (protectedClearTypes.Length > 0)
-            {
                 // SaveImage succeeds before ClearImages, so removing these types here only protects
                 // existing local scraper images when no replacement was actually written.
                 imageTypesToClear = imageTypesToClear
                     .Where(imageType => !protectedClearTypes.Contains(imageType))
                     .ToArray();
-            }
 
-            if (numBackdropToKeep <= 0)
-            {
+            if (numBackdropToKeep <= 0) {
                 var protectedBackdropKeepCount = GetBackdropKeepCount(item, protectedImages);
-                if (protectedBackdropKeepCount > numBackdropToKeep)
-                {
-                    numBackdropToKeep = protectedBackdropKeepCount;
-                }
+                if (protectedBackdropKeepCount > numBackdropToKeep) numBackdropToKeep = protectedBackdropKeepCount;
             }
         }
 
-        private static int GetBackdropKeepCount(BaseItem item, ProtectedImage[] protectedImages)
-        {
-            if (!protectedImages.Any(image => image.Type == ImageType.Backdrop))
-            {
-                return 0;
-            }
+        private static int GetBackdropKeepCount(BaseItem item, ProtectedImage[] protectedImages) {
+            if (!protectedImages.Any(image => image.Type == ImageType.Backdrop)) return 0;
 
             var backdropIndex = 0;
             var keepCount = 0;
-            foreach (var image in item.ImageInfos ?? Array.Empty<ItemImageInfo>())
-            {
-                if (image.Type != ImageType.Backdrop)
-                {
-                    continue;
-                }
+            foreach (var image in item.ImageInfos ?? Array.Empty<ItemImageInfo>()) {
+                if (image.Type != ImageType.Backdrop) continue;
 
                 if (protectedImages.Any(protectedImage =>
                         protectedImage.Type == ImageType.Backdrop &&
                         PathsEqual(protectedImage.Path, image.Path)))
-                {
                     keepCount = backdropIndex + 1;
-                }
 
                 backdropIndex++;
             }
@@ -139,23 +105,15 @@ namespace MediaInfoKeeper.Patch
             return keepCount;
         }
 
-        private static ProtectedImage[] GetProtectedImages(BaseItem item)
-        {
+        private static ProtectedImage[] GetProtectedImages(BaseItem item) {
             var itemPath = item.Path ?? item.FileName;
-            if (string.IsNullOrWhiteSpace(itemPath))
-            {
-                return Array.Empty<ProtectedImage>();
-            }
+            if (string.IsNullOrWhiteSpace(itemPath)) return Array.Empty<ProtectedImage>();
 
             var folder = Path.GetDirectoryName(itemPath);
             var basename = Path.GetFileNameWithoutExtension(itemPath);
-            if (string.IsNullOrWhiteSpace(folder) || string.IsNullOrWhiteSpace(basename))
-            {
-                return Array.Empty<ProtectedImage>();
-            }
+            if (string.IsNullOrWhiteSpace(folder) || string.IsNullOrWhiteSpace(basename)) return Array.Empty<ProtectedImage>();
 
-            var prefixedImages = new[]
-                {
+            var prefixedImages = new[] {
                     (Type: ImageType.Primary, Suffix: "-poster"),
                     (Type: ImageType.Backdrop, Suffix: "-fanart"),
                     (Type: ImageType.Thumb, Suffix: "-thumb")
@@ -166,10 +124,7 @@ namespace MediaInfoKeeper.Patch
                 .Where(image => !string.IsNullOrWhiteSpace(image.Path))
                 .ToArray();
 
-            if (prefixedImages.Length == 0)
-            {
-                return Array.Empty<ProtectedImage>();
-            }
+            if (prefixedImages.Length == 0) return Array.Empty<ProtectedImage>();
 
             return (item.ImageInfos ?? Array.Empty<ItemImageInfo>())
                 .Where(image => image != null && image.IsLocalFile)
@@ -182,76 +137,44 @@ namespace MediaInfoKeeper.Patch
                 .ToArray();
         }
 
-        private static string FindSiblingImagePath(string folder, string filenameWithoutExtension)
-        {
-            foreach (var extension in BaseItem.SupportedImageExtensions)
-            {
+        private static string FindSiblingImagePath(string folder, string filenameWithoutExtension) {
+            foreach (var extension in BaseItem.SupportedImageExtensions) {
                 var path = Path.Combine(folder, filenameWithoutExtension + extension);
-                if (File.Exists(path))
-                {
-                    return path;
-                }
+                if (File.Exists(path)) return path;
             }
 
             return null;
         }
 
-        private static bool PathsEqual(string left, string right)
-        {
+        private static bool PathsEqual(string left, string right) {
             return string.Equals(NormalizePath(left), NormalizePath(right), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string NormalizePath(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return string.Empty;
-            }
+        private static string NormalizePath(string path) {
+            if (string.IsNullOrWhiteSpace(path)) return string.Empty;
 
-            try
-            {
+            try {
                 return Path.GetFullPath(path);
             }
-            catch
-            {
+            catch {
                 return path;
             }
         }
 
-        private readonly struct ProtectedImage
-        {
-            public ProtectedImage(ImageType type, string path)
-            {
-                Type = type;
-                Path = path;
-            }
-
-            public ImageType Type { get; }
-
-            public string Path { get; }
-        }
-
-        private static MethodInfo ResolveClearImages(Assembly embyProvidersAssembly)
-        {
-            try
-            {
+        private static MethodInfo ResolveClearImages(Assembly embyProvidersAssembly) {
+            try {
                 var itemImageProvider = embyProvidersAssembly?.GetType("Emby.Providers.Manager.ItemImageProvider");
-                if (itemImageProvider == null)
-                {
-                    return null;
-                }
+                if (itemImageProvider == null) return null;
 
                 var embyProvidersVersion = embyProvidersAssembly.GetName().Version;
                 return PatchMethodResolver.Resolve(
                     itemImageProvider,
                     embyProvidersVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "itemimageprovider-clearimages-exact",
                         MethodName = "ClearImages",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             typeof(BaseItem),
                             typeof(ImageType[]),
                             typeof(int)
@@ -262,10 +185,20 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "ItemImageClearGuard.ClearImages");
             }
-            catch
-            {
+            catch {
                 return null;
             }
+        }
+
+        private readonly struct ProtectedImage {
+            public ProtectedImage(ImageType type, string path) {
+                Type = type;
+                Path = path;
+            }
+
+            public ImageType Type { get; }
+
+            public string Path { get; }
         }
     }
 }

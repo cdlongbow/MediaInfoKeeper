@@ -16,26 +16,24 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.MediaInfo;
 
-namespace MediaInfoKeeper.Patch
-{
-    public class ExternalFiles
-    {
-        private static readonly HashSet<string> ProbeExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
+namespace MediaInfoKeeper.Patch {
+    public class ExternalFiles {
+        private static readonly HashSet<string> ProbeExtensions = new(StringComparer.OrdinalIgnoreCase) {
             ".sub",
             ".smi",
             ".sami",
             ".mpl"
         };
 
-        private readonly ILogger logger;
-        private readonly ILibraryManager libraryManager;
-        private readonly IFileSystem fileSystem;
-        private readonly IItemRepository itemRepository;
         private readonly object audioTrackResolver;
-        private readonly object subtitleResolver;
-        private readonly MethodInfo getExternalTracksMethod;
         private readonly object ffProbeSubtitleInfo;
+        private readonly IFileSystem fileSystem;
+        private readonly MethodInfo getExternalTracksMethod;
+        private readonly IItemRepository itemRepository;
+        private readonly ILibraryManager libraryManager;
+
+        private readonly ILogger logger;
+        private readonly object subtitleResolver;
         private readonly MethodInfo updateExternalSubtitleStreamMethod;
 
         public ExternalFiles(
@@ -43,21 +41,21 @@ namespace MediaInfoKeeper.Patch
             IFileSystem fileSystem,
             IMediaProbeManager mediaProbeManager,
             ILocalizationManager localizationManager,
-            IItemRepository itemRepository)
-        {
-            this.logger = Plugin.Instance.Logger;
+            IItemRepository itemRepository) {
+            logger = Plugin.Instance.Logger;
             this.libraryManager = libraryManager;
             this.fileSystem = fileSystem;
             this.itemRepository = itemRepository;
 
-            try
-            {
+            try {
                 var embyProvidersAssembly = Assembly.Load("Emby.Providers");
                 var embyProvidersVersion = embyProvidersAssembly.GetName().Version;
-                var audioTrackResolverType = embyProvidersAssembly.GetType("Emby.Providers.MediaInfo.AudioTrackResolver");
+                var audioTrackResolverType =
+                    embyProvidersAssembly.GetType("Emby.Providers.MediaInfo.AudioTrackResolver");
                 var subtitleResolverType = embyProvidersAssembly.GetType("Emby.Providers.MediaInfo.SubtitleResolver");
                 var baseTrackResolverType = embyProvidersAssembly.GetType("Emby.Providers.MediaInfo.BaseTrackResolver");
-                var ffProbeSubtitleInfoType = embyProvidersAssembly.GetType("Emby.Providers.MediaInfo.FFProbeSubtitleInfo");
+                var ffProbeSubtitleInfoType =
+                    embyProvidersAssembly.GetType("Emby.Providers.MediaInfo.FFProbeSubtitleInfo");
                 var localizationManagerType = Assembly.Load("MediaBrowser.Model")
                     .GetType("MediaBrowser.Model.Globalization.ILocalizationManager");
                 var fileSystemType = Assembly.Load("MediaBrowser.Model")
@@ -88,44 +86,39 @@ namespace MediaInfoKeeper.Patch
                     mediaStreamType == null ||
                     metadataRefreshOptionsType == null ||
                     directoryServiceType == null ||
-                    namingOptionsType == null)
-                {
-                    PatchLog.InitFailed(this.logger, nameof(ExternalFiles), "关键运行时类型缺失");
+                    namingOptionsType == null) {
+                    PatchLog.InitFailed(logger, nameof(ExternalFiles), "关键运行时类型缺失");
                     return;
                 }
 
-                this.audioTrackResolver = Activator.CreateInstance(
+                audioTrackResolver = Activator.CreateInstance(
                     audioTrackResolverType,
                     localizationManager,
                     fileSystem,
                     libraryManager);
-                if (this.audioTrackResolver == null)
-                {
-                    PatchLog.InitFailed(this.logger, nameof(ExternalFiles), "AudioTrackResolver 初始化失败");
+                if (audioTrackResolver == null) {
+                    PatchLog.InitFailed(logger, nameof(ExternalFiles), "AudioTrackResolver 初始化失败");
                     return;
                 }
 
-                this.subtitleResolver = Activator.CreateInstance(
+                subtitleResolver = Activator.CreateInstance(
                     subtitleResolverType,
                     localizationManager,
                     fileSystem,
                     libraryManager);
-                if (this.subtitleResolver == null)
-                {
-                    PatchLog.InitFailed(this.logger, nameof(ExternalFiles), "SubtitleResolver 初始化失败");
+                if (subtitleResolver == null) {
+                    PatchLog.InitFailed(logger, nameof(ExternalFiles), "SubtitleResolver 初始化失败");
                     return;
                 }
 
-                this.getExternalTracksMethod = PatchMethodResolver.Resolve(
+                getExternalTracksMethod = PatchMethodResolver.Resolve(
                     baseTrackResolverType,
                     embyProvidersVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "BaseTrackResolver.GetExternalTracks",
                         MethodName = "GetExternalTracks",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             baseItemType,
                             typeof(int),
                             directoryServiceType,
@@ -134,26 +127,23 @@ namespace MediaInfoKeeper.Patch
                             typeof(bool)
                         }
                     },
-                    this.logger,
+                    logger,
                     nameof(ExternalFiles));
 
-                this.ffProbeSubtitleInfo = Activator.CreateInstance(ffProbeSubtitleInfoType, mediaProbeManager);
-                if (this.ffProbeSubtitleInfo == null)
-                {
-                    PatchLog.InitFailed(this.logger, nameof(ExternalFiles), "FFProbeSubtitleInfo 初始化失败");
+                ffProbeSubtitleInfo = Activator.CreateInstance(ffProbeSubtitleInfoType, mediaProbeManager);
+                if (ffProbeSubtitleInfo == null) {
+                    PatchLog.InitFailed(logger, nameof(ExternalFiles), "FFProbeSubtitleInfo 初始化失败");
                     return;
                 }
 
-                this.updateExternalSubtitleStreamMethod = PatchMethodResolver.Resolve(
+                updateExternalSubtitleStreamMethod = PatchMethodResolver.Resolve(
                     ffProbeSubtitleInfoType,
                     embyProvidersVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "FFProbeSubtitleInfo.UpdateExternalSubtitleStream",
                         MethodName = "UpdateExternalSubtitleStream",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             baseItemType,
                             mediaStreamType,
                             metadataRefreshOptionsType,
@@ -162,27 +152,24 @@ namespace MediaInfoKeeper.Patch
                         },
                         ReturnType = typeof(Task<bool>)
                     },
-                    this.logger,
+                    logger,
                     nameof(ExternalFiles));
             }
-            catch (Exception ex)
-            {
-                PatchLog.InitFailed(this.logger, nameof(ExternalFiles), ex.Message);
-                this.logger.Debug(ex.StackTrace);
+            catch (Exception ex) {
+                PatchLog.InitFailed(logger, nameof(ExternalFiles), ex.Message);
+                logger.Debug(ex.StackTrace);
             }
         }
 
         public bool IsAvailable =>
-            this.audioTrackResolver != null &&
-            this.subtitleResolver != null &&
-            this.getExternalTracksMethod != null &&
-            this.ffProbeSubtitleInfo != null &&
-            this.updateExternalSubtitleStreamMethod != null;
+            audioTrackResolver != null &&
+            subtitleResolver != null &&
+            getExternalTracksMethod != null &&
+            ffProbeSubtitleInfo != null &&
+            updateExternalSubtitleStreamMethod != null;
 
-        public MetadataRefreshOptions GetRefreshOptions()
-        {
-            return new MetadataRefreshOptions(new DirectoryService(this.logger, this.fileSystem))
-            {
+        public MetadataRefreshOptions GetRefreshOptions() {
+            return new MetadataRefreshOptions(new DirectoryService(logger, fileSystem)) {
                 EnableRemoteContentProbe = true,
                 MetadataRefreshMode = MetadataRefreshMode.ValidationOnly,
                 ReplaceAllMetadata = false,
@@ -193,23 +180,17 @@ namespace MediaInfoKeeper.Patch
             };
         }
 
-        public bool HasExternalFilesChanged(BaseItem item, IDirectoryService directoryService, bool clearCache)
-        {
-            if (item == null || !IsAvailable)
-            {
-                return false;
-            }
+        public bool HasExternalFilesChanged(BaseItem item, IDirectoryService directoryService, bool clearCache) {
+            if (item == null || !IsAvailable) return false;
 
-            try
-            {
+            try {
                 return HasExternalStreamChanged(item, directoryService, clearCache, MediaStreamType.Subtitle) ||
-                    HasExternalStreamChanged(item, directoryService, clearCache, MediaStreamType.Audio);
+                       HasExternalStreamChanged(item, directoryService, clearCache, MediaStreamType.Audio);
             }
-            catch (Exception ex)
-            {
-                this.logger.Warn($"外挂文件变更检测失败: {item.Path ?? item.Name}");
-                this.logger.Warn(ex.Message);
-                this.logger.Debug(ex.StackTrace);
+            catch (Exception ex) {
+                logger.Warn($"外挂文件变更检测失败: {item.Path ?? item.Name}");
+                logger.Warn(ex.Message);
+                logger.Debug(ex.StackTrace);
                 return false;
             }
         }
@@ -218,12 +199,8 @@ namespace MediaInfoKeeper.Patch
             BaseItem item,
             MetadataRefreshOptions refreshOptions,
             bool clearCache,
-            CancellationToken cancellationToken)
-        {
-            if (item == null || !IsAvailable)
-            {
-                return;
-            }
+            CancellationToken cancellationToken) {
+            if (item == null || !IsAvailable) return;
 
             var directoryService = refreshOptions.DirectoryService;
             var currentStreams = item.GetMediaStreams()
@@ -236,20 +213,21 @@ namespace MediaInfoKeeper.Patch
             nextIndex += externalSubtitleStreams.Count;
             var externalAudioStreams = GetExternalAudioStreams(item, nextIndex, directoryService, clearCache);
 
-            await UpdateStreams(item, externalSubtitleStreams, refreshOptions, cancellationToken, "字幕").ConfigureAwait(false);
-            await UpdateStreams(item, externalAudioStreams, refreshOptions, cancellationToken, "音轨").ConfigureAwait(false);
+            await UpdateStreams(item, externalSubtitleStreams, refreshOptions, cancellationToken, "字幕")
+                .ConfigureAwait(false);
+            await UpdateStreams(item, externalAudioStreams, refreshOptions, cancellationToken, "音轨")
+                .ConfigureAwait(false);
 
             currentStreams.AddRange(externalSubtitleStreams);
             currentStreams.AddRange(externalAudioStreams);
-            this.itemRepository.SaveMediaStreams(item.InternalId, currentStreams, cancellationToken);
+            itemRepository.SaveMediaStreams(item.InternalId, currentStreams, cancellationToken);
         }
 
         private bool HasExternalStreamChanged(
             BaseItem item,
             IDirectoryService directoryService,
             bool clearCache,
-            MediaStreamType streamType)
-        {
+            MediaStreamType streamType) {
             var currentSet = new HashSet<string>(
                 item.GetMediaStreams()
                     .Where(stream =>
@@ -272,8 +250,7 @@ namespace MediaInfoKeeper.Patch
             BaseItem item,
             int startIndex,
             IDirectoryService directoryService,
-            bool clearCache)
-        {
+            bool clearCache) {
             return GetExternalStreams(item, startIndex, directoryService, clearCache, MediaStreamType.Subtitle);
         }
 
@@ -281,8 +258,7 @@ namespace MediaInfoKeeper.Patch
             BaseItem item,
             int startIndex,
             IDirectoryService directoryService,
-            bool clearCache)
-        {
+            bool clearCache) {
             return GetExternalStreams(item, startIndex, directoryService, clearCache, MediaStreamType.Audio);
         }
 
@@ -291,25 +267,18 @@ namespace MediaInfoKeeper.Patch
             int startIndex,
             IDirectoryService directoryService,
             bool clearCache,
-            MediaStreamType streamType)
-        {
-            if (string.IsNullOrWhiteSpace(item?.Path))
-            {
-                return new List<MediaStream>();
-            }
+            MediaStreamType streamType) {
+            if (string.IsNullOrWhiteSpace(item?.Path)) return new List<MediaStream>();
 
             if (string.IsNullOrWhiteSpace(item.ContainingFolderPath) || !Directory.Exists(item.ContainingFolderPath))
-            {
                 return new List<MediaStream>();
-            }
 
-            var libraryOptions = this.libraryManager.GetLibraryOptions(item);
-            var namingOptions = this.libraryManager.GetNamingOptions();
-            var resolver = streamType == MediaStreamType.Audio ? this.audioTrackResolver : this.subtitleResolver;
-            var externalStreams = this.getExternalTracksMethod.Invoke(
+            var libraryOptions = libraryManager.GetLibraryOptions(item);
+            var namingOptions = libraryManager.GetNamingOptions();
+            var resolver = streamType == MediaStreamType.Audio ? audioTrackResolver : subtitleResolver;
+            var externalStreams = getExternalTracksMethod.Invoke(
                 resolver,
-                new object[]
-                {
+                new object[] {
                     item,
                     startIndex,
                     directoryService,
@@ -318,18 +287,14 @@ namespace MediaInfoKeeper.Patch
                     clearCache
                 }) as List<MediaStream>;
 
-            if (externalStreams == null)
-            {
-                return new List<MediaStream>();
-            }
+            if (externalStreams == null) return new List<MediaStream>();
 
             return externalStreams
                 .Where(stream =>
                     stream != null &&
                     stream.Type == streamType &&
                     !string.IsNullOrWhiteSpace(stream.Path))
-                .Select(stream =>
-                {
+                .Select(stream => {
                     stream.IsExternal = true;
                     stream.Protocol = MediaProtocol.File;
                     return stream;
@@ -342,30 +307,23 @@ namespace MediaInfoKeeper.Patch
             List<MediaStream> streams,
             MetadataRefreshOptions refreshOptions,
             CancellationToken cancellationToken,
-            string streamLabel)
-        {
-            foreach (var stream in streams)
-            {
+            string streamLabel) {
+            foreach (var stream in streams) {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var extension = Path.GetExtension(stream.Path);
                 if (!string.IsNullOrWhiteSpace(extension) &&
-                    (stream.Type == MediaStreamType.Audio || ProbeExtensions.Contains(extension)))
-                {
+                    (stream.Type == MediaStreamType.Audio || ProbeExtensions.Contains(extension))) {
                     bool updated;
-                    using (FfProcessGuard.Allow())
-                    {
+                    using (FfProcessGuard.Allow()) {
                         updated = await UpdateExternalSubtitleStream(item, stream, refreshOptions, cancellationToken)
                             .ConfigureAwait(false);
                     }
 
-                    if (!updated)
-                    {
-                        this.logger.Warn($"外挂{streamLabel}探测未返回结果: {stream.Path}");
-                    }
+                    if (!updated) logger.Warn($"外挂{streamLabel}探测未返回结果: {stream.Path}");
                 }
 
-                this.logger.Info($"外挂{streamLabel}已处理: {stream.Path}");
+                logger.Info($"外挂{streamLabel}已处理: {stream.Path}");
             }
         }
 
@@ -373,13 +331,11 @@ namespace MediaInfoKeeper.Patch
             BaseItem item,
             MediaStream subtitleStream,
             MetadataRefreshOptions refreshOptions,
-            CancellationToken cancellationToken)
-        {
-            var libraryOptions = this.libraryManager.GetLibraryOptions(item);
-            return (Task<bool>)this.updateExternalSubtitleStreamMethod.Invoke(
-                this.ffProbeSubtitleInfo,
-                new object[]
-                {
+            CancellationToken cancellationToken) {
+            var libraryOptions = libraryManager.GetLibraryOptions(item);
+            return (Task<bool>)updateExternalSubtitleStreamMethod.Invoke(
+                ffProbeSubtitleInfo,
+                new object[] {
                     item,
                     subtitleStream,
                     refreshOptions,
@@ -388,12 +344,8 @@ namespace MediaInfoKeeper.Patch
                 });
         }
 
-        private static string NormalizePath(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return string.Empty;
-            }
+        private static string NormalizePath(string path) {
+            if (string.IsNullOrWhiteSpace(path)) return string.Empty;
 
             return path.Trim();
         }

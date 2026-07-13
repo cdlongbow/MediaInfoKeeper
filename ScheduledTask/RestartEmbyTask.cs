@@ -9,32 +9,29 @@ using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Tasks;
 
-namespace MediaInfoKeeper.ScheduledTask
-{
-    public class RestartEmbyTask : IScheduledTask
-    {
-        private static readonly object DelayedCheckTimerLock = new object();
+namespace MediaInfoKeeper.ScheduledTask {
+    public class RestartEmbyTask : IScheduledTask {
+        private static readonly object DelayedCheckTimerLock = new();
         private static readonly TimeSpan DelayedCheckDelay = TimeSpan.FromMinutes(30);
         private static Timer delayedCheckTimer;
 
         private readonly IApplicationHost applicationHost;
         private readonly ILiveTvManager liveTvManager;
+        private readonly ILogger logger;
         private readonly ISessionManager sessionManager;
         private readonly ITaskManager taskManager;
-        private readonly ILogger logger;
 
         public RestartEmbyTask(
             IApplicationHost applicationHost,
             ILogManager logManager,
             ILiveTvManager liveTvManager,
             ISessionManager sessionManager,
-            ITaskManager taskManager)
-        {
+            ITaskManager taskManager) {
             this.applicationHost = applicationHost;
             this.liveTvManager = liveTvManager;
             this.sessionManager = sessionManager;
             this.taskManager = taskManager;
-            this.logger = logManager.GetLogger(Plugin.PluginName);
+            logger = logManager.GetLogger(Plugin.PluginName);
         }
 
         public string Key => "MediaInfoKeeperRestartEmbyTask";
@@ -45,57 +42,48 @@ namespace MediaInfoKeeper.ScheduledTask
 
         public string Category => Plugin.TaskCategoryName;
 
-        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
-        {
+        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() {
             return Array.Empty<TaskTriggerInfo>();
         }
 
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
-        {
+        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress) {
             cancellationToken.ThrowIfCancellationRequested();
             progress?.Report(0);
 
-            if (!this.applicationHost.CanSelfRestart)
-            {
+            if (!applicationHost.CanSelfRestart) {
                 logger.Error("当前 Emby 环境不支持自重启，请手动重启服务。");
                 return;
             }
 
             await Task.Yield();
 
-            var restartStatus = RestartReadinessChecker.GetStatus(this.sessionManager, this.liveTvManager, this.logger);
-            if (!restartStatus.CanRestart)
-            {
-                ScheduleDelayedCheck(this.taskManager, this.logger, restartStatus);
+            var restartStatus = RestartReadinessChecker.GetStatus(sessionManager, liveTvManager, logger);
+            if (!restartStatus.CanRestart) {
+                ScheduleDelayedCheck(taskManager, logger, restartStatus);
                 progress?.Report(100);
                 return;
             }
 
-            this.logger.Info("重启 Emby 计划任务开始，Emby 正在自重启。");
+            logger.Info("重启 Emby 计划任务开始，Emby 正在自重启。");
             progress?.Report(100);
-            this.applicationHost.Restart();
+            applicationHost.Restart();
         }
 
         internal static void ScheduleDelayedCheck(
             ITaskManager taskManager,
             ILogger logger,
-            RestartReadinessStatus restartStatus)
-        {
+            RestartReadinessStatus restartStatus) {
             var worker = FindRestartTaskWorker(taskManager);
-            if (worker == null)
-            {
+            if (worker == null) {
                 logger.Warn("无法找到重启 Emby 计划任务，不能安排 30 分钟后重新检查。");
                 return;
             }
 
             var nextCheckTime = DateTime.Now.Add(DelayedCheckDelay);
-            lock (DelayedCheckTimerLock)
-            {
+            lock (DelayedCheckTimerLock) {
                 delayedCheckTimer?.Dispose();
-                delayedCheckTimer = new Timer(_ =>
-                {
-                    lock (DelayedCheckTimerLock)
-                    {
+                delayedCheckTimer = new Timer(_ => {
+                    lock (DelayedCheckTimerLock) {
                         delayedCheckTimer?.Dispose();
                         delayedCheckTimer = null;
                     }
@@ -110,11 +98,9 @@ namespace MediaInfoKeeper.ScheduledTask
                 nextCheckTime);
         }
 
-        private static IScheduledTaskWorker FindRestartTaskWorker(ITaskManager taskManager)
-        {
+        private static IScheduledTaskWorker FindRestartTaskWorker(ITaskManager taskManager) {
             return taskManager?.ScheduledTasks.FirstOrDefault(worker =>
                 string.Equals(worker?.ScheduledTask?.Key, "MediaInfoKeeperRestartEmbyTask", StringComparison.Ordinal));
         }
-
     }
 }

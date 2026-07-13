@@ -13,14 +13,12 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 当歌曲或音乐专辑缺少主图时，优先使用专辑/子歌曲可用封面作为 DTO 与图片接口回退。
+    ///     当歌曲或音乐专辑缺少主图时，优先使用专辑/子歌曲可用封面作为 DTO 与图片接口回退。
     /// </summary>
-    public static class AudioAlbumPrimaryFallback
-    {
-        private static readonly object InitLock = new object();
+    public static class AudioAlbumPrimaryFallback {
+        private static readonly object InitLock = new();
 
         private static Harmony harmony;
         private static ILogger logger;
@@ -33,35 +31,31 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
-        public static void Initialize(ILogger pluginLogger, bool enableAudioAlbumPrimaryFallback)
-        {
-            lock (InitLock)
-            {
+        public static void Initialize(ILogger pluginLogger, bool enableAudioAlbumPrimaryFallback) {
+            lock (InitLock) {
                 logger = pluginLogger;
                 isEnabled = enableAudioAlbumPrimaryFallback;
 
-                if (harmony != null)
-                {
+                if (harmony != null) {
                     Configure(enableAudioAlbumPrimaryFallback);
                     return;
                 }
 
-                try
-                {
+                try {
                     var implementationAssembly = Assembly.Load("Emby.Server.Implementations");
                     var implementationVersion = implementationAssembly?.GetName().Version;
-                    var dtoServiceType = implementationAssembly?.GetType("Emby.Server.Implementations.Dto.DtoService", false);
+                    var dtoServiceType =
+                        implementationAssembly?.GetType("Emby.Server.Implementations.Dto.DtoService", false);
                     var apiAssembly = Assembly.Load("Emby.Api");
                     var apiVersion = apiAssembly?.GetName().Version;
                     var imageServiceType = apiAssembly?.GetType("Emby.Api.Images.ImageService", false);
                     imageRequestType = apiAssembly?.GetType("Emby.Api.Images.ImageRequest", false);
-                    if (dtoServiceType == null)
-                    {
+                    if (dtoServiceType == null) {
                         PatchLog.InitFailed(logger, nameof(AudioAlbumPrimaryFallback), "未找到 DtoService");
                         return;
                     }
-                    if (imageServiceType == null || imageRequestType == null)
-                    {
+
+                    if (imageServiceType == null || imageRequestType == null) {
                         PatchLog.InitFailed(logger, nameof(AudioAlbumPrimaryFallback), "未找到 ImageService/ImageRequest");
                         return;
                     }
@@ -69,14 +63,12 @@ namespace MediaInfoKeeper.Patch
                     getBaseItemDtoInternal = PatchMethodResolver.Resolve(
                         dtoServiceType,
                         implementationVersion,
-                        new MethodSignatureProfile
-                        {
+                        new MethodSignatureProfile {
                             Name = "dtoservice-getbaseitemdtointernal",
                             MethodName = "GetBaseItemDtoInternal",
                             BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic,
                             IsStatic = false,
-                            ParameterTypes = new[]
-                            {
+                            ParameterTypes = new[] {
                                 typeof(BaseItem),
                                 typeof(DtoOptions),
                                 typeof(User),
@@ -90,14 +82,12 @@ namespace MediaInfoKeeper.Patch
                     getImageCacheTag = PatchMethodResolver.Resolve(
                         dtoServiceType,
                         implementationVersion,
-                        new MethodSignatureProfile
-                        {
+                        new MethodSignatureProfile {
                             Name = "dtoservice-getimagecachetag-itemimageinfo",
                             MethodName = "GetImageCacheTag",
                             BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic,
                             IsStatic = false,
-                            ParameterTypes = new[]
-                            {
+                            ParameterTypes = new[] {
                                 typeof(BaseItem),
                                 typeof(ItemImageInfo)
                             },
@@ -109,14 +99,12 @@ namespace MediaInfoKeeper.Patch
                     getImage = PatchMethodResolver.Resolve(
                         imageServiceType,
                         apiVersion,
-                        new MethodSignatureProfile
-                        {
+                        new MethodSignatureProfile {
                             Name = "imageservice-getimage",
                             MethodName = "GetImage",
                             BindingFlags = BindingFlags.Instance | BindingFlags.Public,
                             IsStatic = false,
-                            ParameterTypes = new[]
-                            {
+                            ParameterTypes = new[] {
                                 imageRequestType,
                                 typeof(long),
                                 typeof(BaseItem),
@@ -127,8 +115,7 @@ namespace MediaInfoKeeper.Patch
                         logger,
                         "AudioAlbumPrimaryFallback.ImageService.GetImage");
 
-                    if (getBaseItemDtoInternal == null || getImageCacheTag == null || getImage == null)
-                    {
+                    if (getBaseItemDtoInternal == null || getImageCacheTag == null || getImage == null) {
                         PatchLog.InitFailed(logger, nameof(AudioAlbumPrimaryFallback), "DTO 图片相关方法缺失");
                         return;
                     }
@@ -136,13 +123,9 @@ namespace MediaInfoKeeper.Patch
                     harmony = new Harmony("mediainfokeeper.audioalbumprimaryfallback");
                     PatchLog.Patched(logger, nameof(AudioAlbumPrimaryFallback), getBaseItemDtoInternal);
 
-                    if (isEnabled)
-                    {
-                        Patch();
-                    }
+                    if (isEnabled) Patch();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     PatchLog.InitFailed(logger, nameof(AudioAlbumPrimaryFallback), ex.Message);
                     logger?.Error("AudioAlbumPrimaryFallback 初始化异常：{0}", ex);
                     harmony = null;
@@ -151,49 +134,30 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enableAudioAlbumPrimaryFallback)
-        {
-            lock (InitLock)
-            {
+        public static void Configure(bool enableAudioAlbumPrimaryFallback) {
+            lock (InitLock) {
                 isEnabled = enableAudioAlbumPrimaryFallback;
-                if (harmony == null)
-                {
-                    return;
-                }
+                if (harmony == null) return;
 
                 if (isEnabled)
-                {
                     Patch();
-                }
                 else
-                {
                     Unpatch();
-                }
             }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || getBaseItemDtoInternal == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || getBaseItemDtoInternal == null) return;
 
             harmony.Patch(
                 getBaseItemDtoInternal,
                 postfix: new HarmonyMethod(typeof(AudioAlbumPrimaryFallback), nameof(GetBaseItemDtoInternalPostfix)));
-            harmony.Patch(
-                getImage,
-                prefix: new HarmonyMethod(typeof(AudioAlbumPrimaryFallback), nameof(GetImagePrefix)));
+            harmony.Patch(getImage, new HarmonyMethod(typeof(AudioAlbumPrimaryFallback), nameof(GetImagePrefix)));
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null || getBaseItemDtoInternal == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null || getBaseItemDtoInternal == null) return;
 
             harmony.Unpatch(getBaseItemDtoInternal, HarmonyPatchType.Postfix, harmony.Id);
             harmony.Unpatch(getImage, HarmonyPatchType.Prefix, harmony.Id);
@@ -205,63 +169,40 @@ namespace MediaInfoKeeper.Patch
             object __instance,
             BaseItem item,
             User user,
-            ref BaseItemDto __result)
-        {
-            if (!isEnabled || __instance == null || item == null || __result == null)
-            {
-                return;
-            }
+            ref BaseItemDto __result) {
+            if (!isEnabled || __instance == null || item == null || __result == null) return;
 
-            if (item is Audio audio)
-            {
+            if (item is Audio audio) {
                 ApplyAudioPrimaryFallback(__instance, audio, user, __result);
                 return;
             }
 
-            if (item is MusicAlbum musicAlbum)
-            {
-                ApplyMusicAlbumPrimaryFallback(__instance, musicAlbum, user, __result);
-            }
+            if (item is MusicAlbum musicAlbum) ApplyMusicAlbumPrimaryFallback(__instance, musicAlbum, user, __result);
         }
 
         private static void ApplyAudioPrimaryFallback(
             object dtoService,
             Audio audio,
             User user,
-            BaseItemDto dto)
-        {
-            if (audio.GetImageInfo(ImageType.Primary, 0) != null)
-            {
-                return;
-            }
+            BaseItemDto dto) {
+            if (audio.GetImageInfo(ImageType.Primary, 0) != null) return;
 
             var displayParentId = audio.ImageDisplayParentId;
-            if (displayParentId == 0 || displayParentId == audio.InternalId)
-            {
-                return;
-            }
+            if (displayParentId == 0 || displayParentId == audio.InternalId) return;
 
             var displayParent = Plugin.LibraryManager?.GetItemById(displayParentId);
-            if (!TryResolvePrimaryImageSource(displayParent, user, out var imageOwner, out var imageInfo))
-            {
-                return;
-            }
+            if (!TryResolvePrimaryImageSource(displayParent, user, out var imageOwner, out var imageInfo)) return;
 
-            try
-            {
+            try {
                 var displayParentPrimaryTag = getImageCacheTag?.Invoke(
                     dtoService,
                     new object[] { imageOwner, imageInfo }) as string;
-                if (string.IsNullOrWhiteSpace(displayParentPrimaryTag))
-                {
-                    return;
-                }
+                if (string.IsNullOrWhiteSpace(displayParentPrimaryTag)) return;
 
                 dto.PrimaryImageItemId = imageOwner.GetClientId();
                 dto.PrimaryImageTag = displayParentPrimaryTag;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Debug("AudioAlbumPrimaryFallback failed: {0}", ex.Message);
             }
         }
@@ -270,50 +211,32 @@ namespace MediaInfoKeeper.Patch
         private static void GetImagePrefix(
             [HarmonyArgument(0)] object request,
             [HarmonyArgument(1)] ref long itemId,
-            [HarmonyArgument(2)] ref BaseItem item)
-        {
-            if (!isEnabled || request == null || itemId == 0)
-            {
-                return;
-            }
+            [HarmonyArgument(2)] ref BaseItem item) {
+            if (!isEnabled || request == null || itemId == 0) return;
 
-            try
-            {
-                if (!IsPrimaryImageRequest(request))
-                {
-                    return;
-                }
+            try {
+                if (!IsPrimaryImageRequest(request)) return;
 
                 var requestedItem = item ?? Plugin.LibraryManager?.GetItemById(itemId);
-                if (requestedItem is not MusicAlbum musicAlbum || musicAlbum.GetImageInfo(ImageType.Primary, 0) != null)
-                {
-                    return;
-                }
+                if (requestedItem is not MusicAlbum musicAlbum || musicAlbum.GetImageInfo(ImageType.Primary, 0) != null) return;
 
                 if (!TryResolvePrimaryImageSource(musicAlbum, null, out var imageOwner, out var imageInfo) ||
                     imageOwner == null ||
                     imageInfo == null ||
                     imageOwner.InternalId == musicAlbum.InternalId)
-                {
                     return;
-                }
 
                 itemId = imageOwner.InternalId;
                 item = imageOwner;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Debug("AudioAlbumPrimaryFallback image request failed: {0}", ex.Message);
             }
         }
 
-        private static bool IsPrimaryImageRequest(object request)
-        {
+        private static bool IsPrimaryImageRequest(object request) {
             var typeProperty = request.GetType().GetProperty("Type");
-            if (typeProperty?.GetValue(request) is not ImageType imageType || imageType != ImageType.Primary)
-            {
-                return false;
-            }
+            if (typeProperty?.GetValue(request) is not ImageType imageType || imageType != ImageType.Primary) return false;
 
             var indexProperty = request.GetType().GetProperty("Index");
             return indexProperty?.GetValue(request) is not int index || index == 0;
@@ -323,39 +246,24 @@ namespace MediaInfoKeeper.Patch
             object dtoService,
             MusicAlbum musicAlbum,
             User user,
-            BaseItemDto dto)
-        {
-            if (musicAlbum.GetImageInfo(ImageType.Primary, 0) != null)
-            {
-                return;
-            }
+            BaseItemDto dto) {
+            if (musicAlbum.GetImageInfo(ImageType.Primary, 0) != null) return;
 
-            if (!TryResolvePrimaryImageSource(musicAlbum, user, out var imageOwner, out var imageInfo))
-            {
-                return;
-            }
+            if (!TryResolvePrimaryImageSource(musicAlbum, user, out var imageOwner, out var imageInfo)) return;
 
-            try
-            {
+            try {
                 var primaryTag = getImageCacheTag?.Invoke(
                     dtoService,
                     new object[] { imageOwner, imageInfo }) as string;
-                if (string.IsNullOrWhiteSpace(primaryTag))
-                {
-                    return;
-                }
+                if (string.IsNullOrWhiteSpace(primaryTag)) return;
 
                 dto.PrimaryImageItemId = imageOwner.GetClientId();
                 dto.PrimaryImageTag = primaryTag;
-                if (dto.ImageTags == null)
-                {
-                    dto.ImageTags = new Dictionary<ImageType, string>();
-                }
+                if (dto.ImageTags == null) dto.ImageTags = new Dictionary<ImageType, string>();
 
                 dto.ImageTags[ImageType.Primary] = primaryTag;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Debug("AudioAlbumPrimaryFallback album failed: {0}", ex.Message);
             }
         }
@@ -364,31 +272,22 @@ namespace MediaInfoKeeper.Patch
             BaseItem displayParent,
             User user,
             out BaseItem imageOwner,
-            out ItemImageInfo imageInfo)
-        {
+            out ItemImageInfo imageInfo) {
             imageOwner = null;
             imageInfo = null;
-            if (displayParent == null)
-            {
-                return false;
-            }
+            if (displayParent == null) return false;
 
             var primaryImage = displayParent.GetImageInfo(ImageType.Primary, 0);
-            if (primaryImage != null)
-            {
+            if (primaryImage != null) {
                 imageOwner = displayParent;
                 imageInfo = primaryImage;
                 return true;
             }
 
-            if (displayParent is not Folder folder)
-            {
-                return false;
-            }
+            if (displayParent is not Folder folder) return false;
 
             // Match Emby's folder cover behavior by borrowing the first audio child's primary image.
-            var query = new InternalItemsQuery(user)
-            {
+            var query = new InternalItemsQuery(user) {
                 Recursive = displayParent is MusicAlbum || displayParent is Season,
                 IsFolder = false,
                 EnableTotalRecordCount = false,
@@ -399,10 +298,7 @@ namespace MediaInfoKeeper.Patch
 
             var childWithImage = folder.GetItems(query, CancellationToken.None).Items.FirstOrDefault();
             var childPrimaryImage = childWithImage?.GetImageInfo(ImageType.Primary, 0);
-            if (childWithImage == null || childPrimaryImage == null)
-            {
-                return false;
-            }
+            if (childWithImage == null || childPrimaryImage == null) return false;
 
             imageOwner = childWithImage;
             imageInfo = childPrimaryImage;

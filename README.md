@@ -1,4 +1,3 @@
-
 <p align="center">
   <img src="Resources/ThumbImage.png" alt="MediaInfoKeeper" width="320" />
 </p>
@@ -37,14 +36,14 @@
 ⏬ 安装
 --------
 
-1. 下载 dll 文件：[Releases](https://github.com/honue/MediaInfoKeeper/releases) 不带后缀的是通用版本，[最新通用版本](https://github.com/honue/MediaInfoKeeper/releases/latest/download/MediaInfoKeeper.dll)。
+1. 下载 dll 文件：[Releases](https://github.com/honue/MediaInfoKeeper/releases)
+   不带后缀的是通用版本，[最新通用版本](https://github.com/honue/MediaInfoKeeper/releases/latest/download/MediaInfoKeeper.dll)。
 2. 放入 Emby 配置目录中的 `plugins` 目录。
 3. 务必重命名为 `MediaInfoKeeper.dll`，否则后续自动更新会有两个 dll 存在。
 4. 重启 Emby，在插件页面完成配置。
 
 🧩 兼容性
 -----------
-
 
 - 版本说明：本仓库最新代码始终以支持 Emby 最新 release 为目标，开发过程中可能出现阶段性兼容问题。
 
@@ -53,7 +52,6 @@
 - 更新限制：插件自动更新任务已按 [版本区间](Version.json) 限制，不会更新到当前 Emby 不支持的插件版本。
 
 - 不支持：`4.8` 系列
-
 
 ⚖️ Lisence
 -----------

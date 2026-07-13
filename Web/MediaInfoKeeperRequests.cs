@@ -1,12 +1,10 @@
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Model.Services;
 
-namespace MediaInfoKeeper.Web
-{
+namespace MediaInfoKeeper.Web {
     [Route("/{Web}/components/mediainfokeeper/mediainfokeeper.js", "GET", IsHidden = true)]
     [Unauthenticated]
-    public class MediaInfoKeeperJsRequest
-    {
+    public class MediaInfoKeeperJsRequest {
         public string Web { get; set; }
 
         public string ResourceName { get; set; }
@@ -14,64 +12,55 @@ namespace MediaInfoKeeper.Web
 
     [Route("/{Web}/components/mediainfokeeper/ede.js", "GET", IsHidden = true)]
     [Unauthenticated]
-    public class EdeJsRequest
-    {
+    public class EdeJsRequest {
         public string Web { get; set; }
     }
 
     [Route("/{Web}/modules/shortcuts.js", "GET", IsHidden = true)]
     [Unauthenticated]
-    public class ShortcutMenuRequest
-    {
+    public class ShortcutMenuRequest {
         public string Web { get; set; }
     }
 
     [Route("/{Web}/modules/refreshdialog/refreshdialog.js", "GET", IsHidden = true)]
     [Unauthenticated]
-    public class RefreshDialogRequest
-    {
+    public class RefreshDialogRequest {
         public string Web { get; set; }
     }
 
     [Route("/api/danmu/{ItemId}/raw", "GET")]
     [Unauthenticated]
-    public class DanmuRawRequest : IReturnVoid
-    {
+    public class DanmuRawRequest : IReturnVoid {
         public string ItemId { get; set; }
     }
 
     [Route("/MediaInfoKeeper/Items/ExtractMediaInfo", "POST")]
     [Authenticated(Roles = "Admin")]
-    public class ExtractMediaInfoRequest : IReturn<MediaInfoMenuResponse>
-    {
+    public class ExtractMediaInfoRequest : IReturn<MediaInfoMenuResponse> {
         public string[] Ids { get; set; }
     }
 
     [Route("/MediaInfoKeeper/Items/DeleteMediaInfoPersist", "POST")]
     [Authenticated(Roles = "Admin")]
-    public class DeleteMediaInfoPersistRequest : IReturn<MediaInfoMenuResponse>
-    {
+    public class DeleteMediaInfoPersistRequest : IReturn<MediaInfoMenuResponse> {
         public string[] Ids { get; set; }
     }
 
     [Route("/MediaInfoKeeper/Items/ScanIntro", "POST")]
     [Authenticated(Roles = "Admin")]
-    public class ScanIntroRequest : IReturn<MediaInfoMenuResponse>
-    {
+    public class ScanIntroRequest : IReturn<MediaInfoMenuResponse> {
         public string[] Ids { get; set; }
     }
 
     [Route("/MediaInfoKeeper/Items/ScanExternalFiles", "POST")]
     [Authenticated(Roles = "Admin")]
-    public class ScanExternalFilesRequest : IReturn<MediaInfoMenuResponse>
-    {
+    public class ScanExternalFilesRequest : IReturn<MediaInfoMenuResponse> {
         public string[] Ids { get; set; }
     }
 
     [Route("/MediaInfoKeeper/Items/SetIntro", "POST")]
     [Authenticated(Roles = "Admin")]
-    public class SetIntroRequest : IReturn<MediaInfoMenuResponse>
-    {
+    public class SetIntroRequest : IReturn<MediaInfoMenuResponse> {
         public string[] Ids { get; set; }
         public long IntroStartTicks { get; set; }
         public long IntroEndTicks { get; set; }
@@ -80,20 +69,17 @@ namespace MediaInfoKeeper.Web
 
     [Route("/MediaInfoKeeper/Items/ClearIntro", "POST")]
     [Authenticated(Roles = "Admin")]
-    public class ClearIntroRequest : IReturn<MediaInfoMenuResponse>
-    {
+    public class ClearIntroRequest : IReturn<MediaInfoMenuResponse> {
         public string[] Ids { get; set; }
     }
 
     [Route("/MediaInfoKeeper/Items/DebugMediaInfo", "GET")]
     [Authenticated(Roles = "Admin")]
-    public class DebugMediaInfoRequest : IReturn<DebugMediaInfoResponse>
-    {
+    public class DebugMediaInfoRequest : IReturn<DebugMediaInfoResponse> {
         public long InternalId { get; set; }
     }
 
-    public class MediaInfoMenuResponse
-    {
+    public class MediaInfoMenuResponse {
         public int Total { get; set; }
 
         public int Processed { get; set; }
@@ -107,8 +93,7 @@ namespace MediaInfoKeeper.Web
         public string Message { get; set; }
     }
 
-    public class DebugMediaInfoResponse
-    {
+    public class DebugMediaInfoResponse {
         public bool Found { get; set; }
 
         public string Message { get; set; }
@@ -124,8 +109,7 @@ namespace MediaInfoKeeper.Web
         public DebugThumbnailSetsInfo ThumbnailSets { get; set; }
     }
 
-    public class DebugItemInfo
-    {
+    public class DebugItemInfo {
         public long InternalId { get; set; }
 
         public string Type { get; set; }
@@ -193,8 +177,7 @@ namespace MediaInfoKeeper.Web
         public bool? SupportsThumbnails { get; set; }
     }
 
-    public class DebugPrimaryImageInfo
-    {
+    public class DebugPrimaryImageInfo {
         public bool HasPrimaryImage { get; set; }
 
         public string PrimaryImagePath { get; set; }
@@ -210,8 +193,7 @@ namespace MediaInfoKeeper.Web
         public bool DisplayParentPrimaryImagePathExists { get; set; }
     }
 
-    public class DebugChapterImagesInfo
-    {
+    public class DebugChapterImagesInfo {
         public int ChapterCount { get; set; }
 
         public int ChaptersWithImagePath { get; set; }
@@ -221,8 +203,7 @@ namespace MediaInfoKeeper.Web
         public DebugChapterImageEntry[] Entries { get; set; }
     }
 
-    public class DebugChapterImageEntry
-    {
+    public class DebugChapterImageEntry {
         public string Name { get; set; }
 
         public string MarkerType { get; set; }
@@ -238,8 +219,7 @@ namespace MediaInfoKeeper.Web
         public string ImageDateModified { get; set; }
     }
 
-    public class DebugThumbnailSetsInfo
-    {
+    public class DebugThumbnailSetsInfo {
         public bool SupportsThumbnails { get; set; }
 
         public int Count { get; set; }
@@ -247,8 +227,7 @@ namespace MediaInfoKeeper.Web
         public DebugThumbnailSetEntry[] Entries { get; set; }
     }
 
-    public class DebugThumbnailSetEntry
-    {
+    public class DebugThumbnailSetEntry {
         public string Path { get; set; }
 
         public bool Exists { get; set; }
@@ -260,8 +239,7 @@ namespace MediaInfoKeeper.Web
         public int IntervalSeconds { get; set; }
     }
 
-    public class DebugFileInfo
-    {
+    public class DebugFileInfo {
         public string Path { get; set; }
 
         public bool Exists { get; set; }
@@ -269,13 +247,11 @@ namespace MediaInfoKeeper.Web
         public object Content { get; set; }
     }
 
-    public class DebugBinaryFileInfo
-    {
+    public class DebugBinaryFileInfo {
         public string Path { get; set; }
 
         public bool Exists { get; set; }
 
         public long Length { get; set; }
     }
-
 }

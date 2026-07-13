@@ -5,24 +5,20 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using HarmonyLib;
-using MediaInfoKeeper.Services;
 using MediaBrowser.Common.Net;
-using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.Services;
+using MediaInfoKeeper.Services;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 对远端 http(s) strm 音乐在原始静态取流阶段按条件改为 302，让客户端直接拉取。
+    ///     对远端 http(s) strm 音乐在原始静态取流阶段按条件改为 302，让客户端直接拉取。
     /// </summary>
-    internal static class StrmAudioDirectRedirect
-    {
+    internal static class StrmAudioDirectRedirect {
         private static Harmony harmony;
         private static ILogger logger;
         private static bool isEnabled;
@@ -37,19 +33,17 @@ namespace MediaInfoKeeper.Patch
         private static string[] clientBlacklist = Array.Empty<string>();
 
         public static bool IsReady => harmony != null
-            && processRequestMethod != null
-            && getStateMethod != null
-            && disposeStateMethod != null
-            && (!isEnabled || isPatched);
+                                      && processRequestMethod != null
+                                      && getStateMethod != null
+                                      && disposeStateMethod != null
+                                      && (!isEnabled || isPatched);
 
         public static void Initialize(
             ILogger pluginLogger,
             bool enabled,
             bool follow302,
-            string clientBlacklistText)
-        {
-            if (harmony != null)
-            {
+            string clientBlacklistText) {
+            if (harmony != null) {
                 Configure(enabled, follow302, clientBlacklistText);
                 return;
             }
@@ -58,25 +52,25 @@ namespace MediaInfoKeeper.Patch
             isEnabled = enabled;
             ApplySettings(follow302, clientBlacklistText);
 
-            try
-            {
+            try {
                 var mediaEncoding = Assembly.Load("Emby.Server.MediaEncoding");
                 var mediaEncodingVersion = mediaEncoding?.GetName().Version;
                 var baseProgressiveStreamingServiceType =
-                    mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.Progressive.BaseProgressiveStreamingService", false);
+                    mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.Progressive.BaseProgressiveStreamingService",
+                        false);
                 var baseStreamingServiceType =
                     mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.BaseStreamingService", false);
                 streamRequestType = mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.StreamRequest", false);
                 streamStateType = mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.StreamState", false);
                 progressiveAudioRequestType =
-                    mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.Progressive.GetProgressiveAudioStream", false);
+                    mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.Progressive.GetProgressiveAudioStream",
+                        false);
 
                 if (baseProgressiveStreamingServiceType == null ||
                     baseStreamingServiceType == null ||
                     streamRequestType == null ||
                     streamStateType == null ||
-                    progressiveAudioRequestType == null)
-                {
+                    progressiveAudioRequestType == null) {
                     PatchLog.InitFailed(logger, nameof(StrmAudioDirectRedirect), "未找到音乐播放流相关类型");
                     return;
                 }
@@ -84,14 +78,12 @@ namespace MediaInfoKeeper.Patch
                 processRequestMethod = PatchMethodResolver.Resolve(
                     baseProgressiveStreamingServiceType,
                     mediaEncodingVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "baseprogressivestreamingservice-processrequest-exact-audio",
                         MethodName = "ProcessRequest",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         IsStatic = false,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             streamRequestType,
                             typeof(bool)
                         },
@@ -103,14 +95,12 @@ namespace MediaInfoKeeper.Patch
                 getStateMethod = PatchMethodResolver.Resolve(
                     baseStreamingServiceType,
                     mediaEncodingVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "basestreamingservice-getstate-exact-audio",
                         MethodName = "GetState",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         IsStatic = false,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             streamRequestType,
                             typeof(bool),
                             typeof(CancellationToken)
@@ -124,27 +114,22 @@ namespace MediaInfoKeeper.Patch
                     "Dispose",
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                     null,
-                    new[]
-                    {
+                    new[] {
                         typeof(bool),
                         typeof(bool)
                     },
                     null);
 
-                if (processRequestMethod == null || getStateMethod == null || disposeStateMethod == null)
-                {
-                    PatchLog.InitFailed(logger, nameof(StrmAudioDirectRedirect), "未命中 ProcessRequest/GetState/StreamState.Dispose");
+                if (processRequestMethod == null || getStateMethod == null || disposeStateMethod == null) {
+                    PatchLog.InitFailed(logger, nameof(StrmAudioDirectRedirect),
+                        "未命中 ProcessRequest/GetState/StreamState.Dispose");
                     return;
                 }
 
                 harmony = new Harmony("mediainfokeeper.strm-audio-direct-redirect");
-                if (isEnabled)
-                {
-                    Patch();
-                }
+                if (isEnabled) Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 PatchLog.InitFailed(logger, nameof(StrmAudioDirectRedirect), ex.Message);
                 logger?.Error(ex.ToString());
                 harmony = null;
@@ -158,46 +143,30 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enabled, bool follow302, string clientBlacklistText)
-        {
+        public static void Configure(bool enabled, bool follow302, string clientBlacklistText) {
             isEnabled = enabled;
             ApplySettings(follow302, clientBlacklistText);
-            if (harmony == null)
-            {
-                return;
-            }
+            if (harmony == null) return;
 
             if (isEnabled)
-            {
                 Patch();
-            }
             else
-            {
                 Unpatch();
-            }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || processRequestMethod == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || processRequestMethod == null) return;
 
             harmony.Patch(
                 processRequestMethod,
-                prefix: new HarmonyMethod(typeof(StrmAudioDirectRedirect), nameof(ProcessRequestPrefix)));
+                new HarmonyMethod(typeof(StrmAudioDirectRedirect), nameof(ProcessRequestPrefix)));
 
             PatchLog.Patched(logger, nameof(StrmAudioDirectRedirect), processRequestMethod);
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null || processRequestMethod == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null || processRequestMethod == null) return;
 
             harmony.Unpatch(processRequestMethod, HarmonyPatchType.Prefix, harmony.Id);
             isPatched = false;
@@ -207,36 +176,21 @@ namespace MediaInfoKeeper.Patch
         private static bool ProcessRequestPrefix(
             object __instance,
             [HarmonyArgument(0)] object request,
-            ref Task<object> __result)
-        {
+            ref Task<object> __result) {
             var itemId = GetPropertyValue<string>(request, "Id");
 
-            if (!isEnabled || __instance == null || request == null || progressiveAudioRequestType == null)
-            {
-                return true;
-            }
+            if (!isEnabled || __instance == null || request == null || progressiveAudioRequestType == null) return true;
 
-            if (!progressiveAudioRequestType.IsInstanceOfType(request))
-            {
-                return true;
-            }
+            if (!progressiveAudioRequestType.IsInstanceOfType(request)) return true;
 
-            if (!ResolveStrmPath(request))
-            {
-                return true;
-            }
+            if (!ResolveStrmPath(request)) return true;
 
-            try
-            {
+            try {
                 NormalizeOriginalRequest(request);
-                if (!GetPropertyValue<bool>(request, "Static"))
-                {
-                    return true;
-                }
+                if (!GetPropertyValue<bool>(request, "Static")) return true;
 
                 var state = GetState(__instance, request);
-                if (!CanRedirect(state))
-                {
+                if (!CanRedirect(state)) {
                     DisposeState(state);
                     return true;
                 }
@@ -244,14 +198,12 @@ namespace MediaInfoKeeper.Patch
                 var resultFactory = GetPropertyValue<IHttpResultFactory>(__instance, "ResultFactory");
                 var requestContext = GetPropertyValue<IRequest>(__instance, "Request");
                 var mediaSource = GetPropertyValue<MediaSourceInfo>(state, "MediaSource");
-                if (resultFactory == null || mediaSource == null)
-                {
+                if (resultFactory == null || mediaSource == null) {
                     DisposeState(state);
                     return true;
                 }
 
-                if (IsClientBlocked(requestContext))
-                {
+                if (IsClientBlocked(requestContext)) {
                     DisposeState(state);
                     return true;
                 }
@@ -266,8 +218,7 @@ namespace MediaInfoKeeper.Patch
                 DisposeState(state);
                 return false;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Warn(
                     "StrmAudioDirectRedirect 预判失败，回退 Emby 中转: itemId={0}, error={1}",
                     itemId,
@@ -276,84 +227,57 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        private static object GetState(object service, object request)
-        {
+        private static object GetState(object service, object request) {
             var requestContext = GetPropertyValue<IRequest>(service, "Request");
-            if (requestContext == null)
-            {
-                throw new InvalidOperationException("当前请求上下文为空");
-            }
+            if (requestContext == null) throw new InvalidOperationException("当前请求上下文为空");
 
-            var task = getStateMethod?.Invoke(service, new[] { request, (object)true, requestContext.CancellationToken }) as Task;
-            if (task == null)
-            {
-                throw new InvalidOperationException("GetState 返回为空");
-            }
+            var task = getStateMethod?.Invoke(service,
+                new[] { request, true, requestContext.CancellationToken }) as Task;
+            if (task == null) throw new InvalidOperationException("GetState 返回为空");
 
             task.GetAwaiter().GetResult();
             var state = task.GetType()
                 .GetProperty("Result", BindingFlags.Instance | BindingFlags.Public)
                 ?.GetValue(task);
-            if (state == null)
-            {
-                throw new InvalidOperationException("GetState 未返回有效 StreamState");
-            }
+            if (state == null) throw new InvalidOperationException("GetState 未返回有效 StreamState");
 
             return state;
         }
 
-        private static bool ResolveStrmPath(object request)
-        {
+        private static bool ResolveStrmPath(object request) {
             var itemId = GetPropertyValue<string>(request, "Id");
-            if (string.IsNullOrWhiteSpace(itemId))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(itemId)) return false;
 
             var item = Plugin.LibraryManager?.GetItemById(itemId);
             var path = item?.Path ?? item?.FileName;
             return LibraryService.IsFileShortcut(path);
         }
 
-        private static void NormalizeOriginalRequest(object request)
-        {
+        private static void NormalizeOriginalRequest(object request) {
             var streamFileName = GetPropertyValue<string>(request, "StreamFileName");
-            if (string.IsNullOrEmpty(streamFileName))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(streamFileName)) return;
 
-            if (string.Equals(System.IO.Path.GetFileNameWithoutExtension(streamFileName), "original", StringComparison.OrdinalIgnoreCase))
-            {
+            if (string.Equals(Path.GetFileNameWithoutExtension(streamFileName), "original",
+                    StringComparison.OrdinalIgnoreCase))
                 SetPropertyValue(request, "Static", true);
-            }
 
             var container = GetPropertyValue<string>(request, "Container");
-            if (!string.IsNullOrEmpty(container))
-            {
-                return;
-            }
+            if (!string.IsNullOrEmpty(container)) return;
 
-            var extension = System.IO.Path.GetExtension(streamFileName);
-            if (string.IsNullOrEmpty(extension))
-            {
-                return;
-            }
+            var extension = Path.GetExtension(streamFileName);
+            if (string.IsNullOrEmpty(extension)) return;
 
             container = extension.TrimStart('.').ToLowerInvariant();
             SetPropertyValue(request, "Container", string.IsNullOrEmpty(container) ? null : container);
         }
 
-        private static bool CanRedirect(object state)
-        {
+        private static bool CanRedirect(object state) {
             var mediaSource = GetPropertyValue<MediaSourceInfo>(state, "MediaSource");
             if (state == null ||
                 GetPropertyValue<bool>(state, "IsVideoRequest") ||
                 GetPropertyValue<object>(state, "LiveStream") != null ||
                 mediaSource == null)
-            {
                 return false;
-            }
 
             if (!mediaSource.IsRemote ||
                 mediaSource.Protocol != MediaProtocol.Http ||
@@ -361,53 +285,36 @@ namespace MediaInfoKeeper.Patch
                 mediaSource.IsInfiniteStream ||
                 mediaSource.RequiresOpening ||
                 mediaSource.RequiresClosing)
-            {
                 return false;
-            }
 
-            if (mediaSource.RequiredHttpHeaders != null && mediaSource.RequiredHttpHeaders.Count > 0)
-            {
-                return false;
-            }
+            if (mediaSource.RequiredHttpHeaders != null && mediaSource.RequiredHttpHeaders.Count > 0) return false;
 
             return Uri.TryCreate(mediaSource.Path, UriKind.Absolute, out var uri) &&
-                (string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
+                   (string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static void DisposeState(object state)
-        {
+        private static void DisposeState(object state) {
             disposeStateMethod?.Invoke(state, new object[] { true, true });
         }
 
-        private static void ApplySettings(bool follow302, string clientBlacklistText)
-        {
+        private static void ApplySettings(bool follow302, string clientBlacklistText) {
             followRedirect302 = follow302;
             clientBlacklist = ParseClientBlacklist(clientBlacklistText);
         }
 
-        private static string ResolveRedirectUrl(string url, string userAgent)
-        {
+        private static string ResolveRedirectUrl(string url, string userAgent) {
             var normalizedUrl = NormalizeRedirectUrl(url);
-            if (!followRedirect302)
-            {
-                return normalizedUrl;
-            }
+            if (!followRedirect302) return normalizedUrl;
 
             var httpClient = Plugin.SharedHttpClient;
-            if (httpClient == null || string.IsNullOrWhiteSpace(normalizedUrl))
-            {
-                return normalizedUrl;
-            }
+            if (httpClient == null || string.IsNullOrWhiteSpace(normalizedUrl)) return normalizedUrl;
 
             string resolvedUrl = null;
             foreach (var method in new[] { "GET", "HEAD" })
-            {
-                try
-                {
+                try {
                     using var response = httpClient.SendAsync(
-                        new HttpRequestOptions
-                        {
+                        new HttpRequestOptions {
                             Url = normalizedUrl,
                             UserAgent = userAgent ?? string.Empty,
                             TimeoutMs = 3000,
@@ -422,41 +329,29 @@ namespace MediaInfoKeeper.Patch
                         },
                         method).GetAwaiter().GetResult();
 
-                    if (!string.IsNullOrWhiteSpace(response?.ResponseUrl))
-                    {
+                    if (!string.IsNullOrWhiteSpace(response?.ResponseUrl)) {
                         resolvedUrl = NormalizeRedirectUrl(response.ResponseUrl);
                         break;
                     }
                 }
-                catch
-                {
+                catch {
                 }
-            }
 
             return string.IsNullOrWhiteSpace(resolvedUrl) ? normalizedUrl : resolvedUrl;
         }
 
-        private static string NormalizeRedirectUrl(string url)
-        {
+        private static string NormalizeRedirectUrl(string url) {
             return string.IsNullOrWhiteSpace(url) ? url : url.Trim();
         }
 
-        private static bool IsClientBlocked(IRequest requestContext)
-        {
-            if (requestContext == null || clientBlacklist.Length == 0)
-            {
-                return false;
-            }
+        private static bool IsClientBlocked(IRequest requestContext) {
+            if (requestContext == null || clientBlacklist.Length == 0) return false;
 
             var client = ResolveClient(requestContext);
-            if (string.IsNullOrWhiteSpace(client))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(client)) return false;
 
             if (clientBlacklist.Any(pattern =>
-                    client.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0))
-            {
+                    client.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)) {
                 logger?.Info(
                     "StrmAudioDirectRedirect: 客户端命中黑名单，回退 Emby 中转。client={0}",
                     client);
@@ -466,15 +361,13 @@ namespace MediaInfoKeeper.Patch
             return false;
         }
 
-        private static string ResolveClient(IRequest requestContext)
-        {
+        private static string ResolveClient(IRequest requestContext) {
             var sessionContext = Plugin.Instance?.AppHost?.Resolve<ISessionContext>();
             var session = sessionContext?.GetSession(requestContext);
             return session?.Client?.Trim();
         }
 
-        private static string[] ParseClientBlacklist(string text)
-        {
+        private static string[] ParseClientBlacklist(string text) {
             return string.IsNullOrWhiteSpace(text)
                 ? Array.Empty<string>()
                 : text
@@ -485,35 +378,23 @@ namespace MediaInfoKeeper.Patch
                     .ToArray();
         }
 
-        private static T GetPropertyValue<T>(object instance, string propertyName)
-        {
-            if (instance == null)
-            {
-                return default;
-            }
+        private static T GetPropertyValue<T>(object instance, string propertyName) {
+            if (instance == null) return default;
 
-            var property = instance.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (property == null)
-            {
-                return default;
-            }
+            var property = instance.GetType().GetProperty(propertyName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (property == null) return default;
 
             var value = property.GetValue(instance);
-            if (value is T typedValue)
-            {
-                return typedValue;
-            }
+            if (value is T typedValue) return typedValue;
 
             return default;
         }
 
-        private static void SetPropertyValue(object instance, string propertyName, object value)
-        {
-            var property = instance?.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (property?.CanWrite == true)
-            {
-                property.SetValue(instance, value);
-            }
+        private static void SetPropertyValue(object instance, string propertyName, object value) {
+            var property = instance?.GetType().GetProperty(propertyName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (property?.CanWrite == true) property.SetValue(instance, value);
         }
     }
 }

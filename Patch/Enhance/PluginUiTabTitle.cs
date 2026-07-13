@@ -4,13 +4,11 @@ using System.Reflection;
 using HarmonyLib;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 为带 Tab 的插件主页单独调整主 Tab 标题，避免和左侧菜单文案强绑定。
+    ///     为带 Tab 的插件主页单独调整主 Tab 标题，避免和左侧菜单文案强绑定。
     /// </summary>
-    public static class PluginUiTabTitle
-    {
+    public static class PluginUiTabTitle {
         private const string ModuleName = nameof(PluginUiTabTitle);
         private const string GenericUiAssemblyName = "Emby.Web.GenericUI";
         private const string UiPagesManagerTypeName = "Emby.Web.GenericUI.Control.UIPagesManager";
@@ -34,25 +32,19 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && isPatched;
 
-        public static void Initialize(ILogger pluginLogger)
-        {
-            if (harmony != null)
-            {
-                return;
-            }
+        public static void Initialize(ILogger pluginLogger) {
+            if (harmony != null) return;
 
             logger = pluginLogger;
 
-            try
-            {
+            try {
                 var genericUiAssembly = Assembly.Load(GenericUiAssemblyName);
                 var assemblyVersion = genericUiAssembly?.GetName().Version;
                 var uiPagesManagerType = genericUiAssembly?.GetType(UiPagesManagerTypeName, false);
                 uiViewInfoType = genericUiAssembly?.GetType(UiViewInfoTypeName, false);
                 uiTabPageInfoType = genericUiAssembly?.GetType(UiTabPageInfoTypeName, false);
 
-                if (uiPagesManagerType == null || uiViewInfoType == null || uiTabPageInfoType == null)
-                {
+                if (uiPagesManagerType == null || uiViewInfoType == null || uiTabPageInfoType == null) {
                     PatchLog.InitFailed(logger, ModuleName, "Emby.Web.GenericUI 关键类型缺失");
                     return;
                 }
@@ -60,8 +52,7 @@ namespace MediaInfoKeeper.Patch
                 addTabPageInformationMethod = PatchMethodResolver.Resolve(
                     uiPagesManagerType,
                     assemblyVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "uipagesmanager-addtabpageinformation-exact",
                         MethodName = "AddTabPageInformation",
                         BindingFlags = BindingFlags.Public | BindingFlags.Instance,
@@ -72,8 +63,7 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "PluginUiTabTitle.AddTabPageInformation");
 
-                uiTabPageInfoConstructor = uiTabPageInfoType.GetConstructor(new[]
-                {
+                uiTabPageInfoConstructor = uiTabPageInfoType.GetConstructor(new[] {
                     typeof(string),
                     typeof(string),
                     typeof(string),
@@ -82,14 +72,22 @@ namespace MediaInfoKeeper.Patch
                     typeof(int)
                 });
 
-                uiViewInfoTabPageInfosProperty = uiViewInfoType.GetProperty("TabPageInfos", BindingFlags.Public | BindingFlags.Instance);
-                uiViewInfoPageIdProperty = uiViewInfoType.GetProperty("PageId", BindingFlags.Public | BindingFlags.Instance);
-                uiTabPageInfoPageIdProperty = uiTabPageInfoType.GetProperty("PageId", BindingFlags.Public | BindingFlags.Instance);
-                uiTabPageInfoDisplayNameProperty = uiTabPageInfoType.GetProperty("DisplayName", BindingFlags.Public | BindingFlags.Instance);
-                uiTabPageInfoPluginIdProperty = uiTabPageInfoType.GetProperty("PluginId", BindingFlags.Public | BindingFlags.Instance);
-                uiTabPageInfoHrefProperty = uiTabPageInfoType.GetProperty("Href", BindingFlags.Public | BindingFlags.Instance);
-                uiTabPageInfoNavKeyProperty = uiTabPageInfoType.GetProperty("NavKey", BindingFlags.Public | BindingFlags.Instance);
-                uiTabPageInfoIndexProperty = uiTabPageInfoType.GetProperty("Index", BindingFlags.Public | BindingFlags.Instance);
+                uiViewInfoTabPageInfosProperty =
+                    uiViewInfoType.GetProperty("TabPageInfos", BindingFlags.Public | BindingFlags.Instance);
+                uiViewInfoPageIdProperty =
+                    uiViewInfoType.GetProperty("PageId", BindingFlags.Public | BindingFlags.Instance);
+                uiTabPageInfoPageIdProperty =
+                    uiTabPageInfoType.GetProperty("PageId", BindingFlags.Public | BindingFlags.Instance);
+                uiTabPageInfoDisplayNameProperty =
+                    uiTabPageInfoType.GetProperty("DisplayName", BindingFlags.Public | BindingFlags.Instance);
+                uiTabPageInfoPluginIdProperty =
+                    uiTabPageInfoType.GetProperty("PluginId", BindingFlags.Public | BindingFlags.Instance);
+                uiTabPageInfoHrefProperty =
+                    uiTabPageInfoType.GetProperty("Href", BindingFlags.Public | BindingFlags.Instance);
+                uiTabPageInfoNavKeyProperty =
+                    uiTabPageInfoType.GetProperty("NavKey", BindingFlags.Public | BindingFlags.Instance);
+                uiTabPageInfoIndexProperty =
+                    uiTabPageInfoType.GetProperty("Index", BindingFlags.Public | BindingFlags.Instance);
 
                 if (addTabPageInformationMethod == null ||
                     uiTabPageInfoConstructor == null ||
@@ -100,8 +98,7 @@ namespace MediaInfoKeeper.Patch
                     uiTabPageInfoPluginIdProperty == null ||
                     uiTabPageInfoHrefProperty == null ||
                     uiTabPageInfoNavKeyProperty == null ||
-                    uiTabPageInfoIndexProperty == null)
-                {
+                    uiTabPageInfoIndexProperty == null) {
                     PatchLog.InitFailed(logger, ModuleName, "UIPagesManager 或 UITabPageInfo 依赖成员缺失");
                     return;
                 }
@@ -109,8 +106,7 @@ namespace MediaInfoKeeper.Patch
                 harmony = new Harmony("mediainfokeeper.pluginuitabtitle");
                 Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 PatchLog.InitFailed(logger, ModuleName, ex.Message);
                 logger?.Error(ex.ToString());
                 harmony = null;
@@ -130,16 +126,11 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure()
-        {
+        public static void Configure() {
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || addTabPageInformationMethod == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || addTabPageInformationMethod == null) return;
 
             harmony.Patch(
                 addTabPageInformationMethod,
@@ -149,44 +140,27 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void AddTabPageInformationPostfix([HarmonyArgument(0)] object uiViewInfo)
-        {
-            try
-            {
-                if (uiViewInfo == null || uiViewInfoType == null || !uiViewInfoType.IsInstanceOfType(uiViewInfo))
-                {
-                    return;
-                }
+        private static void AddTabPageInformationPostfix([HarmonyArgument(0)] object uiViewInfo) {
+            try {
+                if (uiViewInfo == null || uiViewInfoType == null || !uiViewInfoType.IsInstanceOfType(uiViewInfo)) return;
 
                 var tabPageInfos = uiViewInfoTabPageInfosProperty?.GetValue(uiViewInfo) as IList;
-                if (tabPageInfos == null || tabPageInfos.Count == 0)
-                {
-                    return;
-                }
+                if (tabPageInfos == null || tabPageInfos.Count == 0) return;
 
                 var firstTab = tabPageInfos[0];
-                if (firstTab == null || !uiTabPageInfoType.IsInstanceOfType(firstTab))
-                {
-                    return;
-                }
+                if (firstTab == null || !uiTabPageInfoType.IsInstanceOfType(firstTab)) return;
 
                 var currentPageId = uiViewInfoPageIdProperty?.GetValue(uiViewInfo) as string;
                 var firstTabPageId = uiTabPageInfoPageIdProperty?.GetValue(firstTab) as string;
-                if (!IsMainPluginPageId(currentPageId) && !IsMainPluginPageId(firstTabPageId))
-                {
-                    return;
-                }
+                if (!IsMainPluginPageId(currentPageId) && !IsMainPluginPageId(firstTabPageId)) return;
 
                 var currentDisplayName = uiTabPageInfoDisplayNameProperty?.GetValue(firstTab) as string;
                 var desiredTitle = GetDesiredMainTabTitle();
                 if (string.IsNullOrWhiteSpace(desiredTitle) ||
                     string.Equals(currentDisplayName, desiredTitle, StringComparison.Ordinal))
-                {
                     return;
-                }
 
-                var replacement = uiTabPageInfoConstructor.Invoke(new object[]
-                {
+                var replacement = uiTabPageInfoConstructor.Invoke(new object[] {
                     uiTabPageInfoPageIdProperty?.GetValue(firstTab) as string,
                     desiredTitle,
                     uiTabPageInfoPluginIdProperty?.GetValue(firstTab) as string,
@@ -197,54 +171,34 @@ namespace MediaInfoKeeper.Patch
 
                 tabPageInfos[0] = replacement;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("PluginUiTabTitle postfix failed: " + ex);
             }
         }
 
-        private static string GetDesiredMainTabTitle()
-        {
+        private static string GetDesiredMainTabTitle() {
             var title = Plugin.Instance?.Options?.MainPage?.EditorTitle;
-            if (!string.IsNullOrWhiteSpace(title))
-            {
-                return title;
-            }
+            if (!string.IsNullOrWhiteSpace(title)) return title;
 
             return null;
         }
 
-        private static bool IsMainPluginPageId(string pageId)
-        {
-            if (string.IsNullOrWhiteSpace(pageId))
-            {
-                return false;
-            }
+        private static bool IsMainPluginPageId(string pageId) {
+            if (string.IsNullOrWhiteSpace(pageId)) return false;
 
             var pageName = GetMainPageControllerName();
-            if (string.IsNullOrWhiteSpace(pageName))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(pageName)) return false;
 
             return pageId.EndsWith(":" + pageName, StringComparison.Ordinal);
         }
 
-        private static string GetMainPageControllerName()
-        {
+        private static string GetMainPageControllerName() {
             var controllers = Plugin.Instance?.UIPageControllers;
-            if (controllers == null)
-            {
-                return null;
-            }
+            if (controllers == null) return null;
 
-            foreach (var controller in controllers)
-            {
+            foreach (var controller in controllers) {
                 var pageName = controller?.PageInfo?.Name;
-                if (!string.IsNullOrWhiteSpace(pageName))
-                {
-                    return pageName;
-                }
+                if (!string.IsNullOrWhiteSpace(pageName)) return pageName;
             }
 
             return null;

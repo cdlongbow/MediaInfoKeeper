@@ -95,23 +95,23 @@
 当前确认到的常见项包括：
 
 - 普通字段
-  - `bool`
-  - `string`
-  - `int`
-  - `int?`
-  - `enum`
+    - `bool`
+    - `string`
+    - `int`
+    - `int?`
+    - `enum`
 - 选择项源
-  - `EditorSelectOption`
-  - `EditorRadioOption`
+    - `EditorSelectOption`
+    - `EditorRadioOption`
 - 展示项
-  - `StatusItem`
-  - `CaptionItem`
+    - `StatusItem`
+    - `CaptionItem`
 - 交互项
-  - `ButtonItem`
+    - `ButtonItem`
 - 容器项
-  - `EditorGroup`
+    - `EditorGroup`
 - 嵌套项
-  - 属性类型本身是 `EditableOptionsBase` 或 `EditableObjectBase`
+    - 属性类型本身是 `EditableOptionsBase` 或 `EditableObjectBase`
 
 ## 你项目里已经在用的能力
 
@@ -159,7 +159,9 @@
 
 文件：
 
-- `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs.VideoCodecs.Parameters/EncoderParametersBase.cs`
+-
+
+`/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs.VideoCodecs.Parameters/EncoderParametersBase.cs`
 
 作用：
 
@@ -172,17 +174,19 @@
 
 示例文件：
 
-- `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs.VideoCodecs.Parameters/EncoderParametersH264LibX.cs`
+-
+
+`/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs.VideoCodecs.Parameters/EncoderParametersH264LibX.cs`
 
 作用：
 
 - 定义 `libx264` 的参数字段
 - 例如：
-  - `Preset`
-  - `ConstantRateFactor`
-  - `ThreadCount`
-  - `UseAbrMode`
-  - `X264Options`
+    - `Preset`
+    - `ConstantRateFactor`
+    - `ThreadCount`
+    - `UseAbrMode`
+    - `X264Options`
 
 依赖属性：
 
@@ -195,7 +199,9 @@
 
 文件：
 
-- `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.Codecs/CodecParameterService.cs`
+-
+
+`/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.Codecs/CodecParameterService.cs`
 
 作用：
 
@@ -212,7 +218,9 @@
 
 文件：
 
-- `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs/CodecManager.cs`
+-
+
+`/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs/CodecManager.cs`
 
 作用：
 
@@ -232,18 +240,21 @@
 
 关键文件：
 
-- `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Configuration.ToneMapping/ToneMapOptions.cs`
-- `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.ToneMap/ToneMapOptionsService.cs`
+-
+
+`/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Configuration.ToneMapping/ToneMapOptions.cs`
+-
+`/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.ToneMap/ToneMapOptionsService.cs`
 
 特点：
 
 - 顶层仍然是 `EditableOptionsBase`
 - 内部大量使用嵌套配置组
-  - `SoftwareToneMapOptions`
-  - `HardwareToneMapGroup`
-  - `NvidiaToneMapOptions`
-  - `QuickSyncToneMapOptions`
-  - `VaapiToneMapOptions`
+    - `SoftwareToneMapOptions`
+    - `HardwareToneMapGroup`
+    - `NvidiaToneMapOptions`
+    - `QuickSyncToneMapOptions`
+    - `VaapiToneMapOptions`
 - 通过 `[VisibleCondition]` 控制不同硬件配置块是否显示
 
 这说明：
@@ -285,19 +296,29 @@
 如果后面要继续研究配置页，建议优先看这几类：
 
 - 插件基础配置页
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/MediaBrowser.Controller_4.9.3.0/MediaBrowser.Controller.Plugins.Internal/PluginOptionsPageView.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/MediaBrowser.Controller_4.9.3.0/MediaBrowser.Controller.Plugins.Internal/PluginPageController.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/MediaBrowser.Controller_4.9.3.0/MediaBrowser.Controller.Plugins.Internal/PluginOptionsPageView.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/MediaBrowser.Controller_4.9.3.0/MediaBrowser.Controller.Plugins.Internal/PluginPageController.cs`
 - GenericUI 页面宿主
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Web.GenericUI_4.9.3.0/Emby.Web.GenericUI.Control.PageHosts/PageControllerHostBase.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Web.GenericUI_4.9.3.0/Emby.Web.GenericUI.Control.ViewHosts/PluginPageViewHost.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Web.GenericUI_4.9.3.0/Emby.Web.GenericUI.Control.ViewHosts/PluginDialogViewHost.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Web.GenericUI_4.9.3.0/Emby.Web.GenericUI.Control.PageHosts/PageControllerHostBase.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Web.GenericUI_4.9.3.0/Emby.Web.GenericUI.Control.ViewHosts/PluginPageViewHost.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Web.GenericUI_4.9.3.0/Emby.Web.GenericUI.Control.ViewHosts/PluginDialogViewHost.cs`
 - 编码器参数页
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.Codecs/CodecParameterService.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs/CodecManager.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs.VideoCodecs.Parameters/EncoderParametersBase.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.Codecs/CodecParameterService.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs/CodecManager.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Codecs.VideoCodecs.Parameters/EncoderParametersBase.cs`
 - 色调映射配置页
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.ToneMap/ToneMapOptionsService.cs`
-  - `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Configuration.ToneMapping/ToneMapOptions.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Api.ToneMap/ToneMapOptionsService.cs`
+  -
+  `/Users/honue/Documents/Emby/dlls/4.9.3.0/source/Emby.Server.MediaEncoding_4.9.3.0/Emby.Server.MediaEncoding.Configuration.ToneMapping/ToneMapOptions.cs`
 
 ## 一句话总结
 

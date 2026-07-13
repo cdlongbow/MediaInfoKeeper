@@ -9,14 +9,12 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.MediaInfo;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 美化 PlaybackInfo 返回给客户端的多版本媒体源名称。
+    ///     美化 PlaybackInfo 返回给客户端的多版本媒体源名称。
     /// </summary>
-    public static class PlaybackMediaSourceName
-    {
-        private static readonly object InitLock = new object();
+    public static class PlaybackMediaSourceName {
+        private static readonly object InitLock = new();
 
         private static Harmony harmony;
         private static ILogger logger;
@@ -26,40 +24,35 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
-        public static void Initialize(ILogger pluginLogger, bool enablePlaybackMediaSourceName)
-        {
-            lock (InitLock)
-            {
+        public static void Initialize(ILogger pluginLogger, bool enablePlaybackMediaSourceName) {
+            lock (InitLock) {
                 logger = pluginLogger;
                 isEnabled = enablePlaybackMediaSourceName;
-                if (harmony != null)
-                {
+                if (harmony != null) {
                     Configure(enablePlaybackMediaSourceName);
                     return;
                 }
 
-                try
-                {
+                try {
                     var mediaEncoding = Assembly.Load("Emby.Server.MediaEncoding");
                     var mediaInfoServiceType = mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.MediaInfoService");
-                    var getPostedPlaybackInfoType = mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.GetPostedPlaybackInfo");
+                    var getPostedPlaybackInfoType =
+                        mediaEncoding?.GetType("Emby.Server.MediaEncoding.Api.GetPostedPlaybackInfo");
 
-                    if (mediaInfoServiceType == null || getPostedPlaybackInfoType == null)
-                    {
-                        PatchLog.InitFailed(logger, nameof(PlaybackMediaSourceName), "未找到 MediaInfoService/GetPostedPlaybackInfo 类型");
+                    if (mediaInfoServiceType == null || getPostedPlaybackInfoType == null) {
+                        PatchLog.InitFailed(logger, nameof(PlaybackMediaSourceName),
+                            "未找到 MediaInfoService/GetPostedPlaybackInfo 类型");
                         return;
                     }
 
                     playbackInfoEntry = PatchMethodResolver.Resolve(
                         mediaInfoServiceType,
                         mediaEncoding.GetName().Version,
-                        new MethodSignatureProfile
-                        {
+                        new MethodSignatureProfile {
                             Name = "playbackinfo-mediasource-name-entry-exact",
                             MethodName = "GetPlaybackInfo",
                             BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                            ParameterTypes = new[]
-                            {
+                            ParameterTypes = new[] {
                                 getPostedPlaybackInfoType,
                                 typeof(bool),
                                 typeof(string),
@@ -70,8 +63,7 @@ namespace MediaInfoKeeper.Patch
                         logger,
                         "PlaybackMediaSourceName.MediaInfoService.GetPlaybackInfo");
 
-                    if (playbackInfoEntry == null)
-                    {
+                    if (playbackInfoEntry == null) {
                         PatchLog.InitFailed(logger, nameof(PlaybackMediaSourceName), "未找到 GetPlaybackInfo");
                         return;
                     }
@@ -79,13 +71,9 @@ namespace MediaInfoKeeper.Patch
                     harmony = new Harmony("mediainfokeeper.playbackmediasourcename");
                     PatchLog.Patched(logger, nameof(PlaybackMediaSourceName), playbackInfoEntry);
 
-                    if (isEnabled)
-                    {
-                        Patch();
-                    }
+                    if (isEnabled) Patch();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     PatchLog.InitFailed(logger, nameof(PlaybackMediaSourceName), ex.Message);
                     logger?.Error("PlaybackMediaSourceName 初始化异常：{0}", ex);
                     harmony = null;
@@ -94,33 +82,20 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enablePlaybackMediaSourceName)
-        {
-            lock (InitLock)
-            {
+        public static void Configure(bool enablePlaybackMediaSourceName) {
+            lock (InitLock) {
                 isEnabled = enablePlaybackMediaSourceName;
-                if (harmony == null)
-                {
-                    return;
-                }
+                if (harmony == null) return;
 
                 if (isEnabled)
-                {
                     Patch();
-                }
                 else
-                {
                     Unpatch();
-                }
             }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || playbackInfoEntry == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || playbackInfoEntry == null) return;
 
             harmony.Patch(
                 playbackInfoEntry,
@@ -128,80 +103,49 @@ namespace MediaInfoKeeper.Patch
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null || playbackInfoEntry == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null || playbackInfoEntry == null) return;
 
             harmony.Unpatch(playbackInfoEntry, HarmonyPatchType.Postfix, harmony.Id);
             isPatched = false;
         }
 
         [HarmonyPostfix]
-        private static void GetPlaybackInfoPostfix(ref Task<PlaybackInfoResponse> __result)
-        {
-            if (!isEnabled || __result == null)
-            {
-                return;
-            }
+        private static void GetPlaybackInfoPostfix(ref Task<PlaybackInfoResponse> __result) {
+            if (!isEnabled || __result == null) return;
 
             __result = BeautifyAsync(__result);
         }
 
-        private static async Task<PlaybackInfoResponse> BeautifyAsync(Task<PlaybackInfoResponse> task)
-        {
+        private static async Task<PlaybackInfoResponse> BeautifyAsync(Task<PlaybackInfoResponse> task) {
             var response = await task.ConfigureAwait(false);
-            if (!isEnabled || response?.MediaSources == null)
-            {
-                return response;
-            }
+            if (!isEnabled || response?.MediaSources == null) return response;
 
-            foreach (var source in response.MediaSources)
-            {
-                TryApplyDisplayName(source);
-            }
+            foreach (var source in response.MediaSources) TryApplyDisplayName(source);
 
             return response;
         }
 
-        private static void TryApplyDisplayName(MediaSourceInfo source)
-        {
-            try
-            {
+        private static void TryApplyDisplayName(MediaSourceInfo source) {
+            try {
                 var displayName = BuildDisplayName(source);
-                if (!string.IsNullOrWhiteSpace(displayName))
-                {
-                    source.Name = displayName;
-                }
+                if (!string.IsNullOrWhiteSpace(displayName)) source.Name = displayName;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Debug("PlaybackMediaSourceName failed: {0}", ex.Message);
             }
         }
 
-        private static string BuildDisplayName(MediaSourceInfo source)
-        {
+        private static string BuildDisplayName(MediaSourceInfo source) {
             var videoStream = source?.VideoStream ??
-                source?.MediaStreams?.FirstOrDefault(i => i.Type == MediaStreamType.Video);
-            if (videoStream == null)
-            {
-                return null;
-            }
+                              source?.MediaStreams?.FirstOrDefault(i => i.Type == MediaStreamType.Video);
+            if (videoStream == null) return null;
 
             var bitrate = GetBitrate(source);
-            if (!bitrate.HasValue || bitrate.Value <= 0)
-            {
-                return null;
-            }
+            if (!bitrate.HasValue || bitrate.Value <= 0) return null;
 
             var resolution = GetResolutionLabel(videoStream);
-            if (string.IsNullOrWhiteSpace(resolution))
-            {
-                return null;
-            }
+            if (string.IsNullOrWhiteSpace(resolution)) return null;
 
             var range = GetVideoRangeLabel(videoStream);
             var bitrateLabel = FormatBitrate(bitrate.Value);
@@ -211,12 +155,8 @@ namespace MediaInfoKeeper.Patch
                 : $"{resolution} {range} - {bitrateLabel}";
         }
 
-        private static long? GetBitrate(MediaSourceInfo source)
-        {
-            if (source?.Bitrate > 0)
-            {
-                return source.Bitrate.Value;
-            }
+        private static long? GetBitrate(MediaSourceInfo source) {
+            if (source?.Bitrate > 0) return source.Bitrate.Value;
 
             var streamBitrate = source?.MediaStreams?
                 .Where(i => !i.IsExternal)
@@ -226,43 +166,25 @@ namespace MediaInfoKeeper.Patch
             return streamBitrate > 0 ? streamBitrate : null;
         }
 
-        private static string GetResolutionLabel(MediaStream videoStream)
-        {
+        private static string GetResolutionLabel(MediaStream videoStream) {
             var width = videoStream.Width.GetValueOrDefault();
             var height = videoStream.Height.GetValueOrDefault();
 
-            if (width >= 3800 || height >= 2000)
-            {
-                return "4K";
-            }
+            if (width >= 3800 || height >= 2000) return "4K";
 
-            if (height >= 1440)
-            {
-                return "1440p";
-            }
+            if (height >= 1440) return "1440p";
 
-            if (height >= 1080)
-            {
-                return "1080p";
-            }
+            if (height >= 1080) return "1080p";
 
-            if (height >= 720)
-            {
-                return "720p";
-            }
+            if (height >= 720) return "720p";
 
-            if (height > 0)
-            {
-                return $"{height}p";
-            }
+            if (height > 0) return $"{height}p";
 
             return null;
         }
 
-        private static string GetVideoRangeLabel(MediaStream videoStream)
-        {
-            if (videoStream.ExtendedVideoType == ExtendedVideoTypes.DolbyVision)
-            {
+        private static string GetVideoRangeLabel(MediaStream videoStream) {
+            if (videoStream.ExtendedVideoType == ExtendedVideoTypes.DolbyVision) {
                 var profile = GetDolbyVisionProfileLabel(videoStream.ExtendedVideoSubType);
                 return string.IsNullOrWhiteSpace(profile) ? "DV" : $"DV {profile}";
             }
@@ -270,10 +192,8 @@ namespace MediaInfoKeeper.Patch
             return null;
         }
 
-        private static string GetDolbyVisionProfileLabel(ExtendedVideoSubTypes subType)
-        {
-            switch (subType)
-            {
+        private static string GetDolbyVisionProfileLabel(ExtendedVideoSubTypes subType) {
+            switch (subType) {
                 case ExtendedVideoSubTypes.DoviProfile02:
                     return "P2";
                 case ExtendedVideoSubTypes.DoviProfile10:
@@ -303,8 +223,7 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        private static string FormatBitrate(long bitrate)
-        {
+        private static string FormatBitrate(long bitrate) {
             var mbps = Math.Max(1, (int)Math.Round(bitrate / 1000000d, MidpointRounding.AwayFromZero));
             return $"{mbps} Mbps";
         }

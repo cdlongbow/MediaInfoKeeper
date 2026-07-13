@@ -1,32 +1,27 @@
-namespace MediaInfoKeeper.Options.Store
-{
-    using MediaInfoKeeper.Options;
+using Emby.Web.GenericEdit.Elements;
 
-    internal class NetWorkOptionsStore
-    {
+namespace MediaInfoKeeper.Options.Store {
+    internal class NetWorkOptionsStore {
         private readonly PluginOptionsStore pluginOptionsStore;
 
-        public NetWorkOptionsStore(PluginOptionsStore pluginOptionsStore)
-        {
+        public NetWorkOptionsStore(PluginOptionsStore pluginOptionsStore) {
             this.pluginOptionsStore = pluginOptionsStore;
         }
 
-        public NetWorkOptions GetOptions()
-        {
-            var options = this.pluginOptionsStore.GetOptionsForUi();
+        public NetWorkOptions GetOptions() {
+            var options = pluginOptionsStore.GetOptionsForUi();
             var networkOptions = options.GetNetWorkOptions();
-            networkOptions.ProxyLatencyStatus = new Emby.Web.GenericEdit.Elements.StatusItem();
+            networkOptions.ProxyLatencyStatus = new StatusItem();
             networkOptions.ShowProxyLatencyStatus = false;
-            networkOptions.TmdbReplacementStatus = new Emby.Web.GenericEdit.Elements.StatusItem();
+            networkOptions.TmdbReplacementStatus = new StatusItem();
             networkOptions.ShowTmdbReplacementStatus = false;
             return networkOptions;
         }
 
-        public void SetOptions(NetWorkOptions options)
-        {
-            var pluginOptions = this.pluginOptionsStore.GetOptions();
+        public void SetOptions(NetWorkOptions options) {
+            var pluginOptions = pluginOptionsStore.GetOptions();
             pluginOptions.NetWork = options ?? new NetWorkOptions();
-            this.pluginOptionsStore.SetOptions(pluginOptions);
+            pluginOptionsStore.SetOptions(pluginOptions);
         }
     }
 }

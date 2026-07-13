@@ -432,7 +432,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             return Promise.resolve(items);
         }
 
-        const query = new URLSearchParams({ Ids: ids.join(',') }).toString();
+        const query = new URLSearchParams({Ids: ids.join(',')}).toString();
         const url = `${apiClient.getUrl('Library/VirtualFolders/Query')}?${query}`;
 
         return apiClient.ajax({
@@ -493,7 +493,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             return null;
         }
 
-        return { introStartTicks, introEndTicks, creditsStartTicks };
+        return {introStartTicks, introEndTicks, creditsStartTicks};
     }
 
     function getExistingMarkerTicks(apiClient, episodeItem) {
@@ -508,7 +508,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
 
         const userId = typeof apiClient.getCurrentUserId === 'function' ? apiClient.getCurrentUserId() : null;
         const endpoint = userId ? `Users/${userId}/Items/${episodeItem.Id}` : `Items/${episodeItem.Id}`;
-        const query = new URLSearchParams({ Fields: 'Chapters' }).toString();
+        const query = new URLSearchParams({Fields: 'Chapters'}).toString();
         const url = `${apiClient.getUrl(endpoint)}?${query}`;
 
         return apiClient.ajax({
@@ -537,7 +537,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             }).then(function () {
                 loading.show();
                 const apiClient = connectionManager.currentApiClient();
-                return postJson(apiClient, 'MediaInfoKeeper/Items/ExtractMediaInfo', { Ids: ids }).then(function (result) {
+                return postJson(apiClient, 'MediaInfoKeeper/Items/ExtractMediaInfo', {Ids: ids}).then(function (result) {
                     toast(getResultMessage(result, 'extract'));
                 }).catch(function (err) {
                     toast(getErrorMessage('extract', err));
@@ -561,7 +561,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             }).then(function () {
                 loading.show();
                 const apiClient = connectionManager.currentApiClient();
-                return postJson(apiClient, 'MediaInfoKeeper/Items/DeleteMediaInfoPersist', { Ids: ids }).then(function (result) {
+                return postJson(apiClient, 'MediaInfoKeeper/Items/DeleteMediaInfoPersist', {Ids: ids}).then(function (result) {
                     toast(getResultMessage(result, 'delete'));
                 }).catch(function (err) {
                     toast(getErrorMessage('delete', err));
@@ -585,7 +585,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             }).then(function () {
                 loading.show();
                 const apiClient = connectionManager.currentApiClient();
-                return postJson(apiClient, 'MediaInfoKeeper/Items/ScanIntro', { Ids: ids }).then(function (result) {
+                return postJson(apiClient, 'MediaInfoKeeper/Items/ScanIntro', {Ids: ids}).then(function (result) {
                     toast(getResultMessage(result, 'scan_intro'));
                 }).catch(function (err) {
                     toast(getErrorMessage('scan_intro', err));
@@ -609,7 +609,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             }).then(function () {
                 loading.show();
                 const apiClient = connectionManager.currentApiClient();
-                return postJson(apiClient, 'MediaInfoKeeper/Items/ScanExternalFiles', { Ids: ids }).then(function (result) {
+                return postJson(apiClient, 'MediaInfoKeeper/Items/ScanExternalFiles', {Ids: ids}).then(function (result) {
                     toast(getResultMessage(result, 'scan_external_files'));
                 }).catch(function (err) {
                     toast(getErrorMessage('scan_external_files', err));
@@ -628,7 +628,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
             const locale = (globalize.getCurrentLocale() || '').toLowerCase();
             const selectedItems = Array.isArray(items) ? items.filter(Boolean) : [];
             const defaultTimeValue = '00:00:00.000';
-            
+
             function timeToSeconds(timeStr) {
                 const parts = timeStr.split(':');
                 if (parts.length === 3) {
@@ -639,7 +639,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
                 }
                 return 0;
             }
-            
+
             return new Promise(function (resolve) {
                 const dialogHtml = `
                     <div class="dialogContainer" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999;">
@@ -735,7 +735,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
                     loading.show();
                     const apiClient = connectionManager.currentApiClient();
                     return postJson(apiClient, 'MediaInfoKeeper/Items/SetIntro', {
-                        Ids: ids, 
+                        Ids: ids,
                         IntroStartTicks: introStartTicks,
                         IntroEndTicks: introEndTicks,
                         CreditsStartTicks: creditsStartTicks
@@ -759,7 +759,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
 
             const commandName = getClearIntroCommandName();
             const locale = (globalize.getCurrentLocale() || '').toLowerCase();
-            
+
             return new Promise(function (resolve) {
                 const dialogHtml = `
                     <div class="dialogContainer" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999;">
@@ -790,7 +790,7 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
                     document.body.removeChild(dialog);
                     loading.show();
                     const apiClient = connectionManager.currentApiClient();
-                    return postJson(apiClient, 'MediaInfoKeeper/Items/ClearIntro', { Ids: ids }).then(function (result) {
+                    return postJson(apiClient, 'MediaInfoKeeper/Items/ClearIntro', {Ids: ids}).then(function (result) {
                         toast(getResultMessage(result, 'clear_intro'));
                         resolve();
                     }).catch(function (err) {
@@ -850,28 +850,42 @@ define(['connectionManager', 'globalize', 'loading', 'toast', 'confirm'], functi
                 const commands = [];
 
                 if (libraryItems.length === 1) {
-                    commands.push({ name: getCopyLibraryCommandName(), id: 'copy_library', icon: 'content_copy' });
-                    commands.push({ name: getCommandName(), id: 'extract_media_info', icon: '4k' });
-                    commands.push({ name: getDeleteCommandName(), id: 'delete_media_info_persist', icon: 'delete_forever' });
+                    commands.push({name: getCopyLibraryCommandName(), id: 'copy_library', icon: 'content_copy'});
+                    commands.push({name: getCommandName(), id: 'extract_media_info', icon: '4k'});
+                    commands.push({
+                        name: getDeleteCommandName(),
+                        id: 'delete_media_info_persist',
+                        icon: 'delete_forever'
+                    });
                 }
 
                 if (!items.length) {
                     return commands;
                 }
 
-                commands.push({ name: getCommandName(), id: 'extract_media_info', icon: '4k' });
-                commands.push({ name: getDeleteCommandName(), id: 'delete_media_info_persist', icon: 'delete_forever' });
+                commands.push({name: getCommandName(), id: 'extract_media_info', icon: '4k'});
+                commands.push({name: getDeleteCommandName(), id: 'delete_media_info_persist', icon: 'delete_forever'});
 
-                const introSupportedTypes = { Episode: true, Season: true, Series: true };
+                const introSupportedTypes = {Episode: true, Season: true, Series: true};
                 if (items.every(item => introSupportedTypes[item.Type])) {
-                    commands.push({ name: getScanIntroCommandName(), id: 'scan_intro', icon: 'graphic_eq' });
-                    commands.push({ name: getSetIntroCommandName(), id: 'set_intro', icon: 'schedule' });
-                    commands.push({ name: getClearIntroCommandName(), id: 'clear_intro', icon: 'delete_forever' });
+                    commands.push({name: getScanIntroCommandName(), id: 'scan_intro', icon: 'graphic_eq'});
+                    commands.push({name: getSetIntroCommandName(), id: 'set_intro', icon: 'schedule'});
+                    commands.push({name: getClearIntroCommandName(), id: 'clear_intro', icon: 'delete_forever'});
                 }
 
-                const externalFilesSupportedTypes = { Movie: true, Episode: true, Season: true, Series: true, Video: true };
+                const externalFilesSupportedTypes = {
+                    Movie: true,
+                    Episode: true,
+                    Season: true,
+                    Series: true,
+                    Video: true
+                };
                 if (items.every(item => externalFilesSupportedTypes[item.Type])) {
-                    commands.push({ name: getScanExternalFilesCommandName(), id: 'scan_external_files', icon: 'subtitles' });
+                    commands.push({
+                        name: getScanExternalFilesCommandName(),
+                        id: 'scan_external_files',
+                        icon: 'subtitles'
+                    });
                 }
 
                 return commands;

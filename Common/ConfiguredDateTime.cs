@@ -1,9 +1,7 @@
 using System;
 
-namespace MediaInfoKeeper.Common
-{
-    internal static class ConfiguredDateTime
-    {
+namespace MediaInfoKeeper.Common {
+    internal static class ConfiguredDateTime {
         private static readonly TimeZoneInfo ConfiguredTimeZone = ResolveTimeZone();
 
         public static TimeSpan Offset => ConfiguredTimeZone.GetUtcOffset(DateTime.UtcNow);
@@ -16,16 +14,13 @@ namespace MediaInfoKeeper.Common
 
         public static DateTime Today => Now.Date;
 
-        public static DateTimeOffset ToConfiguredOffset(DateTimeOffset value)
-        {
+        public static DateTimeOffset ToConfiguredOffset(DateTimeOffset value) {
             return TimeZoneInfo.ConvertTime(value, ConfiguredTimeZone);
         }
 
-        public static DateTimeOffset ToConfiguredOffset(DateTime value)
-        {
+        public static DateTimeOffset ToConfiguredOffset(DateTime value) {
             DateTimeOffset source;
-            switch (value.Kind)
-            {
+            switch (value.Kind) {
                 case DateTimeKind.Utc:
                     source = new DateTimeOffset(value, TimeSpan.Zero);
                     break;
@@ -40,48 +35,29 @@ namespace MediaInfoKeeper.Common
             return TimeZoneInfo.ConvertTime(source, ConfiguredTimeZone);
         }
 
-        private static TimeZoneInfo ResolveTimeZone()
-        {
+        private static TimeZoneInfo ResolveTimeZone() {
             var tzFromEnv = Environment.GetEnvironmentVariable("TZ")?.Trim();
-            if (!string.IsNullOrWhiteSpace(tzFromEnv))
-            {
+            if (!string.IsNullOrWhiteSpace(tzFromEnv)) {
                 var fromEnv = TryFindTimeZone(tzFromEnv);
-                if (fromEnv != null)
-                {
-                    return fromEnv;
-                }
+                if (fromEnv != null) return fromEnv;
             }
 
             var shanghai = TryFindTimeZone("Asia/Shanghai") ?? TryFindTimeZone("China Standard Time");
-            if (shanghai != null)
-            {
-                return shanghai;
-            }
+            if (shanghai != null) return shanghai;
 
-            return TimeZoneInfo.CreateCustomTimeZone(
-                "UTC+08",
-                TimeSpan.FromHours(8),
-                "UTC+08",
-                "UTC+08");
+            return TimeZoneInfo.CreateCustomTimeZone("UTC+08", TimeSpan.FromHours(8), "UTC+08", "UTC+08");
         }
 
-        private static TimeZoneInfo TryFindTimeZone(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                return null;
-            }
+        private static TimeZoneInfo TryFindTimeZone(string id) {
+            if (string.IsNullOrWhiteSpace(id)) return null;
 
-            try
-            {
+            try {
                 return TimeZoneInfo.FindSystemTimeZoneById(id);
             }
-            catch (TimeZoneNotFoundException)
-            {
+            catch (TimeZoneNotFoundException) {
                 return null;
             }
-            catch (InvalidTimeZoneException)
-            {
+            catch (InvalidTimeZoneException) {
                 return null;
             }
         }

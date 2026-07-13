@@ -1,22 +1,16 @@
-namespace MediaInfoKeeper.Options.Store
-{
-    using Emby.Web.GenericEdit.Elements;
-    using MediaBrowser.Model.GenericEdit;
-    using MediaInfoKeeper.Options;
-    using MediaInfoKeeper.Services;
+using Emby.Web.GenericEdit.Elements;
+using MediaInfoKeeper.Services;
 
-    internal class MainPageOptionsStore
-    {
+namespace MediaInfoKeeper.Options.Store {
+    internal class MainPageOptionsStore {
         private readonly PluginOptionsStore pluginOptionsStore;
 
-        public MainPageOptionsStore(PluginOptionsStore pluginOptionsStore)
-        {
+        public MainPageOptionsStore(PluginOptionsStore pluginOptionsStore) {
             this.pluginOptionsStore = pluginOptionsStore;
         }
 
-        public MainPageOptions GetOptions()
-        {
-            var options = this.pluginOptionsStore.GetOptionsForUi();
+        public MainPageOptions GetOptions() {
+            var options = pluginOptionsStore.GetOptionsForUi();
             var mainPage = options.MainPage ?? new MainPageOptions();
             mainPage.ScheduledTasksEditor ??= new MainPageOptions.ScheduledTaskEditorOptions();
             mainPage.ShowRefreshQueueStatus = options.Enhance?.TakeOverRefreshQueue ?? true;
@@ -24,15 +18,13 @@ namespace MediaInfoKeeper.Options.Store
             return mainPage;
         }
 
-        public void SetOptions(MainPageOptions options)
-        {
-            var pluginOptions = this.pluginOptionsStore.GetOptions();
+        public void SetOptions(MainPageOptions options) {
+            var pluginOptions = pluginOptionsStore.GetOptions();
             pluginOptions.MainPage = options ?? new MainPageOptions();
-            this.pluginOptionsStore.SetOptions(pluginOptions);
+            pluginOptionsStore.SetOptions(pluginOptions);
         }
 
-        private static StatusItem BuildRefreshQueueStatus()
-        {
+        private static StatusItem BuildRefreshQueueStatus() {
             var metadataStats = MetaDataRunner.GetQueueStats();
             var mediaInfoStats = MediaInfoRunner.GetQueueStats();
 

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Notifications;
-using MediaInfoKeeper.Patch;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -12,44 +11,34 @@ using MediaBrowser.Controller.Notifications;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Session;
+using MediaInfoKeeper.Patch;
 
-namespace MediaInfoKeeper.Common
-{
-    public sealed class NotificationApi
-    {
+namespace MediaInfoKeeper.Common {
+    public sealed class NotificationApi {
         private const long DefaultDisplayMessageTimeoutMs = 800;
         private readonly INotificationManager notificationManager;
-        private readonly IUserManager userManager;
         private readonly ISessionManager sessionManager;
+        private readonly IUserManager userManager;
 
         public NotificationApi(
             INotificationManager notificationManager,
             IUserManager userManager,
-            ISessionManager sessionManager)
-        {
+            ISessionManager sessionManager) {
             this.notificationManager = notificationManager;
             this.userManager = userManager;
             this.sessionManager = sessionManager;
         }
 
-        public void DeepDeleteSendNotification(BaseItem item, HashSet<string> mountPaths)
-        {
-            if (mountPaths == null || mountPaths.Count == 0)
-            {
-                return;
-            }
+        public void DeepDeleteSendNotification(BaseItem item, HashSet<string> mountPaths) {
+            if (mountPaths == null || mountPaths.Count == 0) return;
 
             var paths = mountPaths
                 .Where(p => !string.IsNullOrWhiteSpace(p))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
-            if (paths.Length == 0)
-            {
-                return;
-            }
+            if (paths.Length == 0) return;
 
-            var request = new NotificationRequest
-            {
+            var request = new NotificationRequest {
                 Title = Plugin.PluginName + " - 深度删除",
                 EventId = "deep.delete",
                 Item = item,
@@ -61,25 +50,18 @@ namespace MediaInfoKeeper.Common
                     string.Join(Environment.NewLine, paths))
             };
 
-            this.notificationManager.SendNotification(request);
+            notificationManager.SendNotification(request);
         }
 
-        public int LibraryNewSendNotification(Series series, Episode episode, IReadOnlyCollection<User> users)
-        {
-            if (series == null || episode == null || users == null || users.Count == 0)
-            {
-                return 0;
-            }
+        public int LibraryNewSendNotification(Series series, Episode episode, IReadOnlyCollection<User> users) {
+            if (series == null || episode == null || users == null || users.Count == 0) return 0;
 
             var useSystemLibraryNew = Plugin.Instance?.Options?.Enhance?.TakeOverSystemLibraryNew == true;
             var eventId = useSystemLibraryNew ? "library.new" : "favorites.update";
             var sentCount = 0;
-            using (useSystemLibraryNew ? NotificationSystem.BeginCustomLibraryNewScope() : null)
-            {
-                foreach (var user in users)
-                {
-                    var request = new NotificationRequest
-                    {
+            using (useSystemLibraryNew ? NotificationSystem.BeginCustomLibraryNewScope() : null) {
+                foreach (var user in users) {
+                    var request = new NotificationRequest {
                         Date = ConfiguredDateTime.NowOffset,
                         EventId = eventId,
                         User = user,
@@ -87,7 +69,7 @@ namespace MediaInfoKeeper.Common
                         Description = series.Name
                     };
 
-                    this.notificationManager.SendNotification(request);
+                    notificationManager.SendNotification(request);
                     sentCount++;
                 }
             }
@@ -95,36 +77,27 @@ namespace MediaInfoKeeper.Common
             return sentCount;
         }
 
-        public async Task IntroUpdateSendNotification(Episode episode, SessionInfo session, string introStartTime, string introEndTime)
-        {
-            if (episode == null || session == null)
-            {
-                return;
-            }
+        public async Task IntroUpdateSendNotification(Episode episode, SessionInfo session, string introStartTime,
+            string introEndTime) {
+            if (episode == null || session == null) return;
 
-            if (Plugin.Instance?.Options?.Enhance?.EnableNotificationEnhance != true)
-            {
-                return;
-            }
+            if (Plugin.Instance?.Options?.Enhance?.EnableNotificationEnhance != true) return;
 
-            if (CanDisplayMessage(session))
-            {
-                var message = new MessageCommand
-                {
+            if (CanDisplayMessage(session)) {
+                var message = new MessageCommand {
                     Header = Plugin.PluginName,
                     Text = $"{episode.FindSeriesName()} - 片头标记已更新",
                     TimeoutMs = 500
                 };
-                await this.sessionManager
+                await sessionManager
                     .SendMessageCommand(session.Id, session.Id, message, CancellationToken.None)
                     .ConfigureAwait(false);
             }
 
-            var request = new NotificationRequest
-            {
+            var request = new NotificationRequest {
                 Title = Plugin.PluginName,
                 EventId = "introskip.update",
-                User = this.userManager.GetUserById(session.UserInternalId),
+                User = userManager.GetUserById(session.UserInternalId),
                 Item = episode,
                 Session = session,
                 Description =
@@ -134,39 +107,29 @@ namespace MediaInfoKeeper.Common
                     $"{Environment.NewLine}{Environment.NewLine}by {session.UserName}"
             };
 
-            this.notificationManager.SendNotification(request);
+            notificationManager.SendNotification(request);
         }
 
-        public async Task CreditsUpdateSendNotification(Episode episode, SessionInfo session, string creditsDuration)
-        {
-            if (episode == null || session == null)
-            {
-                return;
-            }
+        public async Task CreditsUpdateSendNotification(Episode episode, SessionInfo session, string creditsDuration) {
+            if (episode == null || session == null) return;
 
-            if (Plugin.Instance?.Options?.Enhance?.EnableNotificationEnhance != true)
-            {
-                return;
-            }
+            if (Plugin.Instance?.Options?.Enhance?.EnableNotificationEnhance != true) return;
 
-            if (CanDisplayMessage(session))
-            {
-                var message = new MessageCommand
-                {
+            if (CanDisplayMessage(session)) {
+                var message = new MessageCommand {
                     Header = Plugin.PluginName,
                     Text = $"{episode.FindSeriesName()} - 片尾标记已更新",
                     TimeoutMs = 500
                 };
-                await this.sessionManager
+                await sessionManager
                     .SendMessageCommand(session.Id, session.Id, message, CancellationToken.None)
                     .ConfigureAwait(false);
             }
 
-            var request = new NotificationRequest
-            {
+            var request = new NotificationRequest {
                 Title = Plugin.PluginName,
                 EventId = "introskip.update",
-                User = this.userManager.GetUserById(session.UserInternalId),
+                User = userManager.GetUserById(session.UserInternalId),
                 Item = episode,
                 Session = session,
                 Description =
@@ -175,73 +138,58 @@ namespace MediaInfoKeeper.Common
                     $"{Environment.NewLine}{Environment.NewLine}by {session.UserName}"
             };
 
-            this.notificationManager.SendNotification(request);
+            notificationManager.SendNotification(request);
         }
 
-        public async Task DisplayMessage(UserDto user, string text)
-        {
-            if (user == null || string.IsNullOrWhiteSpace(user.Id) || string.IsNullOrWhiteSpace(text))
-            {
-                return;
-            }
+        public async Task DisplayMessage(UserDto user, string text) {
+            if (user == null || string.IsNullOrWhiteSpace(user.Id) || string.IsNullOrWhiteSpace(text)) return;
 
             long userInternalId;
-            try
-            {
-                userInternalId = this.userManager.GetInternalId(user.Id);
+            try {
+                userInternalId = userManager.GetInternalId(user.Id);
             }
-            catch
-            {
+            catch {
                 return;
             }
 
-            var sessions = this.sessionManager.Sessions
+            var sessions = sessionManager.Sessions
                 .Where(session => session?.UserInternalId == userInternalId && CanDisplayMessage(session))
                 .ToArray();
 
-            foreach (var session in sessions)
-            {
-                var message = new MessageCommand
-                {
+            foreach (var session in sessions) {
+                var message = new MessageCommand {
                     Header = Plugin.PluginName,
                     Text = text,
                     TimeoutMs = DefaultDisplayMessageTimeoutMs
                 };
 
-                await this.sessionManager
+                await sessionManager
                     .SendMessageCommand(session.Id, session.Id, message, CancellationToken.None)
                     .ConfigureAwait(false);
             }
         }
 
-        public async Task DisplayMessage(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return;
-            }
+        public async Task DisplayMessage(string text) {
+            if (string.IsNullOrWhiteSpace(text)) return;
 
-            var sessions = this.sessionManager.Sessions
+            var sessions = sessionManager.Sessions
                 .Where(CanDisplayMessage)
                 .ToArray();
 
-            foreach (var session in sessions)
-            {
-                var message = new MessageCommand
-                {
+            foreach (var session in sessions) {
+                var message = new MessageCommand {
                     Header = Plugin.PluginName,
                     Text = text,
                     TimeoutMs = DefaultDisplayMessageTimeoutMs
                 };
 
-                await this.sessionManager
+                await sessionManager
                     .SendMessageCommand(session.Id, session.Id, message, CancellationToken.None)
                     .ConfigureAwait(false);
             }
         }
 
-        private bool CanDisplayMessage(SessionInfo session)
-        {
+        private bool CanDisplayMessage(SessionInfo session) {
             return session?.SupportedCommands?.Contains("DisplayMessage") == true;
         }
     }

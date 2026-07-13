@@ -9,13 +9,11 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Library;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 阻止系统自动创建 BoxSets 库，并从用户视图中过滤合集入口。
+    ///     阻止系统自动创建 BoxSets 库，并从用户视图中过滤合集入口。
     /// </summary>
-    public static class NoBoxsetsAutoCreation
-    {
+    public static class NoBoxsetsAutoCreation {
         private static Harmony harmony;
         private static ILogger logger;
         private static MethodInfo ensureLibraryFolder;
@@ -25,10 +23,8 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
-        public static void Initialize(ILogger pluginLogger, bool enable)
-        {
-            if (harmony != null)
-            {
+        public static void Initialize(ILogger pluginLogger, bool enable) {
+            if (harmony != null) {
                 Configure(enable);
                 return;
             }
@@ -36,8 +32,7 @@ namespace MediaInfoKeeper.Patch
             logger = pluginLogger;
             isEnabled = enable;
 
-            try
-            {
+            try {
                 var implAssembly = Assembly.Load("Emby.Server.Implementations");
                 var implVersion = implAssembly?.GetName().Version;
 
@@ -46,8 +41,7 @@ namespace MediaInfoKeeper.Patch
                 ensureLibraryFolder = PatchMethodResolver.Resolve(
                     collectionManagerType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "collectionmanager-ensurelibraryfolder-exact",
                         MethodName = "EnsureLibraryFolder",
                         BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic,
@@ -63,14 +57,12 @@ namespace MediaInfoKeeper.Patch
                 getUserViews = PatchMethodResolver.Resolve(
                     userViewManagerType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "userviewmanager-getuserviews-exact",
                         MethodName = "GetUserViews",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
                         IsStatic = false,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             typeof(UserViewQuery),
                             typeof(User),
                             typeof(Folder[]),
@@ -82,8 +74,7 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "NoBoxsetsAutoCreation.UserViewManager.GetUserViews");
 
-                if (ensureLibraryFolder == null || getUserViews == null)
-                {
+                if (ensureLibraryFolder == null || getUserViews == null) {
                     PatchLog.InitFailed(logger, nameof(NoBoxsetsAutoCreation), "目标方法缺失");
                     return;
                 }
@@ -92,13 +83,9 @@ namespace MediaInfoKeeper.Patch
                 PatchLog.Patched(logger, nameof(NoBoxsetsAutoCreation), ensureLibraryFolder);
                 PatchLog.Patched(logger, nameof(NoBoxsetsAutoCreation), getUserViews);
 
-                if (isEnabled)
-                {
-                    Patch();
-                }
+                if (isEnabled) Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("NoBoxsetsAutoCreation 初始化失败。");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -107,74 +94,47 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enable)
-        {
+        public static void Configure(bool enable) {
             isEnabled = enable;
 
-            if (harmony == null)
-            {
-                return;
-            }
+            if (harmony == null) return;
 
             if (isEnabled)
-            {
                 Patch();
-            }
             else
-            {
                 Unpatch();
-            }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || ensureLibraryFolder == null || getUserViews == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || ensureLibraryFolder == null || getUserViews == null) return;
 
             harmony.Patch(
                 ensureLibraryFolder,
-                prefix: new HarmonyMethod(typeof(NoBoxsetsAutoCreation), nameof(EnsureLibraryFolderPrefix)));
+                new HarmonyMethod(typeof(NoBoxsetsAutoCreation), nameof(EnsureLibraryFolderPrefix)));
             harmony.Patch(
                 getUserViews,
                 postfix: new HarmonyMethod(typeof(NoBoxsetsAutoCreation), nameof(GetUserViewsPostfix)));
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null) return;
 
-            if (ensureLibraryFolder != null)
-            {
-                harmony.Unpatch(ensureLibraryFolder, HarmonyPatchType.Prefix, harmony.Id);
-            }
+            if (ensureLibraryFolder != null) harmony.Unpatch(ensureLibraryFolder, HarmonyPatchType.Prefix, harmony.Id);
 
-            if (getUserViews != null)
-            {
-                harmony.Unpatch(getUserViews, HarmonyPatchType.Postfix, harmony.Id);
-            }
+            if (getUserViews != null) harmony.Unpatch(getUserViews, HarmonyPatchType.Postfix, harmony.Id);
 
             isPatched = false;
         }
 
         [HarmonyPrefix]
-        private static bool EnsureLibraryFolderPrefix()
-        {
+        private static bool EnsureLibraryFolderPrefix() {
             return !isEnabled;
         }
 
         [HarmonyPostfix]
-        private static void GetUserViewsPostfix(ref Folder[] __result)
-        {
-            if (!isEnabled || __result == null || __result.Length == 0)
-            {
-                return;
-            }
+        private static void GetUserViewsPostfix(ref Folder[] __result) {
+            if (!isEnabled || __result == null || __result.Length == 0) return;
 
             __result = __result
                 .Where(i => !(i is CollectionFolder library) ||

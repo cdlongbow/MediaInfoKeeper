@@ -1,167 +1,143 @@
-using Emby.Web.GenericEdit.Elements;
+using System.Threading.Tasks;
 
-namespace MediaInfoKeeper.Options.View
-{
-    using System.Threading.Tasks;
-    using MediaInfoKeeper.Options;
-
-    internal sealed class UpdatePluginTaskDialogView : MainPageTaskDialogView<MainPageOptions.UpdatePluginTaskEditorOptions>
-    {
+namespace MediaInfoKeeper.Options.View {
+    internal sealed class
+        UpdatePluginTaskDialogView : MainPageTaskDialogView<MainPageOptions.UpdatePluginTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public UpdatePluginTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.UpdatePlugin ?? new MainPageOptions.UpdatePluginTaskEditorOptions(), "更新插件")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.UpdatePlugin ?? new MainPageOptions.UpdatePluginTaskEditorOptions(),
+                "更新插件") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.UpdatePlugin = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.UpdatePlugin = Options;
         }
     }
 
-    internal sealed class RefreshRecentMetadataTaskDialogView : MainPageTaskDialogView<MainPageOptions.RefreshRecentMetadataTaskEditorOptions>
-    {
+    internal sealed class
+        RefreshRecentMetadataTaskDialogView : MainPageTaskDialogView<
+        MainPageOptions.RefreshRecentMetadataTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public RefreshRecentMetadataTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.RefreshRecentMetadata ?? new MainPageOptions.RefreshRecentMetadataTaskEditorOptions(), "刷新媒体元数据")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.RefreshRecentMetadata ??
+                new MainPageOptions.RefreshRecentMetadataTaskEditorOptions(), "刷新媒体元数据") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.RefreshRecentMetadata = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.RefreshRecentMetadata = Options;
         }
     }
 
-    internal sealed class ScanRecentIntroTaskDialogView : MainPageTaskDialogView<MainPageOptions.ScanRecentIntroTaskEditorOptions>
-    {
+    internal sealed class
+        ScanRecentIntroTaskDialogView : MainPageTaskDialogView<MainPageOptions.ScanRecentIntroTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public ScanRecentIntroTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.ScanRecentIntro ?? new MainPageOptions.ScanRecentIntroTaskEditorOptions(), "扫描片头")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.ScanRecentIntro ?? new MainPageOptions.ScanRecentIntroTaskEditorOptions(),
+                "扫描片头") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.ScanRecentIntro = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.ScanRecentIntro = Options;
         }
     }
 
-    internal sealed class SubmitTheIntroDbMarkersTaskDialogView : MainPageTaskDialogView<MainPageOptions.SubmitTheIntroDbMarkersTaskEditorOptions>
-    {
+    internal sealed class
+        SubmitTheIntroDbMarkersTaskDialogView : MainPageTaskDialogView<
+        MainPageOptions.SubmitTheIntroDbMarkersTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public SubmitTheIntroDbMarkersTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.SubmitTheIntroDbMarkers ?? new MainPageOptions.SubmitTheIntroDbMarkersTaskEditorOptions(), "共享片头片尾")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.SubmitTheIntroDbMarkers ??
+                new MainPageOptions.SubmitTheIntroDbMarkersTaskEditorOptions(), "共享片头片尾") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.SubmitTheIntroDbMarkers = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.SubmitTheIntroDbMarkers = Options;
         }
     }
 
-    internal sealed class ExtractRecentMediaInfoTaskDialogView : MainPageTaskDialogView<MainPageOptions.ExtractRecentMediaInfoTaskEditorOptions>
-    {
+    internal sealed class
+        ExtractRecentMediaInfoTaskDialogView : MainPageTaskDialogView<
+        MainPageOptions.ExtractRecentMediaInfoTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public ExtractRecentMediaInfoTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.ExtractRecentMediaInfo ?? new MainPageOptions.ExtractRecentMediaInfoTaskEditorOptions(), "提取媒体信息")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.ExtractRecentMediaInfo ??
+                new MainPageOptions.ExtractRecentMediaInfoTaskEditorOptions(), "提取媒体信息") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.ExtractRecentMediaInfo = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.ExtractRecentMediaInfo = Options;
         }
     }
 
-    internal sealed class ExportExistingMediaInfoTaskDialogView : MainPageTaskDialogView<MainPageOptions.ExportExistingMediaInfoTaskEditorOptions>
-    {
+    internal sealed class
+        ExportExistingMediaInfoTaskDialogView : MainPageTaskDialogView<
+        MainPageOptions.ExportExistingMediaInfoTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public ExportExistingMediaInfoTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.ExportExistingMediaInfo ?? new MainPageOptions.ExportExistingMediaInfoTaskEditorOptions(), "备份媒体信息")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.ExportExistingMediaInfo ??
+                new MainPageOptions.ExportExistingMediaInfoTaskEditorOptions(), "备份媒体信息") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.ExportExistingMediaInfo = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.ExportExistingMediaInfo = Options;
         }
     }
 
-    internal sealed class RestoreMediaInfoTaskDialogView : MainPageTaskDialogView<MainPageOptions.RestoreMediaInfoTaskEditorOptions>
-    {
+    internal sealed class
+        RestoreMediaInfoTaskDialogView : MainPageTaskDialogView<MainPageOptions.RestoreMediaInfoTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public RestoreMediaInfoTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.RestoreMediaInfo ?? new MainPageOptions.RestoreMediaInfoTaskEditorOptions(), "恢复媒体信息")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.RestoreMediaInfo ??
+                new MainPageOptions.RestoreMediaInfoTaskEditorOptions(), "恢复媒体信息") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.RestoreMediaInfo = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.RestoreMediaInfo = Options;
         }
     }
 
-    internal sealed class ScanExternalFilesTaskDialogView : MainPageTaskDialogView<MainPageOptions.ScanExternalFilesTaskEditorOptions>
-    {
+    internal sealed class
+        ScanExternalFilesTaskDialogView : MainPageTaskDialogView<MainPageOptions.ScanExternalFilesTaskEditorOptions> {
         private readonly MainPageOptions owner;
 
         public ScanExternalFilesTaskDialogView(string pluginId, MainPageOptions owner)
-            : base(pluginId, owner?.ScheduledTasksEditor?.ScanExternalFiles ?? new MainPageOptions.ScanExternalFilesTaskEditorOptions(), "扫描外挂文件")
-        {
+            : base(pluginId,
+                owner?.ScheduledTasksEditor?.ScanExternalFiles ??
+                new MainPageOptions.ScanExternalFilesTaskEditorOptions(), "扫描外挂文件") {
             this.owner = owner;
         }
 
-        public override async Task OnOkCommand(string providerId, string commandId, string data)
-        {
+        public override async Task OnOkCommand(string providerId, string commandId, string data) {
             await base.OnOkCommand(providerId, commandId, data).ConfigureAwait(false);
-            if (this.owner?.ScheduledTasksEditor != null)
-            {
-                this.owner.ScheduledTasksEditor.ScanExternalFiles = this.Options;
-            }
+            if (owner?.ScheduledTasksEditor != null) owner.ScheduledTasksEditor.ScanExternalFiles = Options;
         }
     }
 }

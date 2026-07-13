@@ -6,30 +6,25 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
 using MediaInfoKeeper.Services.IntroSkip;
 
-namespace MediaInfoKeeper.Web.Handler
-{
-    internal sealed class ClearIntroRouteHandler
-    {
+namespace MediaInfoKeeper.Web.Handler {
+    internal sealed class ClearIntroRouteHandler {
         private readonly Func<IEnumerable<string>, List<BaseItem>> _expandToTargetItems;
-        private readonly ILibraryManager _libraryManager;
         private readonly IItemRepository _itemRepository;
+        private readonly ILibraryManager _libraryManager;
 
         public ClearIntroRouteHandler(
             Func<IEnumerable<string>, List<BaseItem>> expandToTargetItems,
             ILibraryManager libraryManager,
-            IItemRepository itemRepository)
-        {
+            IItemRepository itemRepository) {
             _expandToTargetItems = expandToTargetItems;
             _libraryManager = libraryManager;
             _itemRepository = itemRepository;
         }
 
-        public MediaInfoMenuResponse Handle(ClearIntroRequest request)
-        {
+        public MediaInfoMenuResponse Handle(ClearIntroRequest request) {
             var response = new MediaInfoMenuResponse();
 
-            if (request?.Ids == null || request.Ids.Length == 0)
-            {
+            if (request?.Ids == null || request.Ids.Length == 0) {
                 response.Message = "no items";
                 Plugin.Instance.Logger.Info(
                     $"ShortcutMenu ClearIntro result: total={response.Total}, processed={response.Processed}, succeeded={response.Succeeded}, failed={response.Failed}, skipped={response.Skipped}, message={response.Message}");
@@ -39,8 +34,7 @@ namespace MediaInfoKeeper.Web.Handler
             var targetItems = _expandToTargetItems(request.Ids).OfType<BaseItem>().ToList();
             response.Total = targetItems.Count;
 
-            if (targetItems.Count == 0)
-            {
+            if (targetItems.Count == 0) {
                 response.Message = "no supported items";
                 Plugin.Instance.Logger.Info(
                     $"ShortcutMenu ClearIntro result: total={response.Total}, processed={response.Processed}, succeeded={response.Succeeded}, failed={response.Failed}, skipped={response.Skipped}, message={response.Message}");
@@ -49,17 +43,14 @@ namespace MediaInfoKeeper.Web.Handler
 
             var introSkipApi = new IntroSkipChapterApi(_libraryManager, _itemRepository, Plugin.Instance.Logger);
 
-            foreach (var item in targetItems)
-            {
+            foreach (var item in targetItems) {
                 response.Processed++;
-                try
-                {
-                    introSkipApi.RemoveIntroMarkers(item, allowDatabaseClear: true);
+                try {
+                    introSkipApi.RemoveIntroMarkers(item, true);
                     response.Succeeded++;
                     Plugin.Instance.Logger.Info($"ShortcutMenu 清除片头片尾成功: {item.Path ?? item.Name}");
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     response.Failed++;
                     Plugin.Instance.Logger.Error($"快捷菜单清除片头片尾失败: {item.Path ?? item.Name}");
                     Plugin.Instance.Logger.Error(ex.Message);

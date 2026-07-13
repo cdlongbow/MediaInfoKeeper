@@ -6,13 +6,11 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 调整新建媒体库的提供程序和本地保存默认设置。
+    ///     调整新建媒体库的提供程序和本地保存默认设置。
     /// </summary>
-    public static class LibrayProviderSettings
-    {
+    public static class LibrayProviderSettings {
         private const string TmdbProviderName = "TheMovieDb";
 
         private static Harmony harmony;
@@ -23,10 +21,8 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
-        public static void Initialize(ILogger pluginLogger, bool enable)
-        {
-            if (harmony != null)
-            {
+        public static void Initialize(ILogger pluginLogger, bool enable) {
+            if (harmony != null) {
                 Configure(enable);
                 return;
             }
@@ -34,15 +30,13 @@ namespace MediaInfoKeeper.Patch
             logger = pluginLogger;
             isEnabled = enable;
 
-            try
-            {
+            try {
                 var apiAssembly = Assembly.Load("Emby.Api");
                 var apiVersion = apiAssembly?.GetName().Version;
                 var libraryServiceType = apiAssembly?.GetType("Emby.Api.Library.LibraryService");
                 var requestType = apiAssembly?.GetType("Emby.Api.Library.GetLibraryOptionsInfo");
 
-                if (requestType == null)
-                {
+                if (requestType == null) {
                     PatchLog.InitFailed(logger, nameof(LibrayProviderSettings), "GetLibraryOptionsInfo 类型缺失");
                     return;
                 }
@@ -50,14 +44,12 @@ namespace MediaInfoKeeper.Patch
                 getLibraryOptionsInfo = PatchMethodResolver.Resolve(
                     libraryServiceType,
                     apiVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "libraryservice-get-availableoptions-exact",
                         MethodName = "Get",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
                         IsStatic = false,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             requestType
                         },
                         ReturnType = typeof(object)
@@ -65,8 +57,7 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "LibrayProviderSettings.LibraryService.Get");
 
-                if (getLibraryOptionsInfo == null)
-                {
+                if (getLibraryOptionsInfo == null) {
                     PatchLog.InitFailed(logger, nameof(LibrayProviderSettings), "目标方法缺失");
                     return;
                 }
@@ -74,13 +65,9 @@ namespace MediaInfoKeeper.Patch
                 harmony = new Harmony("mediainfokeeper.librayprovidersettings");
                 PatchLog.Patched(logger, nameof(LibrayProviderSettings), getLibraryOptionsInfo);
 
-                if (isEnabled)
-                {
-                    Patch();
-                }
+                if (isEnabled) Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("LibrayProviderSettings 初始化失败。");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -89,31 +76,19 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enable)
-        {
+        public static void Configure(bool enable) {
             isEnabled = enable;
 
-            if (harmony == null)
-            {
-                return;
-            }
+            if (harmony == null) return;
 
             if (isEnabled)
-            {
                 Patch();
-            }
             else
-            {
                 Unpatch();
-            }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || getLibraryOptionsInfo == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || getLibraryOptionsInfo == null) return;
 
             harmony.Patch(
                 getLibraryOptionsInfo,
@@ -121,27 +96,18 @@ namespace MediaInfoKeeper.Patch
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null || getLibraryOptionsInfo == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null || getLibraryOptionsInfo == null) return;
 
             harmony.Unpatch(getLibraryOptionsInfo, HarmonyPatchType.Postfix, harmony.Id);
             isPatched = false;
         }
 
         [HarmonyPostfix]
-        private static void GetLibraryOptionsInfoPostfix(object __result)
-        {
-            if (!isEnabled || !(__result is LibraryOptionsResult result) || result.TypeOptions == null)
-            {
-                return;
-            }
+        private static void GetLibraryOptionsInfoPostfix(object __result) {
+            if (!isEnabled || !(__result is LibraryOptionsResult result) || result.TypeOptions == null) return;
 
-            if (result.DefaultLibraryOptions != null)
-            {
+            if (result.DefaultLibraryOptions != null) {
                 result.DefaultLibraryOptions.SaveLocalMetadata = true;
                 result.DefaultLibraryOptions.AutoGenerateChapters = false;
                 result.DefaultLibraryOptions.PreferredMetadataLanguage = "zh-CN";
@@ -150,32 +116,19 @@ namespace MediaInfoKeeper.Patch
                 DisableSubtitleFetchersByDefault(result);
             }
 
-            foreach (var typeOptions in result.TypeOptions)
-            {
+            foreach (var typeOptions in result.TypeOptions) {
                 var metadataNames = NormalizeFetcherOptions(typeOptions?.MetadataFetchers);
                 var imageNames = NormalizeFetcherOptions(typeOptions?.ImageFetchers);
 
-                SyncDefaultTypeOptions(
-                    result.DefaultLibraryOptions,
-                    typeOptions?.Type,
-                    metadataNames,
-                    imageNames);
+                SyncDefaultTypeOptions(result.DefaultLibraryOptions, typeOptions?.Type, metadataNames, imageNames);
             }
         }
 
-        private static void DisableSubtitleFetchersByDefault(LibraryOptionsResult result)
-        {
-            if (result?.SubtitleFetchers == null || result.SubtitleFetchers.Length == 0)
-            {
-                return;
-            }
+        private static void DisableSubtitleFetchersByDefault(LibraryOptionsResult result) {
+            if (result?.SubtitleFetchers == null || result.SubtitleFetchers.Length == 0) return;
 
-            foreach (var fetcher in result.SubtitleFetchers)
-            {
-                if (fetcher == null)
-                {
-                    continue;
-                }
+            foreach (var fetcher in result.SubtitleFetchers) {
+                if (fetcher == null) continue;
 
                 fetcher.DefaultEnabled = false;
             }
@@ -189,20 +142,13 @@ namespace MediaInfoKeeper.Patch
             result.DefaultLibraryOptions.SubtitleFetcherOrder = subtitleFetcherNames;
         }
 
-        private static string[] NormalizeFetcherOptions(LibraryOptionInfo[] fetchers)
-        {
+        private static string[] NormalizeFetcherOptions(LibraryOptionInfo[] fetchers) {
             if (fetchers == null || fetchers.Length == 0 ||
                 !fetchers.Any(i => string.Equals(i?.Name, TmdbProviderName, StringComparison.OrdinalIgnoreCase)))
-            {
                 return Array.Empty<string>();
-            }
 
-            foreach (var fetcher in fetchers)
-            {
-                if (fetcher == null)
-                {
-                    continue;
-                }
+            foreach (var fetcher in fetchers) {
+                if (fetcher == null) continue;
 
                 fetcher.DefaultEnabled =
                     string.Equals(fetcher.Name, TmdbProviderName, StringComparison.OrdinalIgnoreCase);
@@ -215,15 +161,11 @@ namespace MediaInfoKeeper.Patch
                 .ToArray();
         }
 
-        private static int CompareFetcherOptions(LibraryOptionInfo left, LibraryOptionInfo right)
-        {
+        private static int CompareFetcherOptions(LibraryOptionInfo left, LibraryOptionInfo right) {
             var leftIsTmdb = string.Equals(left?.Name, TmdbProviderName, StringComparison.OrdinalIgnoreCase);
             var rightIsTmdb = string.Equals(right?.Name, TmdbProviderName, StringComparison.OrdinalIgnoreCase);
 
-            if (leftIsTmdb == rightIsTmdb)
-            {
-                return 0;
-            }
+            if (leftIsTmdb == rightIsTmdb) return 0;
 
             return leftIsTmdb ? -1 : 1;
         }
@@ -232,53 +174,36 @@ namespace MediaInfoKeeper.Patch
             LibraryOptions libraryOptions,
             string itemType,
             string[] metadataOrder,
-            string[] imageOrder)
-        {
-            if (libraryOptions == null || string.IsNullOrWhiteSpace(itemType))
-            {
-                return;
-            }
+            string[] imageOrder) {
+            if (libraryOptions == null || string.IsNullOrWhiteSpace(itemType)) return;
 
             var hasMetadataTmdb = metadataOrder.Any(i =>
                 string.Equals(i, TmdbProviderName, StringComparison.OrdinalIgnoreCase));
             var hasImageTmdb = imageOrder.Any(i =>
                 string.Equals(i, TmdbProviderName, StringComparison.OrdinalIgnoreCase));
 
-            if (!hasMetadataTmdb && !hasImageTmdb)
-            {
-                return;
-            }
+            if (!hasMetadataTmdb && !hasImageTmdb) return;
 
             var typeOptions = GetOrCreateTypeOptions(libraryOptions, itemType);
-            if (typeOptions == null)
-            {
-                return;
-            }
+            if (typeOptions == null) return;
 
-            if (hasMetadataTmdb)
-            {
+            if (hasMetadataTmdb) {
                 typeOptions.MetadataFetchers = new[] { TmdbProviderName };
                 typeOptions.MetadataFetcherOrder = metadataOrder;
             }
 
-            if (hasImageTmdb)
-            {
+            if (hasImageTmdb) {
                 typeOptions.ImageFetchers = new[] { TmdbProviderName };
                 typeOptions.ImageFetcherOrder = imageOrder;
             }
         }
 
-        private static TypeOptions GetOrCreateTypeOptions(LibraryOptions libraryOptions, string itemType)
-        {
+        private static TypeOptions GetOrCreateTypeOptions(LibraryOptions libraryOptions, string itemType) {
             var existing = (libraryOptions.TypeOptions ?? Array.Empty<TypeOptions>())
                 .FirstOrDefault(i => string.Equals(i.Type, itemType, StringComparison.OrdinalIgnoreCase));
-            if (existing != null)
-            {
-                return existing;
-            }
+            if (existing != null) return existing;
 
-            var typeOptions = new TypeOptions
-            {
+            var typeOptions = new TypeOptions {
                 Type = itemType
             };
 

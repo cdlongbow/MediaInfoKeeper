@@ -1,24 +1,20 @@
-namespace MediaInfoKeeper.Options.UIBaseClasses
-{
-    using System.Threading;
-    using System.Threading.Tasks;
-    using MediaBrowser.Model.Plugins;
-    using MediaBrowser.Model.Plugins.UI;
-    using MediaBrowser.Model.Plugins.UI.Views;
+using System.Threading;
+using System.Threading.Tasks;
+using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Plugins.UI;
+using MediaBrowser.Model.Plugins.UI.Views;
 
-    internal abstract class ControllerBase : IPluginUIPageController
-    {
-        protected ControllerBase(string pluginId)
-        {
-            this.PluginId = pluginId;
+namespace MediaInfoKeeper.Options.UIBaseClasses {
+    internal abstract class ControllerBase : IPluginUIPageController {
+        protected ControllerBase(string pluginId) {
+            PluginId = pluginId;
         }
-
-        public abstract PluginPageInfo PageInfo { get; }
 
         public string PluginId { get; }
 
-        public virtual Task Initialize(CancellationToken token)
-        {
+        public abstract PluginPageInfo PageInfo { get; }
+
+        public virtual Task Initialize(CancellationToken token) {
             return Task.CompletedTask;
         }
 

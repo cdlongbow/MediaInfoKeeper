@@ -4,90 +4,79 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.Audio;
-using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Services;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Serialization;
+using MediaBrowser.Model.Services;
 using MediaInfoKeeper.Common;
 using MediaInfoKeeper.Store;
 using MediaInfoKeeper.Web.Handler;
 
-namespace MediaInfoKeeper.Web
-{
+namespace MediaInfoKeeper.Web {
     [Unauthenticated]
-    public class PluginWebResourceService : IService, IRequiresRequest
-    {
-        private readonly IHttpResultFactory _resultFactory;
-        private readonly ILibraryManager _libraryManager;
+    public class PluginWebResourceService : IService, IRequiresRequest {
+        private readonly ClearIntroRouteHandler _clearIntroHandler;
+        private readonly DeleteMediaInfoPersistRouteHandler _deletePersistHandler;
+        private readonly ExtractMediaInfoRouteHandler _extractHandler;
         private readonly IItemRepository _itemRepository;
         private readonly IJsonSerializer _jsonSerializer;
-        private readonly ExtractMediaInfoRouteHandler _extractHandler;
-        private readonly DeleteMediaInfoPersistRouteHandler _deletePersistHandler;
-        private readonly ScanIntroRouteHandler _scanIntroHandler;
+        private readonly ILibraryManager _libraryManager;
+        private readonly IHttpResultFactory _resultFactory;
         private readonly ScanExternalFilesRouteHandler _scanExternalFilesHandler;
+        private readonly ScanIntroRouteHandler _scanIntroHandler;
         private readonly SetIntroRouteHandler _setIntroHandler;
-        private readonly ClearIntroRouteHandler _clearIntroHandler;
 
         public PluginWebResourceService(
             IHttpResultFactory resultFactory,
             ILibraryManager libraryManager,
             IItemRepository itemRepository,
-            IJsonSerializer jsonSerializer)
-        {
+            IJsonSerializer jsonSerializer) {
             _resultFactory = resultFactory;
             _libraryManager = libraryManager;
             _itemRepository = itemRepository;
             _jsonSerializer = jsonSerializer;
             _extractHandler = new ExtractMediaInfoRouteHandler(Plugin.LibraryService.ExpandItem);
-            _deletePersistHandler = new DeleteMediaInfoPersistRouteHandler(Plugin.LibraryService.ExpandItem, libraryManager, itemRepository);
+            _deletePersistHandler =
+                new DeleteMediaInfoPersistRouteHandler(Plugin.LibraryService.ExpandItem, libraryManager,
+                    itemRepository);
             _scanIntroHandler = new ScanIntroRouteHandler(Plugin.LibraryService.ExpandItem);
             _scanExternalFilesHandler = new ScanExternalFilesRouteHandler(Plugin.LibraryService.ExpandItem);
-            _setIntroHandler = new SetIntroRouteHandler(Plugin.LibraryService.ExpandItem, libraryManager, itemRepository);
-            _clearIntroHandler = new ClearIntroRouteHandler(Plugin.LibraryService.ExpandItem, libraryManager, itemRepository);
+            _setIntroHandler =
+                new SetIntroRouteHandler(Plugin.LibraryService.ExpandItem, libraryManager, itemRepository);
+            _clearIntroHandler =
+                new ClearIntroRouteHandler(Plugin.LibraryService.ExpandItem, libraryManager, itemRepository);
         }
 
         public IRequest Request { get; set; }
 
-        public object Get(MediaInfoKeeperJsRequest request)
-        {
+        public object Get(MediaInfoKeeperJsRequest request) {
             return _resultFactory.GetResult(Request,
                 GetStreamBytes(PluginWebResourceLoader.MediaInfoKeeperJs), "application/x-javascript");
         }
 
-        public object Get(EdeJsRequest request)
-        {
+        public object Get(EdeJsRequest request) {
             return _resultFactory.GetResult(Request,
                 GetStreamBytes(PluginWebResourceLoader.EdeJs), "application/x-javascript");
         }
 
-        public object Get(ShortcutMenuRequest request)
-        {
+        public object Get(ShortcutMenuRequest request) {
             return _resultFactory.GetResult(PluginWebResourceLoader.ModifiedShortcutsString.AsSpan(),
                 "application/x-javascript");
         }
 
-        public object Get(RefreshDialogRequest request)
-        {
+        public object Get(RefreshDialogRequest request) {
             return _resultFactory.GetResult(PluginWebResourceLoader.ModifiedRefreshDialogString.AsSpan(),
                 "application/x-javascript");
         }
 
-        public object Get(DanmuRawRequest request)
-        {
-            if (request == null || string.IsNullOrWhiteSpace(request.ItemId))
-            {
-                return CreateEmptyDanmuResult();
-            }
+        public object Get(DanmuRawRequest request) {
+            if (request == null || string.IsNullOrWhiteSpace(request.ItemId)) return CreateEmptyDanmuResult();
 
             var logger = Plugin.Instance?.Logger;
-            if (Plugin.Instance?.Options?.MetaData?.EnableDanmuApi != true)
-            {
+            if (Plugin.Instance?.Options?.MetaData?.EnableDanmuApi != true) {
                 logger?.Debug("弹幕API: 已禁用，返回空结果");
                 return CreateEmptyDanmuResult();
             }
@@ -95,13 +84,11 @@ namespace MediaInfoKeeper.Web
             var item = _libraryManager.GetItemById(request.ItemId);
             if (item == null || string.IsNullOrWhiteSpace(item.ContainingFolderPath) ||
                 string.IsNullOrWhiteSpace(item.FileNameWithoutExtension))
-            {
                 return CreateEmptyDanmuResult();
-            }
 
-            if (Plugin.DanmuService?.IsSupportedItem(item) != true)
-            {
-                logger?.Debug($"弹幕API: 非视频条目，跳过 itemId={request.ItemId} item={item.FileName} type={item.GetType().Name}");
+            if (Plugin.DanmuService?.IsSupportedItem(item) != true) {
+                logger?.Debug(
+                    $"弹幕API: 非视频条目，跳过 itemId={request.ItemId} item={item.FileName} type={item.GetType().Name}");
                 return _resultFactory.GetResult(Request, ReadOnlyMemory<byte>.Empty, "application/xml");
             }
 
@@ -111,26 +98,22 @@ namespace MediaInfoKeeper.Web
             var modeLabel = alwaysFetchLatest ? "始终获取最新" : "本地优先";
             var logContext = $"mode={modeLabel} itemId={request.ItemId} item={item.FileName}";
 
-            if (!alwaysFetchLatest && localExists)
-            {
+            if (!alwaysFetchLatest && localExists) {
                 logger?.Debug($"弹幕API: 本地命中，直接返回 {logContext} path={danmuXmlPath}");
-                return _resultFactory.GetStaticFileResult(Request, danmuXmlPath, FileShareMode.Read).GetAwaiter().GetResult();
+                return _resultFactory.GetStaticFileResult(Request, danmuXmlPath).GetAwaiter()
+                    .GetResult();
             }
 
-            if (!alwaysFetchLatest)
-            {
+            if (!alwaysFetchLatest) {
                 logger?.Debug($"弹幕API: 本地未命中且未启用获取最新，返回空结果 {logContext} path={danmuXmlPath}");
                 return CreateEmptyDanmuResult();
             }
 
             if (Plugin.DanmuService?.IsSupportedItem(item) == true && Plugin.DanmuService.IsEnabled)
-            {
-                try
-                {
+                try {
                     if (Plugin.DanmuService.TryGetCachedDanmuXmlBytes(item, out var cachedXmlBytes))
-                    {
-                        return _resultFactory.GetResult(Request, (ReadOnlyMemory<byte>)cachedXmlBytes, "application/xml");
-                    }
+                        return _resultFactory.GetResult(Request, (ReadOnlyMemory<byte>)cachedXmlBytes,
+                            "application/xml");
 
                     using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(15));
                     var fetchResult = Plugin.DanmuService
@@ -138,22 +121,16 @@ namespace MediaInfoKeeper.Web
                         .GetAwaiter()
                         .GetResult();
                     var xmlBytes = fetchResult?.XmlBytes;
-                    if (xmlBytes != null && xmlBytes.Length > 0)
-                    {
-                        try
-                        {
+                    if (xmlBytes != null && xmlBytes.Length > 0) {
+                        try {
                             var directory = Path.GetDirectoryName(danmuXmlPath);
-                            if (!string.IsNullOrWhiteSpace(directory))
-                            {
-                                Directory.CreateDirectory(directory);
-                            }
+                            if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
 
                             File.WriteAllBytes(danmuXmlPath, xmlBytes);
 
                             logger?.Debug($"弹幕API: 最新弹幕拉取成功并写入本地 {logContext} path={danmuXmlPath}");
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             logger?.Debug($"弹幕API: 拉取成功但写入本地失败 {logContext} path={danmuXmlPath} error={ex.Message}");
                             logger?.Debug(ex.StackTrace);
                         }
@@ -161,90 +138,70 @@ namespace MediaInfoKeeper.Web
                         return _resultFactory.GetResult(Request, (ReadOnlyMemory<byte>)xmlBytes, "application/xml");
                     }
 
-                    if (string.IsNullOrWhiteSpace(fetchResult?.Reason))
-                    {
-                        return CreateEmptyDanmuResult();
-                    }
+                    if (string.IsNullOrWhiteSpace(fetchResult?.Reason)) return CreateEmptyDanmuResult();
 
                     logger?.Debug($"弹幕API: 网络拉取结果为空 {logContext} reason={fetchResult.Reason}");
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     logger?.Debug($"弹幕API: 网络拉取失败 {logContext} error={ex.Message}");
                     logger?.Debug(ex.StackTrace);
                 }
-            }
 
-            if (alwaysFetchLatest && localExists)
-            {
+            if (alwaysFetchLatest && localExists) {
                 logger?.Debug($"弹幕API: 获取最新失败或超时，回退本地 {logContext} path={danmuXmlPath}");
-                return _resultFactory.GetStaticFileResult(Request, danmuXmlPath, FileShareMode.Read).GetAwaiter().GetResult();
+                return _resultFactory.GetStaticFileResult(Request, danmuXmlPath).GetAwaiter()
+                    .GetResult();
             }
 
             logger?.Debug($"弹幕API: 无可用弹幕，返回空结果 {logContext}");
             return CreateEmptyDanmuResult();
         }
 
-        private object CreateEmptyDanmuResult()
-        {
+        private object CreateEmptyDanmuResult() {
             return _resultFactory.GetResult(Request, ReadOnlyMemory<byte>.Empty, "application/xml");
         }
 
-        private static ReadOnlyMemory<byte> GetStreamBytes(MemoryStream stream)
-        {
+        private static ReadOnlyMemory<byte> GetStreamBytes(MemoryStream stream) {
             return stream == null ? ReadOnlyMemory<byte>.Empty : new ReadOnlyMemory<byte>(stream.ToArray());
         }
 
-        public MediaInfoMenuResponse Post(ExtractMediaInfoRequest request)
-        {
+        public MediaInfoMenuResponse Post(ExtractMediaInfoRequest request) {
             return _extractHandler.Handle(request);
         }
 
-        public MediaInfoMenuResponse Post(DeleteMediaInfoPersistRequest request)
-        {
+        public MediaInfoMenuResponse Post(DeleteMediaInfoPersistRequest request) {
             return _deletePersistHandler.Handle(request);
         }
 
-        public MediaInfoMenuResponse Post(ScanIntroRequest request)
-        {
+        public MediaInfoMenuResponse Post(ScanIntroRequest request) {
             return _scanIntroHandler.Handle(request);
         }
 
-        public MediaInfoMenuResponse Post(ScanExternalFilesRequest request)
-        {
+        public MediaInfoMenuResponse Post(ScanExternalFilesRequest request) {
             return _scanExternalFilesHandler.Handle(request);
         }
 
-        public MediaInfoMenuResponse Post(SetIntroRequest request)
-        {
+        public MediaInfoMenuResponse Post(SetIntroRequest request) {
             return _setIntroHandler.Handle(request);
         }
 
-        public MediaInfoMenuResponse Post(ClearIntroRequest request)
-        {
+        public MediaInfoMenuResponse Post(ClearIntroRequest request) {
             return _clearIntroHandler.Handle(request);
         }
 
-        public DebugMediaInfoResponse Get(DebugMediaInfoRequest request)
-        {
+        public DebugMediaInfoResponse Get(DebugMediaInfoRequest request) {
             if (request == null || request.InternalId <= 0)
-            {
-                return new DebugMediaInfoResponse
-                {
+                return new DebugMediaInfoResponse {
                     Found = false,
                     Message = "invalid internalId"
                 };
-            }
 
             var item = _libraryManager.GetItemById(request.InternalId);
             if (item == null)
-            {
-                return new DebugMediaInfoResponse
-                {
+                return new DebugMediaInfoResponse {
                     Found = false,
                     Message = "item not found"
                 };
-            }
 
             var mediaInfoPath = MediaInfoDocument.GetMediaInfoJsonPath(item);
             var streams = item.GetMediaStreams().ToList();
@@ -256,12 +213,10 @@ namespace MediaInfoKeeper.Web
             var chapterImages = BuildChapterImagesInfo(item);
             var thumbnailSets = BuildThumbnailSetsInfo(item, directoryService);
 
-            return new DebugMediaInfoResponse
-            {
+            return new DebugMediaInfoResponse {
                 Found = true,
                 Message = "ok",
-                Item = new DebugItemInfo
-                {
+                Item = new DebugItemInfo {
                     InternalId = item.InternalId,
                     Type = item.GetType().Name,
                     Name = item.Name,
@@ -288,16 +243,23 @@ namespace MediaInfoKeeper.Web
                     Container = item.Container,
                     Width = item.Width,
                     Height = item.Height,
-                    DateCreated = item.DateCreated == default ? null : ConfiguredDateTime.ToConfiguredOffset(item.DateCreated).ToString("O"),
-                    DateModified = item.DateModified == default ? null : ConfiguredDateTime.ToConfiguredOffset(item.DateModified).ToString("O"),
-                    DateLastRefreshed = item.DateLastRefreshed == default ? null : ConfiguredDateTime.ToConfiguredOffset(item.DateLastRefreshed).ToString("O"),
-                    PremiereDate = item.PremiereDate.HasValue ? ConfiguredDateTime.ToConfiguredOffset(item.PremiereDate.Value).ToString("O") : null,
+                    DateCreated = item.DateCreated == default
+                        ? null
+                        : ConfiguredDateTime.ToConfiguredOffset(item.DateCreated).ToString("O"),
+                    DateModified = item.DateModified == default
+                        ? null
+                        : ConfiguredDateTime.ToConfiguredOffset(item.DateModified).ToString("O"),
+                    DateLastRefreshed = item.DateLastRefreshed == default
+                        ? null
+                        : ConfiguredDateTime.ToConfiguredOffset(item.DateLastRefreshed).ToString("O"),
+                    PremiereDate = item.PremiereDate.HasValue
+                        ? ConfiguredDateTime.ToConfiguredOffset(item.PremiereDate.Value).ToString("O")
+                        : null,
                     ProductionYear = item.ProductionYear,
                     OfficialRating = item.OfficialRating,
-                    SupportsThumbnails = item is Video itemVideo ? itemVideo.SupportsThumbnails : (bool?)null
+                    SupportsThumbnails = item is Video itemVideo ? itemVideo.SupportsThumbnails : null
                 },
-                MediaInfoJson = new DebugFileInfo
-                {
+                MediaInfoJson = new DebugFileInfo {
                     Path = mediaInfoPath,
                     Exists = File.Exists(mediaInfoPath),
                     Content = ReadJsonFile<List<MediaInfoDocument>>(mediaInfoPath)
@@ -308,8 +270,7 @@ namespace MediaInfoKeeper.Web
             };
         }
 
-        private DebugPrimaryImageInfo BuildPrimaryImageInfo(BaseItem item)
-        {
+        private DebugPrimaryImageInfo BuildPrimaryImageInfo(BaseItem item) {
             var primaryImage = item.GetImageInfo(ImageType.Primary, 0);
             var displayParentId = item.ImageDisplayParentId;
             var displayParent = displayParentId == 0 || displayParentId == item.InternalId
@@ -317,8 +278,7 @@ namespace MediaInfoKeeper.Web
                 : _libraryManager.GetItemById(displayParentId);
             var displayParentPrimaryImage = displayParent?.GetImageInfo(ImageType.Primary, 0);
 
-            return new DebugPrimaryImageInfo
-            {
+            return new DebugPrimaryImageInfo {
                 HasPrimaryImage = item.HasImage(ImageType.Primary),
                 PrimaryImagePath = primaryImage?.Path,
                 PrimaryImagePathExists = FileExists(primaryImage?.Path),
@@ -329,12 +289,10 @@ namespace MediaInfoKeeper.Web
             };
         }
 
-        private DebugChapterImagesInfo BuildChapterImagesInfo(BaseItem item)
-        {
+        private DebugChapterImagesInfo BuildChapterImagesInfo(BaseItem item) {
             var chapters = _itemRepository.GetChapters(item) ?? new List<ChapterInfo>();
             var entries = chapters
-                .Select(chapter => new DebugChapterImageEntry
-                {
+                .Select(chapter => new DebugChapterImageEntry {
                     Name = chapter.Name,
                     MarkerType = chapter.MarkerType.ToString(),
                     StartPositionTicks = chapter.StartPositionTicks,
@@ -347,8 +305,7 @@ namespace MediaInfoKeeper.Web
                 })
                 .ToArray();
 
-            return new DebugChapterImagesInfo
-            {
+            return new DebugChapterImagesInfo {
                 ChapterCount = chapters.Count,
                 ChaptersWithImagePath = entries.Count(i => !string.IsNullOrWhiteSpace(i.ImagePath)),
                 ExistingImageFiles = entries.Count(i => i.ImagePathExists),
@@ -356,33 +313,27 @@ namespace MediaInfoKeeper.Web
             };
         }
 
-        private DebugThumbnailSetsInfo BuildThumbnailSetsInfo(BaseItem item, IDirectoryService directoryService)
-        {
+        private DebugThumbnailSetsInfo BuildThumbnailSetsInfo(BaseItem item, IDirectoryService directoryService) {
             if (item is not Video video)
-            {
-                return new DebugThumbnailSetsInfo
-                {
+                return new DebugThumbnailSetsInfo {
                     SupportsThumbnails = false,
                     Count = 0,
                     Entries = Array.Empty<DebugThumbnailSetEntry>()
                 };
-            }
 
             var thumbnailSets = Video.GetThumbnailSetInfos(
-                    video.Path,
-                    video.Id,
-                    directoryService,
-                    0,
-                    false)
-                ?? Array.Empty<ThumbnailSetInfo>();
+                                    video.Path,
+                                    video.Id,
+                                    directoryService,
+                                    0,
+                                    false)
+                                ?? Array.Empty<ThumbnailSetInfo>();
 
-            return new DebugThumbnailSetsInfo
-            {
+            return new DebugThumbnailSetsInfo {
                 SupportsThumbnails = video.SupportsThumbnails,
                 Count = thumbnailSets.Length,
                 Entries = thumbnailSets
-                    .Select(set => new DebugThumbnailSetEntry
-                    {
+                    .Select(set => new DebugThumbnailSetEntry {
                         Path = set.Path,
                         Exists = DirectoryExists(set.Path) || FileExists(set.Path),
                         IsDirectory = DirectoryExists(set.Path),
@@ -393,29 +344,21 @@ namespace MediaInfoKeeper.Web
             };
         }
 
-        private static bool FileExists(string path)
-        {
+        private static bool FileExists(string path) {
             return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
         }
 
-        private static bool DirectoryExists(string path)
-        {
+        private static bool DirectoryExists(string path) {
             return !string.IsNullOrWhiteSpace(path) && Directory.Exists(path);
         }
 
-        private T ReadJsonFile<T>(string path) where T : class
-        {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-            {
-                return null;
-            }
+        private T ReadJsonFile<T>(string path) where T : class {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return null;
 
-            try
-            {
+            try {
                 return _jsonSerializer.DeserializeFromFile<T>(path);
             }
-            catch (Exception)
-            {
+            catch (Exception) {
                 return null;
             }
         }

@@ -1,14 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Emby.Web.GenericEdit;
 using Emby.Web.GenericEdit.Editors;
 using MediaBrowser.Model.GenericEdit;
-using System;
-using System.Collections.Generic;
 
-namespace MediaInfoKeeper.Options
-{
-    public class DebugOptions : EditableOptionsBase
-    {
+namespace MediaInfoKeeper.Options {
+    public class DebugOptions : EditableOptionsBase {
         public override string EditorTitle => "Debug";
 
         public override string EditorDescription => string.Empty;
@@ -30,60 +28,40 @@ namespace MediaInfoKeeper.Options
         [Description("关闭后不再拦截 Emby 自身的 ffprobe/ffmpeg 调用。默认开启，仅建议在调试时临时关闭。")]
         public bool EnableFfProcessGuard { get; set; } = true;
 
-        public override IEditObjectContainer CreateEditContainer()
-        {
+        public override IEditObjectContainer CreateEditContainer() {
             var container = (EditObjectContainer)base.CreateEditContainer();
             var root = container.EditorRoot;
-            if (root?.EditorItems == null || root.EditorItems.Length == 0)
-            {
-                return container;
-            }
+            if (root?.EditorItems == null || root.EditorItems.Length == 0) return container;
 
             var itemLookup = new Dictionary<string, EditorBase>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in root.EditorItems)
-            {
+            foreach (var item in root.EditorItems) {
                 var key = item.Name ?? item.Id;
                 if (item is EditorText text &&
-                    string.Equals(key, nameof(DebugMediaInfoUrl), StringComparison.OrdinalIgnoreCase))
-                {
+                    string.Equals(key, nameof(DebugMediaInfoUrl), StringComparison.OrdinalIgnoreCase)) {
                     text.IsReadOnly = true;
                     text.AllowEmpty = false;
                 }
 
-                if (string.IsNullOrEmpty(key))
-                {
-                    continue;
-                }
+                if (string.IsNullOrEmpty(key)) continue;
 
-                if (!itemLookup.ContainsKey(key))
-                {
-                    itemLookup.Add(key, item);
-                }
+                if (!itemLookup.ContainsKey(key)) itemLookup.Add(key, item);
             }
 
             var groupedItems = new List<EditorBase>();
             var groupIndex = 0;
 
-            void AddGroup(string title, string description, params string[] propertyNames)
-            {
+            void AddGroup(string title, string description, params string[] propertyNames) {
                 var items = new List<EditorBase>();
                 foreach (var propertyName in propertyNames)
-                {
-                    if (itemLookup.TryGetValue(propertyName, out var item))
-                    {
+                    if (itemLookup.TryGetValue(propertyName, out var item)) {
                         items.Add(item);
                         itemLookup.Remove(propertyName);
                     }
-                }
 
-                if (items.Count == 0)
-                {
-                    return;
-                }
+                if (items.Count == 0) return;
 
                 groupIndex++;
-                var group = new EditorGroup(title, items.ToArray(), $"group{groupIndex}", root.Id, null)
-                {
+                var group = new EditorGroup(title, items.ToArray(), $"group{groupIndex}", root.Id, null) {
                     Description = description
                 };
                 groupedItems.Add(group);
@@ -95,10 +73,7 @@ namespace MediaInfoKeeper.Options
                 nameof(DllNameBlacklistPrefixes),
                 nameof(EnableFfProcessGuard));
 
-            if (groupedItems.Count > 0)
-            {
-                root.EditorItems = groupedItems.ToArray();
-            }
+            if (groupedItems.Count > 0) root.EditorItems = groupedItems.ToArray();
 
             return container;
         }

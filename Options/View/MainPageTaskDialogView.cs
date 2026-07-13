@@ -1,34 +1,31 @@
-namespace MediaInfoKeeper.Options.View
-{
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Emby.Web.GenericEdit;
-    using MediaBrowser.Common;
-    using MediaBrowser.Model.GenericEdit;
-    using MediaBrowser.Model.Plugins.UI.Views;
-    using MediaBrowser.Model.Plugins.UI.Views.Enums;
-    using MediaBrowser.Model.Serialization;
-    using MediaInfoKeeper.Options.UIBaseClasses.Views;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using Emby.Web.GenericEdit;
+using MediaBrowser.Model.GenericEdit;
+using MediaBrowser.Model.Plugins.UI.Views;
+using MediaBrowser.Model.Plugins.UI.Views.Enums;
+using MediaBrowser.Model.Serialization;
+using MediaInfoKeeper.Options.UIBaseClasses.Views;
 
+namespace MediaInfoKeeper.Options.View {
     internal abstract class MainPageTaskDialogView<TOptions> : PluginViewBase, IPluginDialogView, IPluginViewWithOptions
-        where TOptions : EditableOptionsBase, IEditableObject, new()
-    {
+        where TOptions : EditableOptionsBase, IEditableObject, new() {
         private readonly string caption;
 
         protected MainPageTaskDialogView(string pluginId, TOptions options)
-            : this(pluginId, options, string.Empty)
-        {
+            : this(pluginId, options, string.Empty) {
         }
 
         protected MainPageTaskDialogView(string pluginId, TOptions options, string caption)
-            : base(pluginId)
-        {
-            this.ContentData = options;
+            : base(pluginId) {
+            ContentData = options;
             this.caption = caption ?? string.Empty;
         }
+
+        public TOptions Options => ContentData as TOptions;
 
         public bool AllowCancel { get; set; } = true;
 
@@ -36,69 +33,50 @@ namespace MediaInfoKeeper.Options.View
 
         public bool ShowDialogFullScreen => false;
 
-        public override string Caption => this.caption;
+        public override string Caption => caption;
 
         public override string SubCaption => string.Empty;
 
-        public PluginViewOptions ViewOptions { get; } = new PluginViewOptions
-        {
+        public virtual Task OnCancelCommand() {
+            return Task.CompletedTask;
+        }
+
+        public virtual Task OnOkCommand(string providerId, string commandId, string data) {
+            ApplyPostedData(data);
+            return Task.CompletedTask;
+        }
+
+        public PluginViewOptions ViewOptions { get; } = new() {
             DialogSize = DialogSize.MediumTall,
             OKButtonCaption = "保存"
         };
 
-        public TOptions Options => this.ContentData as TOptions;
-
-        public virtual Task OnCancelCommand()
-        {
-            return Task.CompletedTask;
-        }
-
-        public virtual Task OnOkCommand(string providerId, string commandId, string data)
-        {
-            this.ApplyPostedData(data);
-            return Task.CompletedTask;
-        }
-
-        protected void ApplyPostedData(string data)
-        {
-            if (string.IsNullOrWhiteSpace(data) || this.Options == null)
-            {
-                return;
-            }
+        protected void ApplyPostedData(string data) {
+            if (string.IsNullOrWhiteSpace(data) || Options == null) return;
 
             var jsonSerializer = Plugin.Instance?.AppHost?.Resolve<IJsonSerializer>();
-            if (jsonSerializer == null)
-            {
-                return;
-            }
+            if (jsonSerializer == null) return;
 
-            try
-            {
+            try {
                 var editable = new TOptions();
                 using var stream = new MemoryStream(Encoding.UTF8.GetBytes(data));
-                var deserialized = ((EditableObjectBase)(object)editable).DeserializeFromJsonStream(stream, jsonSerializer) as TOptions;
-                if (deserialized == null)
-                {
-                    return;
-                }
+                var deserialized =
+                    editable.DeserializeFromJsonStream(stream,
+                        jsonSerializer) as TOptions;
+                if (deserialized == null) return;
 
-                CopyWritableProperties(deserialized, this.Options);
+                CopyWritableProperties(deserialized, Options);
             }
-            catch
-            {
+            catch {
             }
         }
 
-        private static void CopyWritableProperties(TOptions source, TOptions target)
-        {
+        private static void CopyWritableProperties(TOptions source, TOptions target) {
             var properties = typeof(TOptions)
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Where(property => property.CanRead && property.CanWrite && property.GetIndexParameters().Length == 0);
 
-            foreach (var property in properties)
-            {
-                property.SetValue(target, property.GetValue(source));
-            }
+            foreach (var property in properties) property.SetValue(target, property.GetValue(source));
         }
     }
 }

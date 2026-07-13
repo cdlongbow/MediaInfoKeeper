@@ -10,18 +10,17 @@ using HarmonyLib;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.System;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 重写 HTTP 与 UDP 局域网发现响应中的服务器地址，支持自定义或阻断。
+    ///     重写 HTTP 与 UDP 局域网发现响应中的服务器地址，支持自定义或阻断。
     /// </summary>
-    public static class LocalDiscoveryAddress
-    {
+    public static class LocalDiscoveryAddress {
         private const string BlockedKeyword = "BLOCKED";
+
         private static readonly BindingFlags InstanceFlags =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        private static readonly AsyncLocal<string> CurrentUdpDiscoveryAddress = new AsyncLocal<string>();
+        private static readonly AsyncLocal<string> CurrentUdpDiscoveryAddress = new();
 
         private static Harmony harmony;
         private static ILogger logger;
@@ -44,27 +43,21 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsUdpBlockReady => isPatched && respondToMessageMethod != null;
 
-        public static bool IsUdpRewriteReady => isPatched && respondToMessageMethod != null && sendMessageMethod != null;
+        public static bool IsUdpRewriteReady =>
+            isPatched && respondToMessageMethod != null && sendMessageMethod != null;
 
         public static bool IsReady => IsHttpReady && IsUdpRewriteReady;
 
-        public static bool IsConfiguredBehaviorReady
-        {
-            get
-            {
-                if (IsBlockedConfigured())
-                {
-                    return IsUdpBlockReady;
-                }
+        public static bool IsConfiguredBehaviorReady {
+            get {
+                if (IsBlockedConfigured()) return IsUdpBlockReady;
 
                 return !HasConfiguredValue() || (IsHttpReady && IsUdpRewriteReady);
             }
         }
 
-        public static void Initialize(ILogger pluginLogger, string customAddress)
-        {
-            if (harmony != null)
-            {
+        public static void Initialize(ILogger pluginLogger, string customAddress) {
+            if (harmony != null) {
                 Configure(customAddress);
                 return;
             }
@@ -72,23 +65,20 @@ namespace MediaInfoKeeper.Patch
             logger = pluginLogger;
             configuredValue = NormalizeConfiguredValue(customAddress);
 
-            try
-            {
+            try {
                 var embyServerImplementationsAssembly = Assembly.Load("Emby.Server.Implementations");
                 var mediaBrowserControllerAssembly = Assembly.Load("MediaBrowser.Controller");
 
                 var applicationHostType =
                     embyServerImplementationsAssembly.GetType("Emby.Server.Implementations.ApplicationHost", false);
-                if (applicationHostType == null)
-                {
+                if (applicationHostType == null) {
                     PatchLog.InitFailed(logger, nameof(LocalDiscoveryAddress), "ApplicationHost 未找到");
                     return;
                 }
 
                 var authorizationInfoType =
                     mediaBrowserControllerAssembly.GetType("MediaBrowser.Controller.Net.AuthorizationInfo", false);
-                if (authorizationInfoType == null)
-                {
+                if (authorizationInfoType == null) {
                     PatchLog.InitFailed(logger, nameof(LocalDiscoveryAddress), "AuthorizationInfo 未找到");
                     return;
                 }
@@ -97,8 +87,7 @@ namespace MediaInfoKeeper.Patch
                 getPublicSystemInfoWithToken = PatchMethodResolver.Resolve(
                     applicationHostType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "applicationhost-getpublicsysteminfo-token",
                         MethodName = "GetPublicSystemInfo",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -111,8 +100,7 @@ namespace MediaInfoKeeper.Patch
                 getPublicSystemInfoWithAddress = PatchMethodResolver.Resolve(
                     applicationHostType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "applicationhost-getpublicsysteminfo-address-auth-token",
                         MethodName = "GetPublicSystemInfo",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -125,8 +113,7 @@ namespace MediaInfoKeeper.Patch
                 getSystemInfoWithToken = PatchMethodResolver.Resolve(
                     applicationHostType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "applicationhost-getsysteminfo-address-token",
                         MethodName = "GetSystemInfo",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -139,8 +126,7 @@ namespace MediaInfoKeeper.Patch
                 getSystemInfoWithAddress = PatchMethodResolver.Resolve(
                     applicationHostType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "applicationhost-getsysteminfo-address-auth-token",
                         MethodName = "GetSystemInfo",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -153,8 +139,7 @@ namespace MediaInfoKeeper.Patch
 
                 var udpServerType =
                     embyServerImplementationsAssembly.GetType("Emby.Server.Implementations.Udp.UdpServer", false);
-                if (udpServerType == null)
-                {
+                if (udpServerType == null) {
                     PatchLog.InitFailed(logger, nameof(LocalDiscoveryAddress), "UdpServer 未找到");
                     return;
                 }
@@ -162,8 +147,7 @@ namespace MediaInfoKeeper.Patch
                 respondToMessageMethod = PatchMethodResolver.Resolve(
                     udpServerType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "udpserver-respondtomessage-endpoint-encoding",
                         MethodName = "RespondToMessage",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -176,8 +160,7 @@ namespace MediaInfoKeeper.Patch
                 sendMessageMethod = PatchMethodResolver.Resolve(
                     udpServerType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "udpserver-sendmessage-string-endpoint-encoding",
                         MethodName = "SendMessage",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -191,8 +174,7 @@ namespace MediaInfoKeeper.Patch
                 harmony = new Harmony("mediainfokeeper.localdiscovery");
                 Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("本地发现地址补丁初始化失败。");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -200,47 +182,37 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(string customAddress)
-        {
+        public static void Configure(string customAddress) {
             configuredValue = NormalizeConfiguredValue(customAddress);
         }
 
-        public static string NormalizeConfiguredValue(string value)
-        {
+        public static string NormalizeConfiguredValue(string value) {
             var normalized = (value ?? string.Empty).Trim();
-            if (string.Equals(normalized, BlockedKeyword, StringComparison.OrdinalIgnoreCase))
-            {
-                return BlockedKeyword;
-            }
+            if (string.Equals(normalized, BlockedKeyword, StringComparison.OrdinalIgnoreCase)) return BlockedKeyword;
 
             return normalized;
         }
 
-        public static bool TryValidateConfiguredValue(string value, out string normalizedValue, out string error)
-        {
+        public static bool TryValidateConfiguredValue(string value, out string normalizedValue, out string error) {
             normalizedValue = NormalizeConfiguredValue(value);
             error = null;
 
-            if (string.IsNullOrWhiteSpace(normalizedValue) || string.Equals(normalizedValue, BlockedKeyword, StringComparison.Ordinal))
-            {
+            if (string.IsNullOrWhiteSpace(normalizedValue) ||
+                string.Equals(normalizedValue, BlockedKeyword, StringComparison.Ordinal))
                 return true;
-            }
 
-            if (!Uri.TryCreate(normalizedValue, UriKind.Absolute, out var uri))
-            {
+            if (!Uri.TryCreate(normalizedValue, UriKind.Absolute, out var uri)) {
                 error = "自定义本地发现地址必须是完整的 http(s)://host:port URL 或 BLOCKED。";
                 return false;
             }
 
             if (!string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
-            {
+                !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)) {
                 error = "自定义本地发现地址仅支持 http 或 https 协议。";
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(uri.Host))
-            {
+            if (string.IsNullOrWhiteSpace(uri.Host)) {
                 error = "自定义本地发现地址必须包含主机名或 IP。";
                 return false;
             }
@@ -248,60 +220,45 @@ namespace MediaInfoKeeper.Patch
             return true;
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null) return;
 
             PatchIfAvailable(getPublicSystemInfoWithToken, nameof(GetPublicSystemInfoPostfix));
             PatchIfAvailable(getPublicSystemInfoWithAddress, nameof(GetPublicSystemInfoPostfix));
             PatchIfAvailable(getSystemInfoWithToken, nameof(GetSystemInfoPostfix));
             PatchIfAvailable(getSystemInfoWithAddress, nameof(GetSystemInfoPostfix));
 
-            if (respondToMessageMethod != null)
-            {
+            if (respondToMessageMethod != null) {
                 harmony.Patch(
                     respondToMessageMethod,
-                    prefix: new HarmonyMethod(typeof(LocalDiscoveryAddress), nameof(RespondToMessagePrefix)),
-                    postfix: new HarmonyMethod(typeof(LocalDiscoveryAddress), nameof(RespondToMessagePostfix)));
+                    new HarmonyMethod(typeof(LocalDiscoveryAddress), nameof(RespondToMessagePrefix)),
+                    new HarmonyMethod(typeof(LocalDiscoveryAddress), nameof(RespondToMessagePostfix)));
                 PatchLog.Patched(logger, nameof(LocalDiscoveryAddress), respondToMessageMethod);
             }
 
-            if (sendMessageMethod != null)
-            {
+            if (sendMessageMethod != null) {
                 harmony.Patch(
                     sendMessageMethod,
-                    prefix: new HarmonyMethod(typeof(LocalDiscoveryAddress), nameof(SendMessagePrefix)));
+                    new HarmonyMethod(typeof(LocalDiscoveryAddress), nameof(SendMessagePrefix)));
                 PatchLog.Patched(logger, nameof(LocalDiscoveryAddress), sendMessageMethod);
             }
 
             isPatched = true;
         }
 
-        private static void PatchIfAvailable(MethodInfo method, string postfixName)
-        {
-            if (method == null)
-            {
-                return;
-            }
+        private static void PatchIfAvailable(MethodInfo method, string postfixName) {
+            if (method == null) return;
 
             harmony.Patch(method, postfix: new HarmonyMethod(typeof(LocalDiscoveryAddress), postfixName));
             PatchLog.Patched(logger, nameof(LocalDiscoveryAddress), method);
         }
 
         [HarmonyPostfix]
-        private static void GetPublicSystemInfoPostfix(ref Task<PublicSystemInfo> __result)
-        {
-            if (__result == null || !TryGetCustomDiscoveryAddress(out var address))
-            {
-                return;
-            }
+        private static void GetPublicSystemInfoPostfix(ref Task<PublicSystemInfo> __result) {
+            if (__result == null || !TryGetCustomDiscoveryAddress(out var address)) return;
 
             var originalTask = __result;
-            __result = originalTask.ContinueWith(task =>
-                {
+            __result = originalTask.ContinueWith(task => {
                     var info = task.GetAwaiter().GetResult();
                     ApplyDiscoveryAddress(info, address, "PublicSystemInfo");
                     return info;
@@ -312,16 +269,11 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void GetSystemInfoPostfix(ref Task<SystemInfo> __result)
-        {
-            if (__result == null || !TryGetCustomDiscoveryAddress(out var address))
-            {
-                return;
-            }
+        private static void GetSystemInfoPostfix(ref Task<SystemInfo> __result) {
+            if (__result == null || !TryGetCustomDiscoveryAddress(out var address)) return;
 
             var originalTask = __result;
-            __result = originalTask.ContinueWith(task =>
-                {
+            __result = originalTask.ContinueWith(task => {
                     var info = task.GetAwaiter().GetResult();
                     ApplyDiscoveryAddress(info, address, "SystemInfo");
                     return info;
@@ -332,17 +284,12 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static bool RespondToMessagePrefix(ref Task __result, IPEndPoint remoteEndPoint)
-        {
+        private static bool RespondToMessagePrefix(ref Task __result, IPEndPoint remoteEndPoint) {
             CurrentUdpDiscoveryAddress.Value = null;
 
-            if (!HasConfiguredValue())
-            {
-                return true;
-            }
+            if (!HasConfiguredValue()) return true;
 
-            if (IsBlockedConfigured())
-            {
+            if (IsBlockedConfigured()) {
                 logger?.Info(
                     "本地发现地址已设置为 BLOCKED，跳过 UDP 应答: {0}",
                     remoteEndPoint?.ToString() ?? "<unknown>");
@@ -350,8 +297,7 @@ namespace MediaInfoKeeper.Patch
                 return false;
             }
 
-            if (TryGetCustomDiscoveryAddress(out var address))
-            {
+            if (TryGetCustomDiscoveryAddress(out var address)) {
                 CurrentUdpDiscoveryAddress.Value = address;
                 logger?.Debug(
                     "本地发现地址 UDP 应答将改写为: {0} ({1})",
@@ -363,15 +309,10 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void RespondToMessagePostfix(Task __result)
-        {
-            if (string.IsNullOrWhiteSpace(CurrentUdpDiscoveryAddress.Value))
-            {
-                return;
-            }
+        private static void RespondToMessagePostfix(Task __result) {
+            if (string.IsNullOrWhiteSpace(CurrentUdpDiscoveryAddress.Value)) return;
 
-            if (__result == null)
-            {
+            if (__result == null) {
                 CurrentUdpDiscoveryAddress.Value = null;
                 return;
             }
@@ -384,32 +325,20 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPrefix]
-        private static void SendMessagePrefix([HarmonyArgument(0)] ref string localUrl)
-        {
+        private static void SendMessagePrefix([HarmonyArgument(0)] ref string localUrl) {
             var configuredAddress = CurrentUdpDiscoveryAddress.Value;
-            if (string.IsNullOrWhiteSpace(configuredAddress) || string.IsNullOrWhiteSpace(localUrl))
-            {
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(configuredAddress) || string.IsNullOrWhiteSpace(localUrl)) return;
 
-            if (!TryRewriteDiscoveryMessage(localUrl, configuredAddress, out var rewrittenMessage))
-            {
-                return;
-            }
+            if (!TryRewriteDiscoveryMessage(localUrl, configuredAddress, out var rewrittenMessage)) return;
 
-            if (!string.Equals(localUrl, rewrittenMessage, StringComparison.Ordinal))
-            {
+            if (!string.Equals(localUrl, rewrittenMessage, StringComparison.Ordinal)) {
                 logger?.Debug("UDP 发现响应已改写为自定义地址: {0}", configuredAddress);
                 localUrl = rewrittenMessage;
             }
         }
 
-        private static void ApplyDiscoveryAddress(object info, string address, string source)
-        {
-            if (info == null || string.IsNullOrWhiteSpace(address))
-            {
-                return;
-            }
+        private static void ApplyDiscoveryAddress(object info, string address, string source) {
+            if (info == null || string.IsNullOrWhiteSpace(address)) return;
 
             var localAddressUpdated = TrySetMemberValue(info, "LocalAddress", address);
             var localAddressesUpdated = TrySetMemberValue(info, "LocalAddresses", new[] { address });
@@ -422,58 +351,44 @@ namespace MediaInfoKeeper.Patch
                 localAddressesUpdated);
         }
 
-        private static bool TryRewriteDiscoveryMessage(string message, string address, out string rewrittenMessage)
-        {
+        private static bool TryRewriteDiscoveryMessage(string message, string address, out string rewrittenMessage) {
             rewrittenMessage = message;
 
-            try
-            {
+            try {
                 var root = JsonNode.Parse(message) as JsonObject;
-                if (root == null)
-                {
-                    return false;
-                }
+                if (root == null) return false;
 
                 root["Address"] = address;
                 rewrittenMessage = root.ToJsonString(new JsonSerializerOptions());
                 return true;
             }
-            catch (JsonException ex)
-            {
+            catch (JsonException ex) {
                 logger?.Debug("UDP 发现响应不是有效 JSON，跳过地址改写: {0}", ex.Message);
                 return false;
             }
         }
 
-        private static bool TrySetMemberValue(object instance, string memberName, object value)
-        {
-            if (instance == null || string.IsNullOrWhiteSpace(memberName))
-            {
-                return false;
-            }
+        private static bool TrySetMemberValue(object instance, string memberName, object value) {
+            if (instance == null || string.IsNullOrWhiteSpace(memberName)) return false;
 
             var type = instance.GetType();
             var property = type.GetProperty(memberName, InstanceFlags);
-            if (property != null)
-            {
+            if (property != null) {
                 var setter = property.GetSetMethod(true);
-                if (setter != null && property.PropertyType.IsInstanceOfType(value))
-                {
+                if (setter != null && property.PropertyType.IsInstanceOfType(value)) {
                     setter.Invoke(instance, new[] { value });
                     return true;
                 }
             }
 
             var backingField = type.GetField($"<{memberName}>k__BackingField", InstanceFlags);
-            if (backingField != null && backingField.FieldType.IsInstanceOfType(value))
-            {
+            if (backingField != null && backingField.FieldType.IsInstanceOfType(value)) {
                 backingField.SetValue(instance, value);
                 return true;
             }
 
             var directField = type.GetField(memberName, InstanceFlags);
-            if (directField != null && directField.FieldType.IsInstanceOfType(value))
-            {
+            if (directField != null && directField.FieldType.IsInstanceOfType(value)) {
                 directField.SetValue(instance, value);
                 return true;
             }
@@ -481,27 +396,22 @@ namespace MediaInfoKeeper.Patch
             return false;
         }
 
-        private static bool TryGetCustomDiscoveryAddress(out string address)
-        {
+        private static bool TryGetCustomDiscoveryAddress(out string address) {
             address = null;
             if (!TryValidateConfiguredValue(configuredValue, out var normalizedValue, out _) ||
                 string.IsNullOrWhiteSpace(normalizedValue) ||
                 string.Equals(normalizedValue, BlockedKeyword, StringComparison.Ordinal))
-            {
                 return false;
-            }
 
             address = normalizedValue;
             return true;
         }
 
-        private static bool HasConfiguredValue()
-        {
+        private static bool HasConfiguredValue() {
             return !string.IsNullOrWhiteSpace(configuredValue);
         }
 
-        private static bool IsBlockedConfigured()
-        {
+        private static bool IsBlockedConfigured() {
             return string.Equals(configuredValue, BlockedKeyword, StringComparison.Ordinal);
         }
     }

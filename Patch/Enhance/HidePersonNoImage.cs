@@ -9,14 +9,13 @@ using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
+using MediaInfoKeeper.Options;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 在影视条目 DTO 输出时移除没有主图的人物信息。
+    ///     在影视条目 DTO 输出时移除没有主图的人物信息。
     /// </summary>
-    public static class HidePersonNoImage
-    {
+    public static class HidePersonNoImage {
         private static Harmony harmony;
         private static ILogger logger;
         private static MethodInfo attachPeople;
@@ -25,10 +24,8 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
-        public static void Initialize(ILogger pluginLogger, bool enable)
-        {
-            if (harmony != null)
-            {
+        public static void Initialize(ILogger pluginLogger, bool enable) {
+            if (harmony != null) {
                 Configure(enable);
                 return;
             }
@@ -36,8 +33,7 @@ namespace MediaInfoKeeper.Patch
             logger = pluginLogger;
             isEnabled = enable;
 
-            try
-            {
+            try {
                 var implAssembly = Assembly.Load("Emby.Server.Implementations");
                 var implVersion = implAssembly?.GetName().Version;
                 var dtoServiceType = implAssembly?.GetType("Emby.Server.Implementations.Dto.DtoService");
@@ -45,14 +41,12 @@ namespace MediaInfoKeeper.Patch
                 attachPeople = PatchMethodResolver.Resolve(
                     dtoServiceType,
                     implVersion,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "dtoservice-attachpeople-exact",
                         MethodName = "AttachPeople",
                         BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic,
                         IsStatic = false,
-                        ParameterTypes = new[]
-                        {
+                        ParameterTypes = new[] {
                             typeof(BaseItemDto),
                             typeof(BaseItem),
                             typeof(DtoOptions)
@@ -62,8 +56,7 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "HidePersonNoImage.DtoService.AttachPeople");
 
-                if (attachPeople == null)
-                {
+                if (attachPeople == null) {
                     PatchLog.InitFailed(logger, nameof(HidePersonNoImage), "目标方法缺失");
                     return;
                 }
@@ -71,13 +64,9 @@ namespace MediaInfoKeeper.Patch
                 harmony = new Harmony("mediainfokeeper.hidepersonnoimage");
                 PatchLog.Patched(logger, nameof(HidePersonNoImage), attachPeople);
 
-                if (isEnabled)
-                {
-                    Patch();
-                }
+                if (isEnabled) Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("HidePersonNoImage 初始化失败。");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -86,31 +75,19 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enable)
-        {
+        public static void Configure(bool enable) {
             isEnabled = enable;
 
-            if (harmony == null)
-            {
-                return;
-            }
+            if (harmony == null) return;
 
             if (isEnabled)
-            {
                 Patch();
-            }
             else
-            {
                 Unpatch();
-            }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || attachPeople == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || attachPeople == null) return;
 
             harmony.Patch(
                 attachPeople,
@@ -118,43 +95,32 @@ namespace MediaInfoKeeper.Patch
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null || attachPeople == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null || attachPeople == null) return;
 
             harmony.Unpatch(attachPeople, HarmonyPatchType.Postfix, harmony.Id);
             isPatched = false;
         }
 
         [HarmonyPostfix]
-        private static void AttachPeoplePostfix(BaseItemDto dto, BaseItem item, DtoOptions options)
-        {
-            if (!isEnabled || dto?.People == null || item == null)
-            {
-                return;
-            }
+        private static void AttachPeoplePostfix(BaseItemDto dto, BaseItem item, DtoOptions options) {
+            if (!isEnabled || dto?.People == null || item == null) return;
 
             if (!(item is Movie) &&
                 !(item is Series) &&
                 !(item is Season) &&
                 !(item is Episode))
-            {
                 return;
-            }
 
             var preference = Plugin.Instance?.Options?.Enhance?.HidePersonPreference;
             var noImage =
-                preference?.Contains(Options.EnhanceOptions.HidePersonOption.NoImage.ToString(), StringComparison.OrdinalIgnoreCase) == true;
+                preference?.Contains(EnhanceOptions.HidePersonOption.NoImage.ToString(),
+                    StringComparison.OrdinalIgnoreCase) == true;
             var actorOnly =
-                preference?.Contains(Options.EnhanceOptions.HidePersonOption.ActorOnly.ToString(), StringComparison.OrdinalIgnoreCase) == true;
+                preference?.Contains(EnhanceOptions.HidePersonOption.ActorOnly.ToString(),
+                    StringComparison.OrdinalIgnoreCase) == true;
 
-            if (!noImage && !actorOnly)
-            {
-                return;
-            }
+            if (!noImage && !actorOnly) return;
 
             var originalPeople = dto.People;
             var filteredOutPeople = originalPeople
@@ -164,10 +130,7 @@ namespace MediaInfoKeeper.Patch
                      (actorOnly && p.Type != PersonType.Actor && p.Type != PersonType.GuestStar)))
                 .ToArray();
 
-            if (filteredOutPeople.Length == 0)
-            {
-                return;
-            }
+            if (filteredOutPeople.Length == 0) return;
 
             dto.People = originalPeople
                 .Where(p =>
@@ -183,7 +146,8 @@ namespace MediaInfoKeeper.Patch
                 .ToArray();
             var removedNamesText = removedNames.Length == 0
                 ? "[]"
-                : "[" + string.Join(", ", removedNames) + (filteredOutPeople.Length > 10 ? ", ..." : string.Empty) + "]";
+                : "[" + string.Join(", ", removedNames) + (filteredOutPeople.Length > 10 ? ", ..." : string.Empty) +
+                  "]";
 
             logger?.Debug(
                 "HidePersonNoImage - 条目=\"{0}\" 类型={1} 人物过滤：过滤前={2}，过滤后={3}，移除={4}，移除人物={5}",

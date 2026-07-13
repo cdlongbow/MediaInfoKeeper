@@ -37,14 +37,49 @@
     // note02: url 禁止使用相对路径,非 web 环境的根路径为文件路径,非 http
     // ------ 程序内部使用,请勿更改 start ------
     const openSourceLicense = {
-        self: { version: '1.2.5', name: 'Emby Danmaku Extension (misaka10876 Fork)', license: 'MIT License', url: 'https://github.com/l429609201/dd-danmaku' },
-        chen3861229: { version: '1.45', name: 'Emby Danmaku Extension(Forked from original:1.11)', license: 'MIT License', url: 'https://github.com/chen3861229/dd-danmaku' },
-        original: { version: '1.11', name: 'Emby Danmaku Extension', license: 'MIT License', url: 'https://github.com/RyoLee/emby-danmaku' },
-        jellyfinFork: { version: '1.52', name: 'Jellyfin Danmaku Extension', license: 'MIT License', url: 'https://github.com/Izumiko/jellyfin-danmaku' },
-        danmaku: { version: '2.0.8', name: 'Danmaku', license: 'MIT License', url: 'https://github.com/weizhenye/Danmaku' },
-        dandanplayApi: { version: 'v2', name: '弹弹 play API', license: 'MIT License', url: 'https://github.com/kaedei/dandanplay-libraryindex' },
-        bangumiApi: { version: '2025-02-5', name: 'Bangumi API', license: 'None', url: 'https://github.com/bangumi/api' },
-        embyPluginDanmu: { version: '1.0.2', name: 'EmbyPluginDanmu', license: 'None', url: 'https://github.com/fengymi/emby-plugin-danmu' },
+        self: {
+            version: '1.2.5',
+            name: 'Emby Danmaku Extension (misaka10876 Fork)',
+            license: 'MIT License',
+            url: 'https://github.com/l429609201/dd-danmaku'
+        },
+        chen3861229: {
+            version: '1.45',
+            name: 'Emby Danmaku Extension(Forked from original:1.11)',
+            license: 'MIT License',
+            url: 'https://github.com/chen3861229/dd-danmaku'
+        },
+        original: {
+            version: '1.11',
+            name: 'Emby Danmaku Extension',
+            license: 'MIT License',
+            url: 'https://github.com/RyoLee/emby-danmaku'
+        },
+        jellyfinFork: {
+            version: '1.52',
+            name: 'Jellyfin Danmaku Extension',
+            license: 'MIT License',
+            url: 'https://github.com/Izumiko/jellyfin-danmaku'
+        },
+        danmaku: {
+            version: '2.0.8',
+            name: 'Danmaku',
+            license: 'MIT License',
+            url: 'https://github.com/weizhenye/Danmaku'
+        },
+        dandanplayApi: {
+            version: 'v2',
+            name: '弹弹 play API',
+            license: 'MIT License',
+            url: 'https://github.com/kaedei/dandanplay-libraryindex'
+        },
+        bangumiApi: {version: '2025-02-5', name: 'Bangumi API', license: 'None', url: 'https://github.com/bangumi/api'},
+        embyPluginDanmu: {
+            version: '1.0.2',
+            name: 'EmbyPluginDanmu',
+            license: 'None',
+            url: 'https://github.com/fengymi/emby-plugin-danmu'
+        },
     };
     const dandanplayApi = {
         get prefix() {
@@ -95,7 +130,7 @@
         getUserCollection: (userName, subjectId) => `${bangumiApi.prefix}/users/${userName}/collections/${subjectId}`,
         postUserCollection: (subjectId) => `${bangumiApi.prefix}/users/-/collections/${subjectId}`,
         getUserSubjectEpisodeCollection: (subjectId) => `${bangumiApi.prefix}/users/-/collections/${subjectId}/episodes?offset=0&limit=100`,
-        putUserEpisodeCollection: (episodeId ) => `${bangumiApi.prefix}/users/-/collections/-/episodes/${episodeId}`,
+        putUserEpisodeCollection: (episodeId) => `${bangumiApi.prefix}/users/-/collections/-/episodes/${episodeId}`,
     };
     const check_interval = 200;
     const LOAD_TYPE = {
@@ -132,7 +167,7 @@
                 const parts = sv.split('.').map(Number);
                 apiSaysOld = (parts[0] || 0) < 4 || ((parts[0] || 0) === 4 && (parts[1] || 0) < 8);
             }
-        } catch(e) {
+        } catch (e) {
             logger.warn('[容器探测] API 版本检测异常，回退到 DOM 探测:', e.message);
         }
 
@@ -165,7 +200,7 @@
 
         const selector = finalIsOld ? _CONTAINER_SELECTORS.old : _CONTAINER_SELECTORS.new;
         logger.info(`[容器探测] 结果: ${finalIsOld ? '旧版' : '新版'} | 选择器: ${selector} | 来源: ${source} | API判断: ${apiSaysOld ? '旧' : '新'} | DOM新: ${hasNewContainer} | DOM旧: ${hasOldContainer}`);
-        return { selector, isOld: finalIsOld };
+        return {selector, isOld: finalIsOld};
     }
 
     // https://fonts.google.com/icons
@@ -204,70 +239,75 @@
     const tabIframeId = 'danmakuTab5';
     // 菜单 tabs, 为兼容控制器移动, 应避免使用左右布局
     const danmakuTabOpts = [
-        { id: 'danmakuTab0', name: '弹幕设置', buildMethod: buildDanmakuSetting },
-        { id: 'danmakuTab1', name: '手动匹配', buildMethod: buildSearchEpisode },
-        { id: currentDanmakuInfoContainerId, name: '弹幕信息', buildMethod: buildCurrentDanmakuInfo },
-        { id: 'danmakuTab3', name: '高级设置', buildMethod: buildProSetting },
-        { id: 'danmakuTab4', name: '关于', buildMethod: buildAbout },
-        { id: tabIframeId, name: '内嵌网页', hidden: true, buildMethod: buildIframe },
+        {id: 'danmakuTab0', name: '弹幕设置', buildMethod: buildDanmakuSetting},
+        {id: 'danmakuTab1', name: '手动匹配', buildMethod: buildSearchEpisode},
+        {id: currentDanmakuInfoContainerId, name: '弹幕信息', buildMethod: buildCurrentDanmakuInfo},
+        {id: 'danmakuTab3', name: '高级设置', buildMethod: buildProSetting},
+        {id: 'danmakuTab4', name: '关于', buildMethod: buildAbout},
+        {id: tabIframeId, name: '内嵌网页', hidden: true, buildMethod: buildIframe},
     ];
     // 弹幕类型过滤
     const danmakuTypeFilterOpts = {
-        bottom: { id: 'bottom', name: '底部弹幕', },
-        top: { id: 'top', name: '顶部弹幕', },
-        ltr: { id: 'ltr', name: '从左至右', },
-        rtl: { id: 'rtl', name: '从右至左', },
-        rolling: { id: 'rolling', name: '滚动弹幕', },
-        onlyWhite: { id: 'onlyWhite', name: '彩色弹幕', },
-        emoji: { id: 'emoji', name: 'emoji', },
+        bottom: {id: 'bottom', name: '底部弹幕',},
+        top: {id: 'top', name: '顶部弹幕',},
+        ltr: {id: 'ltr', name: '从左至右',},
+        rtl: {id: 'rtl', name: '从右至左',},
+        rolling: {id: 'rolling', name: '滚动弹幕',},
+        onlyWhite: {id: 'onlyWhite', name: '彩色弹幕',},
+        emoji: {id: 'emoji', name: 'emoji',},
     };
     const danmakuSource = {
-        AcFun: { id: 'AcFun', name: 'A站(AcFun)' },
-        BiliBili: { id: 'BiliBili', name: 'B站(BiliBili)' },
-        DanDanPlay: { id: 'DanDanPlay', name: '弹弹(DanDanPlay)' }, // 无弹幕来源的默认值
-        D: { id: 'D', name: 'D' }, // 未知平台
-        Gamer: { id: 'Gamer', name: '巴哈(Gamer)' },
-        iqiyi: { id: 'iqiyi', name: '爱奇艺(iqiyi)' },
-        QQ: { id: 'QQ', name: '腾讯视频(QQ)' },
-        Youku: { id: 'Youku', name: '优酷(Youku)' },
-        '5dm': { id: '5dm', name: 'D站(5dm)' },
-        '异世界动漫': { id: '异世界动漫', name: '异世界动漫' },
+        AcFun: {id: 'AcFun', name: 'A站(AcFun)'},
+        BiliBili: {id: 'BiliBili', name: 'B站(BiliBili)'},
+        DanDanPlay: {id: 'DanDanPlay', name: '弹弹(DanDanPlay)'}, // 无弹幕来源的默认值
+        D: {id: 'D', name: 'D'}, // 未知平台
+        Gamer: {id: 'Gamer', name: '巴哈(Gamer)'},
+        iqiyi: {id: 'iqiyi', name: '爱奇艺(iqiyi)'},
+        QQ: {id: 'QQ', name: '腾讯视频(QQ)'},
+        Youku: {id: 'Youku', name: '优酷(Youku)'},
+        '5dm': {id: '5dm', name: 'D站(5dm)'},
+        '异世界动漫': {id: '异世界动漫', name: '异世界动漫'},
     };
     const showSource = {
-        source: { id: 'source', name: '来源平台' },
-        originalUserId: { id: 'originalUserId', name: '用户ID' },
-        cid: { id: 'cid', name: '弹幕CID' }, // 非弹幕 id,唯一性需自行用 uid + cid 拼接的 cuid
+        source: {id: 'source', name: '来源平台'},
+        originalUserId: {id: 'originalUserId', name: '用户ID'},
+        cid: {id: 'cid', name: '弹幕CID'}, // 非弹幕 id,唯一性需自行用 uid + cid 拼接的 cuid
     };
     const danmakuEngineOpts = [
-        { id: 'canvas', name: 'canvas' },
-        { id: 'dom', name: 'dom' },
+        {id: 'canvas', name: 'canvas'},
+        {id: 'dom', name: 'dom'},
     ];
     const danmakuMatchModeOpts = [
-        { id: 'hashAndFileName', name: '哈希+文件名' },
-        { id: 'fileNameOnly', name: '仅文件名' },
+        {id: 'hashAndFileName', name: '哈希+文件名'},
+        {id: 'fileNameOnly', name: '仅文件名'},
     ];
     const danmakuChConverOpts = [
-        { id: '0', name: '未启用' },
-        { id: '1', name: '转换为简体' },
-        { id: '2', name: '转换为繁体' },
+        {id: '0', name: '未启用'},
+        {id: '1', name: '转换为简体'},
+        {id: '2', name: '转换为繁体'},
     ];
     // 日志级别选项
     const logLevelOpts = [
-        { id: '2', name: 'WARN' },
-        { id: '3', name: 'INFO' },
-        { id: '4', name: 'DEBUG' },
+        {id: '2', name: 'WARN'},
+        {id: '3', name: 'INFO'},
+        {id: '4', name: 'DEBUG'},
     ];
     const embyOffsetBtnStyle = 'margin: 0;padding: 0;';
     const timeOffsetBtns = [
-        { label: '-30', valueOffset: '-30', iconKey: iconKeys.replay_30,  style: embyOffsetBtnStyle },
-        { label: '-10', valueOffset: '-10', iconKey: iconKeys.replay_10,  style: embyOffsetBtnStyle },
-        { label: '-5',  valueOffset: '-5',  iconKey: iconKeys.replay_5,   style: embyOffsetBtnStyle },
-        { label: '-1',  valueOffset: '-1',  iconKey: iconKeys.replay,     style: embyOffsetBtnStyle },
-        { label: '0',   valueOffset: '0',   iconKey: iconKeys.reset,      style: embyOffsetBtnStyle },
-        { label: '+1',  valueOffset: '1',   iconKey: iconKeys.replay,     style: embyOffsetBtnStyle + ' transform: rotateY(180deg);' },
-        { label: '+5',  valueOffset: '5',   iconKey: iconKeys.forward_5,  style: embyOffsetBtnStyle },
-        { label: '+10', valueOffset: '10',  iconKey: iconKeys.forward_10, style: embyOffsetBtnStyle },
-        { label: '+30', valueOffset: '30',  iconKey: iconKeys.forward_30, style: embyOffsetBtnStyle },
+        {label: '-30', valueOffset: '-30', iconKey: iconKeys.replay_30, style: embyOffsetBtnStyle},
+        {label: '-10', valueOffset: '-10', iconKey: iconKeys.replay_10, style: embyOffsetBtnStyle},
+        {label: '-5', valueOffset: '-5', iconKey: iconKeys.replay_5, style: embyOffsetBtnStyle},
+        {label: '-1', valueOffset: '-1', iconKey: iconKeys.replay, style: embyOffsetBtnStyle},
+        {label: '0', valueOffset: '0', iconKey: iconKeys.reset, style: embyOffsetBtnStyle},
+        {
+            label: '+1',
+            valueOffset: '1',
+            iconKey: iconKeys.replay,
+            style: embyOffsetBtnStyle + ' transform: rotateY(180deg);'
+        },
+        {label: '+5', valueOffset: '5', iconKey: iconKeys.forward_5, style: embyOffsetBtnStyle},
+        {label: '+10', valueOffset: '10', iconKey: iconKeys.forward_10, style: embyOffsetBtnStyle},
+        {label: '+30', valueOffset: '30', iconKey: iconKeys.forward_30, style: embyOffsetBtnStyle},
     ];
     const toastPrefixes = {
         system: '[系统通知] : ',
@@ -280,11 +320,12 @@
         return [];
     };
     const danmuListOpts = [
-        { id: '0', name: '不展示' , onChange: () => [] },
-        { id: '1', name: '屏中', onChange: (ede) => ede.danmaku ? ede.danmaku._.runningList : [] },
-        { id: '2', name: '所有', onChange: (ede) => ede.commentsParsed },
-        { id: '3', name: '已加载', onChange: getDanmakuComments },
-        { id: '4', name: '被过滤', onChange: (ede) => {
+        {id: '0', name: '不展示', onChange: () => []},
+        {id: '1', name: '屏中', onChange: (ede) => ede.danmaku ? ede.danmaku._.runningList : []},
+        {id: '2', name: '所有', onChange: (ede) => ede.commentsParsed},
+        {id: '3', name: '已加载', onChange: getDanmakuComments},
+        {
+            id: '4', name: '被过滤', onChange: (ede) => {
                 // [优化] 使用 Set 优化差集计算性能，防止卡死
                 const loadedComments = getDanmakuComments(ede);
                 if (!loadedComments || loadedComments.length === 0) return ede.commentsParsed;
@@ -294,116 +335,209 @@
 
                 // 只需要遍历一次即可
                 return ede.commentsParsed.filter(p => !loadedCuids.has(p.cuid));
-            } },
-        { id: '5', name: '已相似合并', onChange: (ede) => {
+            }
+        },
+        {
+            id: '5', name: '已相似合并', onChange: (ede) => {
                 if (ede.danmaku && ede.danmaku.comments) {
                     return ede.danmaku.comments.filter(p => p.xCount);
                 }
                 return [];
             }
         },
-        { id: '100', name: '通知', onChange: (ede) => ede.danmaku ? ede.danmaku.comments.filter(c => hasToastPrefixes(c, toastPrefixes)) : [] },
+        {
+            id: '100',
+            name: '通知',
+            onChange: (ede) => ede.danmaku ? ede.danmaku.comments.filter(c => hasToastPrefixes(c, toastPrefixes)) : []
+        },
     ];
     const timeoutCallbackUnitOpts = [
-        { id: '0', name: '秒', msRate: 1000 },
-        { id: '1', name: '分', msRate: 1000 * 60 },
-        { id: '2', name: '时', msRate: 1000 * 60 * 60 },
+        {id: '0', name: '秒', msRate: 1000},
+        {id: '1', name: '分', msRate: 1000 * 60},
+        {id: '2', name: '时', msRate: 1000 * 60 * 60},
     ];
     let timeoutCallbackId;
     const timeoutCallbackClear = () => timeoutCallbackId && clearTimeout(timeoutCallbackId);
     const timeoutCallbackTypeOpts = [
-        { id: '0', name: '不启用' , onChange: () => timeoutCallbackClear() },
-        { id: '1', name: '退出播放', onChange: (ms) => {
-                timeoutCallbackClear(), timeoutCallbackId = setTimeout(() => { closeEmbyDialog(), Emby.InputManager.trigger('back') }, ms);
-            } },
-        { id: '2', name: '返回主页', onChange: (ms) => { // Native 播放器不支持.trigger('home'),虽底层一样,但原因未知
-                timeoutCallbackClear(), timeoutCallbackId = setTimeout(() => { closeEmbyDialog(), Emby.Page.goHome() }, ms);
-            } },
+        {id: '0', name: '不启用', onChange: () => timeoutCallbackClear()},
+        {
+            id: '1', name: '退出播放', onChange: (ms) => {
+                timeoutCallbackClear(), timeoutCallbackId = setTimeout(() => {
+                    closeEmbyDialog(), Emby.InputManager.trigger('back')
+                }, ms);
+            }
+        },
+        {
+            id: '2', name: '返回主页', onChange: (ms) => { // Native 播放器不支持.trigger('home'),虽底层一样,但原因未知
+                timeoutCallbackClear(), timeoutCallbackId = setTimeout(() => {
+                    closeEmbyDialog(), Emby.Page.goHome()
+                }, ms);
+            }
+        },
     ];
     const getApiTl = fn => fn.toString().match(/\=>\s*(.*)$/)[1].trim().replace(/`/g, '');
     const labels = {
         enable: '启用',
     };
     const lsKeys = { // id 统一使用 danmaku 前缀
-        chConvert: { id: 'danmakuChConvert', defaultValue: 1, name: '简繁转换' },
-        switch: { id: 'danmakuSwitch', defaultValue: true, name: '弹幕开关' },
-        autoLoadSwitch: { id: 'danmakuAutoLoadSwitch', defaultValue: true, name: '自动加载弹幕' },
-        antiOverlap: { id: 'danmakuAntiOverlap', defaultValue: false, name: '防重叠' },
-        filterLevel: { id: 'danmakuFilterLevel', defaultValue: 0, name: '过滤强度', min: 0, max: 3, step: 1 },
-        heightPercent: { id: 'danmakuHeightPercent', defaultValue: 70, name: '显示区域', min: 3, max: 100, step: 1 },
-        fontSizeRate: { id: 'danmakuFontSizeRate', defaultValue: 140, name: '弹幕大小', min: 50, max: 300, step: 10 },
-        fontOpacity: { id: 'danmakuFontOpacity', defaultValue: 60, name: '透明度', min: 20, max: 100, step: 10 },
-        speed: { id: 'danmakuBaseSpeed', defaultValue: 200, name: '速度', min: 10, max: 300, step: 10 },
-        timelineOffset: { id: 'danmakuTimelineOffset', defaultValue: 0, name: '轴偏秒' },
-        fontWeight: { id: 'danmakuFontWeight', defaultValue: 400, name: '弹幕粗细', min: 100, max: 1000, step: 100 },
-        fontStyle: { id: 'danmakuFontStyle', defaultValue: 0, name: '弹幕斜体', min: 0, max: 2, step: 1 },
-        fontFamily: { id: 'danmakuFontFamily', defaultValue: 'sans-serif', name: '字体' },
-        danmuList: { id: 'danmakuDanmuList', defaultValue: 0, name: '弹幕列表' },
-        typeFilter: { id: 'danmakuTypeFilter', defaultValue: [], name: '屏蔽类型' },
-        sourceFilter: { id: 'danmakuSourceFilter', defaultValue: [], name: '屏蔽来源平台' },
-        showSource: { id: 'danmakuShowSource', defaultValue: [], name: '显示每条来源' },
-        autoFilterCount: { id: 'danmakuAutoFilterCount', defaultValue: 0, name: '自动过滤弹幕数阈值', min: 0, max: 10000, step: 500 },
-        mergeSimilarEnable: { id: 'danmakuMergeSimilarEnable', defaultValue: false, name: '合并相似弹幕' },
-        mergeSimilarPercent: { id: 'danmakuMergeSimilarPercent', defaultValue: 80, name: '相似度百分比', min: 20, max: 100, step: 1 },
-        mergeSimilarTime: { id: 'danmakuMergeSimilarTime', defaultValue: 10, name: '相似度时间窗口', min: 1, max: 60, step: 1 },
-        filterKeywords: { id: 'danmakuFilterKeywords', defaultValue: '', name: '屏蔽关键词' },
-        filterKeywordsEnable: { id: 'danmakuFilterKeywordsEnable', defaultValue: true, name: '屏蔽关键词启用' },
+        chConvert: {id: 'danmakuChConvert', defaultValue: 1, name: '简繁转换'},
+        switch: {id: 'danmakuSwitch', defaultValue: true, name: '弹幕开关'},
+        autoLoadSwitch: {id: 'danmakuAutoLoadSwitch', defaultValue: true, name: '自动加载弹幕'},
+        antiOverlap: {id: 'danmakuAntiOverlap', defaultValue: false, name: '防重叠'},
+        filterLevel: {id: 'danmakuFilterLevel', defaultValue: 0, name: '过滤强度', min: 0, max: 3, step: 1},
+        heightPercent: {id: 'danmakuHeightPercent', defaultValue: 70, name: '显示区域', min: 3, max: 100, step: 1},
+        fontSizeRate: {id: 'danmakuFontSizeRate', defaultValue: 140, name: '弹幕大小', min: 50, max: 300, step: 10},
+        fontOpacity: {id: 'danmakuFontOpacity', defaultValue: 60, name: '透明度', min: 20, max: 100, step: 10},
+        speed: {id: 'danmakuBaseSpeed', defaultValue: 200, name: '速度', min: 10, max: 300, step: 10},
+        timelineOffset: {id: 'danmakuTimelineOffset', defaultValue: 0, name: '轴偏秒'},
+        fontWeight: {id: 'danmakuFontWeight', defaultValue: 400, name: '弹幕粗细', min: 100, max: 1000, step: 100},
+        fontStyle: {id: 'danmakuFontStyle', defaultValue: 0, name: '弹幕斜体', min: 0, max: 2, step: 1},
+        fontFamily: {id: 'danmakuFontFamily', defaultValue: 'sans-serif', name: '字体'},
+        danmuList: {id: 'danmakuDanmuList', defaultValue: 0, name: '弹幕列表'},
+        typeFilter: {id: 'danmakuTypeFilter', defaultValue: [], name: '屏蔽类型'},
+        sourceFilter: {id: 'danmakuSourceFilter', defaultValue: [], name: '屏蔽来源平台'},
+        showSource: {id: 'danmakuShowSource', defaultValue: [], name: '显示每条来源'},
+        autoFilterCount: {
+            id: 'danmakuAutoFilterCount',
+            defaultValue: 0,
+            name: '自动过滤弹幕数阈值',
+            min: 0,
+            max: 10000,
+            step: 500
+        },
+        mergeSimilarEnable: {id: 'danmakuMergeSimilarEnable', defaultValue: false, name: '合并相似弹幕'},
+        mergeSimilarPercent: {
+            id: 'danmakuMergeSimilarPercent',
+            defaultValue: 80,
+            name: '相似度百分比',
+            min: 20,
+            max: 100,
+            step: 1
+        },
+        mergeSimilarTime: {
+            id: 'danmakuMergeSimilarTime',
+            defaultValue: 10,
+            name: '相似度时间窗口',
+            min: 1,
+            max: 60,
+            step: 1
+        },
+        filterKeywords: {id: 'danmakuFilterKeywords', defaultValue: '', name: '屏蔽关键词'},
+        filterKeywordsEnable: {id: 'danmakuFilterKeywordsEnable', defaultValue: true, name: '屏蔽关键词启用'},
         // removeEmojiEnable: { id: 'danmakuRemoveEmojiEnable', defaultValue: false, name: '移除弹幕中的emoji' },
-        engine: { id: 'danmakuEngine', defaultValue: 'canvas', name: '弹幕引擎' },
-        osdTitleEnable: { id: 'danmakuOsdTitleEnable', defaultValue: false, name: '播放界面右下角显示弹幕信息' },
-        osdLineChartEnable: { id: 'danmakuOsdLineChartEnable', defaultValue: false, name: '弹幕高能进度条' },
-        osdLineChartSkipFilter: { id: 'danmakuOsdLineChartSkipFilter', defaultValue: false, name: '弹幕高能进度条免过滤' },
-        osdLineChartTime: { id: 'danmakuOsdLineChartTime', defaultValue: 10, name: '弹幕高能进度条颗粒度', min: 1, max: 60, step: 1  },
-        osdHeaderClockEnable: { id: 'danmakuOsdHeaderClockEnable', defaultValue: false, name: '播放界面头中显示时钟' },
-        timeoutCallbackUnit: { id: 'danmakuTimeoutCallbackUnit', defaultValue: 1, name: '定时单位' },
-        timeoutCallbackValue: { id: 'danmakuTimeoutCallbackValue', defaultValue: 0, name: '定时值' },
-        bangumiEnable: { id: 'danmakuBangumiEnable', defaultValue: false, name: '启用并填写个人令牌' },
-        bangumiToken: { id: 'danmakuBangumiToken', defaultValue: '', name: '个人令牌' },
-        bangumiPostPercent: { id: 'danmakuBangumiPostPercent', defaultValue: 95, name: '时长比', min: 1, max: 99, step: 1 },
-        bangumiApiPrefix: { id: 'danmakuBangumiApiPrefix', defaultValue: 'https://api.bgm.tv', name: 'Bangumi API 地址' },
-        bangumiImageDomain: { id: 'danmakuBangumiImageDomain', defaultValue: 'https://lain.bgm.tv', name: 'Bangumi 图片域名' },
-        tmdbApiKey: { id: 'danmakuTmdbApiKey', defaultValue: '', name: 'TMDB API Key' },
-        tmdbApiBaseUrl: { id: 'danmakuTmdbApiBaseUrl', defaultValue: 'https://api.themoviedb.org', name: 'TMDB API 域名' },
-        tmdbEpisodeMappingEnable: { id: 'danmakuTmdbEpisodeMappingEnable', defaultValue: false, name: '启用集数映射' },
-        consoleLogEnable: { id: 'danmakuConsoleLogEnable', defaultValue: false, name: '控制台日志' },
-        logLevel: { id: 'danmakuLogLevel', defaultValue: '3', name: '日志级别' },
-        useFetchPluginXml: { id: 'danmakuUseFetchPluginXml', defaultValue: false, name: '加载媒体服务端xml弹幕' },
+        engine: {id: 'danmakuEngine', defaultValue: 'canvas', name: '弹幕引擎'},
+        osdTitleEnable: {id: 'danmakuOsdTitleEnable', defaultValue: false, name: '播放界面右下角显示弹幕信息'},
+        osdLineChartEnable: {id: 'danmakuOsdLineChartEnable', defaultValue: false, name: '弹幕高能进度条'},
+        osdLineChartSkipFilter: {
+            id: 'danmakuOsdLineChartSkipFilter',
+            defaultValue: false,
+            name: '弹幕高能进度条免过滤'
+        },
+        osdLineChartTime: {
+            id: 'danmakuOsdLineChartTime',
+            defaultValue: 10,
+            name: '弹幕高能进度条颗粒度',
+            min: 1,
+            max: 60,
+            step: 1
+        },
+        osdHeaderClockEnable: {id: 'danmakuOsdHeaderClockEnable', defaultValue: false, name: '播放界面头中显示时钟'},
+        timeoutCallbackUnit: {id: 'danmakuTimeoutCallbackUnit', defaultValue: 1, name: '定时单位'},
+        timeoutCallbackValue: {id: 'danmakuTimeoutCallbackValue', defaultValue: 0, name: '定时值'},
+        bangumiEnable: {id: 'danmakuBangumiEnable', defaultValue: false, name: '启用并填写个人令牌'},
+        bangumiToken: {id: 'danmakuBangumiToken', defaultValue: '', name: '个人令牌'},
+        bangumiPostPercent: {
+            id: 'danmakuBangumiPostPercent',
+            defaultValue: 95,
+            name: '时长比',
+            min: 1,
+            max: 99,
+            step: 1
+        },
+        bangumiApiPrefix: {id: 'danmakuBangumiApiPrefix', defaultValue: 'https://api.bgm.tv', name: 'Bangumi API 地址'},
+        bangumiImageDomain: {
+            id: 'danmakuBangumiImageDomain',
+            defaultValue: 'https://lain.bgm.tv',
+            name: 'Bangumi 图片域名'
+        },
+        tmdbApiKey: {id: 'danmakuTmdbApiKey', defaultValue: '', name: 'TMDB API Key'},
+        tmdbApiBaseUrl: {
+            id: 'danmakuTmdbApiBaseUrl',
+            defaultValue: 'https://api.themoviedb.org',
+            name: 'TMDB API 域名'
+        },
+        tmdbEpisodeMappingEnable: {id: 'danmakuTmdbEpisodeMappingEnable', defaultValue: false, name: '启用集数映射'},
+        consoleLogEnable: {id: 'danmakuConsoleLogEnable', defaultValue: false, name: '控制台日志'},
+        logLevel: {id: 'danmakuLogLevel', defaultValue: '3', name: '日志级别'},
+        useFetchPluginXml: {id: 'danmakuUseFetchPluginXml', defaultValue: false, name: '加载媒体服务端xml弹幕'},
         // refreshPluginXml: { id: 'danmakuRefreshPluginXml', defaultValue: false, name: '加载前刷新媒体服务端xml弹幕' },
-        useOfficialApi: { id: 'danmakuUseOfficialApi', defaultValue: true, name: '使用弹弹play' },
-        useCustomApi: { id: 'danmakuUseCustomApi', defaultValue: false, name: '使用自定义API' },
-        matchApiEnable: { id: 'danmakuMatchApiEnable', defaultValue: false, name: '启用 /match 匹配' },
-        matchMode: { id: 'danmakuMatchMode', defaultValue: 'fileNameOnly', name: '匹配模式' },
-        appendSeasonEpisode: { id: 'danmakuAppendSeasonEpisode', defaultValue: false, name: '文件名拼接季集号' },
-        episodeOffsetRules: { id: 'danmakuEpisodeOffsetRules', defaultValue: [], name: '集数偏移规则' },
-        debugShowDanmakuWrapper: { id: 'danmakuDebugShowDanmakuWrapper', defaultValue: false, name: '弹幕容器边界' },
-        debugShowDanmakuCtrWrapper: { id: 'danmakuDebugShowDanmakuCtrWrapper', defaultValue: false, name: '按钮容器边界' },
-        debugReverseDanmu: { id: 'danmakuDebugReverseDanmu', defaultValue: false, name: '反转弹幕方向' },
-        debugRandomDanmuColor: { id: 'danmakuDebugRandomDanmuColor', defaultValue: false, name: '随机弹幕颜色' },
-        debugForceDanmuWhite: { id: 'danmakuDebugForceDanmuWhite', defaultValue: false, name: '强制弹幕白色' },
-        debugGenerateLarge: { id: 'danmakuDebugGenerateLarge', defaultValue: false, name: '测试大量弹幕' },
-        debugDialogHyalinize: { id: 'danmakuDebugDialogHyalinize', defaultValue: false, name: '透明弹窗背景' },
-        debugDialogWindow: { id: 'danmakuDebugDialogWindow', defaultValue: false, name: '弹窗窗口化' },
-        debugDialogRight: { id: 'danmakuDebugDialogRight', defaultValue: false, name: '弹窗靠右布局' }, // Emby Android 上暂时存在 bug
-        debugTabIframeEnable: { id: 'danmakuDebugTabIframeEnable', defaultValue: false, name: '打开内嵌网页' },
-        debugH5VideoAdapterEnable: { id: 'danmakuDebugH5VideoAdapterEnable', defaultValue: false, name: '查看视频适配器情况' },
-        quickDebugOn: { id: 'danmakuQuickDebugOn', defaultValue: false, name: '快速调试' },
-        customeCorsProxyUrl: { id: 'danmakuCustomeCorsProxyUrl', defaultValue: corsProxy, name: '跨域代理前缀' },
-        customeDanmakuUrl: { id: 'danmakuCustomeDanmakuUrl', defaultValue: requireDanmakuPath, name: '弹幕引擎依赖' },
-        customeGetCommentUrl: { id: 'danmakuCustomeGetCommentUrl', defaultValue: getApiTl(dandanplayApi.getComment), name: '获取指定弹幕库的所有弹幕' },
-        customeGetExtcommentUrl: { id: 'danmakuCustomeGetExtcommentUrl', defaultValue: getApiTl(dandanplayApi.getExtcomment), name: '获取指定第三方url的弹幕' },
-        customePosterImgUrl: { id: 'danmakuCustomePosterImgUrl', defaultValue: getApiTl(dandanplayApi.posterImg), name: '媒体海报' },
-        customApiPrefix: { id: 'danmakuCustomApiPrefix', defaultValue: '', name: '自定义弹弹play API地址' },
-        customApiList: { id: 'danmakuCustomApiList', defaultValue: [], name: '自定义弹幕源列表' },
-        apiPriority: { id: 'danmakuApiPriority', defaultValue: ['official', 'custom'], name: 'API 优先级' },
-        excludedLibraries: { id: 'danmakuExcludedLibraries', defaultValue: [], name: '排除的媒体库' },
-        animeTitleBlacklist: { id: 'danmakuAnimeTitleBlacklist', defaultValue: '', name: '标题黑名单正则' },
-        episodeTitleBlacklist: { id: 'danmakuEpisodeTitleBlacklist', defaultValue: '^(.*?)(特番|特典|特辑|花絮|预告|PV|CM|NCED|NCOP|Opening|Ending|OP|ED|Menu|刊行.*記念|作曲家|音楽|BGM|OST|主题曲|片尾曲|插曲|C\\d+|S\\d+|OVA|OAD|SP|Special|番外|外传|衍生|制作花絮|幕后|访谈|采访|发布会|宣传|推广)(.*?)$', name: '分集名称黑名单正则' },
-        blacklistApplyToCustomApi: { id: 'danmakuBlacklistApplyToCustomApi', defaultValue: false, name: '黑名单应用于自定义接口' },
-        convertTopTo: { id: 'danmakuConvertTopTo', defaultValue: 'default', name: '顶部弹幕转换为' },
-        convertBottomTo: { id: 'danmakuConvertBottomTo', defaultValue: 'default', name: '底部弹幕转换为' },
-        configPersistenceEnable: { id: 'danmakuConfigPersistenceEnable', defaultValue: false, name: '启用配置持久化' },
-        configPersistenceAutoSync: { id: 'danmakuConfigPersistenceAutoSync', defaultValue: false, name: '实时同步' },
-        configPersistenceNamespace: { id: 'danmakuConfigPersistenceNamespace', defaultValue: 'dd-danmaku', name: '同步标识符' },
+        useOfficialApi: {id: 'danmakuUseOfficialApi', defaultValue: true, name: '使用弹弹play'},
+        useCustomApi: {id: 'danmakuUseCustomApi', defaultValue: false, name: '使用自定义API'},
+        matchApiEnable: {id: 'danmakuMatchApiEnable', defaultValue: false, name: '启用 /match 匹配'},
+        matchMode: {id: 'danmakuMatchMode', defaultValue: 'fileNameOnly', name: '匹配模式'},
+        appendSeasonEpisode: {id: 'danmakuAppendSeasonEpisode', defaultValue: false, name: '文件名拼接季集号'},
+        episodeOffsetRules: {id: 'danmakuEpisodeOffsetRules', defaultValue: [], name: '集数偏移规则'},
+        debugShowDanmakuWrapper: {id: 'danmakuDebugShowDanmakuWrapper', defaultValue: false, name: '弹幕容器边界'},
+        debugShowDanmakuCtrWrapper: {
+            id: 'danmakuDebugShowDanmakuCtrWrapper',
+            defaultValue: false,
+            name: '按钮容器边界'
+        },
+        debugReverseDanmu: {id: 'danmakuDebugReverseDanmu', defaultValue: false, name: '反转弹幕方向'},
+        debugRandomDanmuColor: {id: 'danmakuDebugRandomDanmuColor', defaultValue: false, name: '随机弹幕颜色'},
+        debugForceDanmuWhite: {id: 'danmakuDebugForceDanmuWhite', defaultValue: false, name: '强制弹幕白色'},
+        debugGenerateLarge: {id: 'danmakuDebugGenerateLarge', defaultValue: false, name: '测试大量弹幕'},
+        debugDialogHyalinize: {id: 'danmakuDebugDialogHyalinize', defaultValue: false, name: '透明弹窗背景'},
+        debugDialogWindow: {id: 'danmakuDebugDialogWindow', defaultValue: false, name: '弹窗窗口化'},
+        debugDialogRight: {id: 'danmakuDebugDialogRight', defaultValue: false, name: '弹窗靠右布局'}, // Emby Android 上暂时存在 bug
+        debugTabIframeEnable: {id: 'danmakuDebugTabIframeEnable', defaultValue: false, name: '打开内嵌网页'},
+        debugH5VideoAdapterEnable: {
+            id: 'danmakuDebugH5VideoAdapterEnable',
+            defaultValue: false,
+            name: '查看视频适配器情况'
+        },
+        quickDebugOn: {id: 'danmakuQuickDebugOn', defaultValue: false, name: '快速调试'},
+        customeCorsProxyUrl: {id: 'danmakuCustomeCorsProxyUrl', defaultValue: corsProxy, name: '跨域代理前缀'},
+        customeDanmakuUrl: {id: 'danmakuCustomeDanmakuUrl', defaultValue: requireDanmakuPath, name: '弹幕引擎依赖'},
+        customeGetCommentUrl: {
+            id: 'danmakuCustomeGetCommentUrl',
+            defaultValue: getApiTl(dandanplayApi.getComment),
+            name: '获取指定弹幕库的所有弹幕'
+        },
+        customeGetExtcommentUrl: {
+            id: 'danmakuCustomeGetExtcommentUrl',
+            defaultValue: getApiTl(dandanplayApi.getExtcomment),
+            name: '获取指定第三方url的弹幕'
+        },
+        customePosterImgUrl: {
+            id: 'danmakuCustomePosterImgUrl',
+            defaultValue: getApiTl(dandanplayApi.posterImg),
+            name: '媒体海报'
+        },
+        customApiPrefix: {id: 'danmakuCustomApiPrefix', defaultValue: '', name: '自定义弹弹play API地址'},
+        customApiList: {id: 'danmakuCustomApiList', defaultValue: [], name: '自定义弹幕源列表'},
+        apiPriority: {id: 'danmakuApiPriority', defaultValue: ['official', 'custom'], name: 'API 优先级'},
+        excludedLibraries: {id: 'danmakuExcludedLibraries', defaultValue: [], name: '排除的媒体库'},
+        animeTitleBlacklist: {id: 'danmakuAnimeTitleBlacklist', defaultValue: '', name: '标题黑名单正则'},
+        episodeTitleBlacklist: {
+            id: 'danmakuEpisodeTitleBlacklist',
+            defaultValue: '^(.*?)(特番|特典|特辑|花絮|预告|PV|CM|NCED|NCOP|Opening|Ending|OP|ED|Menu|刊行.*記念|作曲家|音楽|BGM|OST|主题曲|片尾曲|插曲|C\\d+|S\\d+|OVA|OAD|SP|Special|番外|外传|衍生|制作花絮|幕后|访谈|采访|发布会|宣传|推广)(.*?)$',
+            name: '分集名称黑名单正则'
+        },
+        blacklistApplyToCustomApi: {
+            id: 'danmakuBlacklistApplyToCustomApi',
+            defaultValue: false,
+            name: '黑名单应用于自定义接口'
+        },
+        convertTopTo: {id: 'danmakuConvertTopTo', defaultValue: 'default', name: '顶部弹幕转换为'},
+        convertBottomTo: {id: 'danmakuConvertBottomTo', defaultValue: 'default', name: '底部弹幕转换为'},
+        configPersistenceEnable: {id: 'danmakuConfigPersistenceEnable', defaultValue: false, name: '启用配置持久化'},
+        configPersistenceAutoSync: {id: 'danmakuConfigPersistenceAutoSync', defaultValue: false, name: '实时同步'},
+        configPersistenceNamespace: {
+            id: 'danmakuConfigPersistenceNamespace',
+            defaultValue: 'dd-danmaku',
+            name: '同步标识符'
+        },
     };
     const lsLocalKeys = {
         animePrefix: '_anime_id_rel_',
@@ -554,30 +688,44 @@
     };
     // 播放界面下方按钮
     const mediaBtnOpts = [
-        { id: eleIds.danmakuSwitchBtn, label: '弹幕开关', iconKey: iconKeys.comment, onClick: doDanmakuSwitch },
-        { label: '弹幕设置', iconKey: iconKeys.setting, onClick: createDialog },
+        {id: eleIds.danmakuSwitchBtn, label: '弹幕开关', iconKey: iconKeys.comment, onClick: doDanmakuSwitch},
+        {label: '弹幕设置', iconKey: iconKeys.setting, onClick: createDialog},
     ];
     const customeUrlMsg1 = '限弹弹 play API 兼容结构';
     const customeUrl = {
         init: () => customeUrl.mapping.map(obj => obj.rewrite(lsGetItem(obj.lsKey.id))),
         mapping: [
-            { divId: eleIds.customeDanmakuDiv, lsKey: lsKeys.customeDanmakuUrl, rewrite: (tl) => {requireDanmakuPath = tl; }
+            {
+                divId: eleIds.customeDanmakuDiv, lsKey: lsKeys.customeDanmakuUrl, rewrite: (tl) => {
+                    requireDanmakuPath = tl;
+                }
                 , msg1: `限 ${openSourceLicense.danmaku.url} 兼容结构`
                 , msg2: `Danmaku 依赖路径,index.html 引入的和篡改猴环境不会使用到,依赖已内置,
                         仅在被 CustomCssJS 执行的特殊环境下使用,支持相对/绝对/网络路径,
-                        默认是相对路径等同 https://emby/web/ 和 /system/dashboard-ui/ ,非浏览器客户端必须使用网络路径`  },
-            { divId: eleIds.customeCorsProxyDiv, lsKey: lsKeys.customeCorsProxyUrl, rewrite: (tl) => { corsProxy = tl; }
+                        默认是相对路径等同 https://emby/web/ 和 /system/dashboard-ui/ ,非浏览器客户端必须使用网络路径`
+            },
+            {
+                divId: eleIds.customeCorsProxyDiv, lsKey: lsKeys.customeCorsProxyUrl, rewrite: (tl) => {
+                    corsProxy = tl;
+                }
                 , msg1: '仅弹弹 play API 跨域使用,限 URL 前缀反代方式,例如 cf_worker'
-                , msg2: '以下共用变量: { dandanplayApi.prefix: 反代前缀拼接的弹弹 play API 路径前缀, }' },
-            { divId: eleIds.customeGetCommentDiv, lsKey: lsKeys.customeGetCommentUrl, rewrite: (tl) => {
+                , msg2: '以下共用变量: { dandanplayApi.prefix: 反代前缀拼接的弹弹 play API 路径前缀, }'
+            },
+            {
+                divId: eleIds.customeGetCommentDiv, lsKey: lsKeys.customeGetCommentUrl, rewrite: (tl) => {
                     dandanplayApi.getComment = (episodeId, chConvert) => eval('`' + tl + '`');
-                }, msg1: customeUrlMsg1, msg2: '变量: { episodeId: 章节 ID, chConvert: 简繁转换, }' },
-            { divId: eleIds.customeGetExtcommentDiv, lsKey: lsKeys.customeGetExtcommentUrl, rewrite: (tl) => {
+                }, msg1: customeUrlMsg1, msg2: '变量: { episodeId: 章节 ID, chConvert: 简繁转换, }'
+            },
+            {
+                divId: eleIds.customeGetExtcommentDiv, lsKey: lsKeys.customeGetExtcommentUrl, rewrite: (tl) => {
                     dandanplayApi.getExtcomment = (url) => eval('`' + tl + '`');
-                }, msg1: customeUrlMsg1, msg2: '变量: { url: 附加弹幕输入框中的网址, }' },
-            { divId: eleIds.customePosterImgDiv, lsKey: lsKeys.customePosterImgUrl, rewrite: (tl) => {
+                }, msg1: customeUrlMsg1, msg2: '变量: { url: 附加弹幕输入框中的网址, }'
+            },
+            {
+                divId: eleIds.customePosterImgDiv, lsKey: lsKeys.customePosterImgUrl, rewrite: (tl) => {
                     dandanplayApi.posterImg = (animeId) => eval('`' + tl + '`');
-                }, msg1: customeUrlMsg1, msg2: '变量: { animeId: 弹弹 play 的作品 ID, }' },
+                }, msg1: customeUrlMsg1, msg2: '变量: { animeId: 弹弹 play 的作品 ID, }'
+            },
         ],
     };
     // emby ui class
@@ -637,17 +785,19 @@
             switchActiveColor: '#52b54b',
         },
         fontStyles: [
-            { id: 'normal', name: '正常' },
-            { id: 'italic', name: '原生斜体' },
-            { id: 'oblique', name: '形变斜体' },
+            {id: 'normal', name: '正常'},
+            {id: 'italic', name: '原生斜体'},
+            {id: 'oblique', name: '形变斜体'},
         ],
     };
+
     function objectEntries(obj) {
         if (obj && typeof obj === 'object') {
             return Object.keys(obj).map(key => [key, obj[key]]);
         }
         return [];
     }
+
     // [优化] UA 正则检测结果缓存，启动时一次性计算，避免每次调用都重复 regex
     const _ua = navigator.userAgent;
     const _uaCache = {
@@ -672,7 +822,7 @@
     const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]/gu;
 
     // 日志级别常量
-    const LOG_LEVEL = { OFF: 0, ERROR: 1, WARN: 2, INFO: 3, DEBUG: 4 };
+    const LOG_LEVEL = {OFF: 0, ERROR: 1, WARN: 2, INFO: 3, DEBUG: 4};
     // 日志工具函数
     const logger = {
         debug: (...args) => logLevel >= LOG_LEVEL.DEBUG && console.log('[DEBUG]', ...args),
@@ -687,7 +837,7 @@
     let skipInnerModule = false;
     try {
         throw new Error();
-    } catch(e) {
+    } catch (e) {
         skipInnerModule = e.stack && e.stack.includes('CustomCssJS');
         // console.log('ignore this not error, callee:', e);
     }
@@ -698,7 +848,273 @@
         // prettier-ignore
         // 注意: 原版使用 this 作为全局对象，但在严格模式下 this 为 undefined，改用 window 确保兼容性
         logger.info('[弹幕引擎] 使用内联模式加载 Danmaku 库 (非 CustomCssJS 环境)');
-        !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():false && "function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).Danmaku=e()}(window,(function(){"use strict";var t=function(){if("undefined"==typeof document)return"transform";for(var t=["oTransform","msTransform","mozTransform","webkitTransform","transform"],e=document.createElement("div").style,i=0;i<t.length;i++)if(t[i]in e)return t[i];return"transform"}();function e(t){var e=document.createElement("div");if(e.style.cssText="position:absolute;","function"==typeof t.render){var i=t.render();if(i instanceof HTMLElement)return e.appendChild(i),e}if(e.textContent=t.text,t.style)for(var n in t.style)e.style[n]=t.style[n];return e}var i={name:"dom",init:function(){var t=document.createElement("div");return t.style.cssText="overflow:hidden;white-space:nowrap;transform:translateZ(0);",t},clear:function(t){for(var e=t.lastChild;e;)t.removeChild(e),e=t.lastChild},resize:function(t,e,i){t.style.width=e+"px",t.style.height=i+"px"},framing:function(){},setup:function(t,i){var n=document.createDocumentFragment(),s=0,r=null;for(s=0;s<i.length;s++)(r=i[s]).node=r.node||e(r),n.appendChild(r.node);for(i.length&&t.appendChild(n),s=0;s<i.length;s++)(r=i[s]).width=r.width||r.node.offsetWidth,r.height=r.height||r.node.offsetHeight},render:function(e,i){i.node.style[t]="translate("+i.x+"px,"+i.y+"px)"},remove:function(t,e){t.removeChild(e.node),this.media||(e.node=null)}},n="undefined"!=typeof window&&window.devicePixelRatio||1,s=Object.create(null);function r(t,e){if("function"==typeof t.render){var i=t.render();if(i instanceof HTMLCanvasElement)return t.width=i.width,t.height=i.height,i}var r=document.createElement("canvas"),h=r.getContext("2d"),o=t.style||{};o.font=o.font||"10px sans-serif",o.textBaseline=o.textBaseline||"bottom";var a=1*o.lineWidth;for(var d in a=a>0&&a!==1/0?Math.ceil(a):1*!!o.strokeStyle,h.font=o.font,t.width=t.width||Math.max(1,Math.ceil(h.measureText(t.text).width)+2*a),t.height=t.height||Math.ceil(function(t,e){if(s[t])return s[t];var i=12,n=t.match(/(\d+(?:\.\d+)?)(px|%|em|rem)(?:\s*\/\s*(\d+(?:\.\d+)?)(px|%|em|rem)?)?/);if(n){var r=1*n[1]||10,h=n[2],o=1*n[3]||1.2,a=n[4];"%"===h&&(r*=e.container/100),"em"===h&&(r*=e.container),"rem"===h&&(r*=e.root),"px"===a&&(i=o),"%"===a&&(i=r*o/100),"em"===a&&(i=r*o),"rem"===a&&(i=e.root*o),void 0===a&&(i=r*o)}return s[t]=i,i}(o.font,e))+2*a,r.width=t.width*n,r.height=t.height*n,h.scale(n,n),o)h[d]=o[d];var u=0;switch(o.textBaseline){case"top":case"hanging":u=a;break;case"middle":u=t.height>>1;break;default:u=t.height-a}return o.strokeStyle&&h.strokeText(t.text,a,u),h.fillText(t.text,a,u),r}function h(t){return 1*window.getComputedStyle(t,null).getPropertyValue("font-size").match(/(.+)px/)[1]}var o={name:"canvas",init:function(t){var e=document.createElement("canvas");return e.context=e.getContext("2d"),e._fontSize={root:h(document.getElementsByTagName("html")[0]),container:h(t)},e},clear:function(t,e){t.context.clearRect(0,0,t.width,t.height);for(var i=0;i<e.length;i++)e[i].canvas=null},resize:function(t,e,i){t.width=e*n,t.height=i*n,t.style.width=e+"px",t.style.height=i+"px"},framing:function(t){t.context.clearRect(0,0,t.width,t.height)},setup:function(t,e){for(var i=0;i<e.length;i++){var n=e[i];n.canvas=r(n,t._fontSize)}},render:function(t,e){t.context.drawImage(e.canvas,e.x*n,e.y*n)},remove:function(t,e){e.canvas=null}},a=("undefined"!=typeof window&&(window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame)||function(t){return setTimeout(t,50/3)}).bind(window),d=("undefined"!=typeof window&&(window.cancelAnimationFrame||window.mozCancelAnimationFrame||window.webkitCancelAnimationFrame)||clearTimeout).bind(window);function u(t,e,i){for(var n=0,s=0,r=t.length;s<r-1;)i>=t[n=s+r>>1][e]?s=n:r=n;return t[s]&&i<t[s][e]?s:r}function m(t){return/^(ltr|top|bottom)$/i.test(t)?t.toLowerCase():"rtl"}function c(){var t=9007199254740991;return[{range:0,time:-t,width:t,height:0},{range:t,time:t,width:0,height:0}]}function l(t){t.ltr=c(),t.rtl=c(),t.top=c(),t.bottom=c()}function f(){return void 0!==window.performance&&window.performance.now?window.performance.now():Date.now()}function p(t){var e=this,i=this.media?this.media.currentTime:f()/1e3,n=this.media?this.media.playbackRate:1;function s(t,s){if("top"===s.mode||"bottom"===s.mode)return i-t.time<e._.duration;var r=(e._.width+t.width)*(i-t.time)*n/e._.duration;if(t.width>r)return!0;var h=e._.duration+t.time-i,o=e._.width+s.width,a=e.media?s.time:s._utc,d=o*(i-a)*n/e._.duration,u=e._.width-d;return h>e._.duration*u/(e._.width+s.width)}for(var r=this._.space[t.mode],h=0,o=0,a=1;a<r.length;a++){var d=r[a],u=t.height;if("top"!==t.mode&&"bottom"!==t.mode||(u+=d.height),d.range-d.height-r[h].range>=u){o=a;break}s(d,t)&&(h=a)}var m=r[h].range,c={range:m+t.height,time:this.media?t.time:t._utc,width:t.width,height:t.height};return r.splice(h+1,o-h-1,c),"bottom"===t.mode?this._.height-t.height-m%this._.height:m%(this._.height-t.height)}function g(){if(!this._.visible||!this._.paused)return this;if(this._.paused=!1,this.media)for(var t=0;t<this._.runningList.length;t++){var e=this._.runningList[t];e._utc=f()/1e3-(this.media.currentTime-e.time)}var i=this,n=function(t,e,i,n){return function(s){t(this._.stage);var r=(s||f())/1e3,h=this.media?this.media.currentTime:r,o=this.media?this.media.playbackRate:1,a=null,d=0,u=0;for(u=this._.runningList.length-1;u>=0;u--)a=this._.runningList[u],h-(d=this.media?a.time:a._utc)>this._.duration&&(n(this._.stage,a),this._.runningList.splice(u,1));for(var m=[];this._.position<this.comments.length&&(a=this.comments[this._.position],!((d=this.media?a.time:a._utc)>=h));)h-d>this._.duration||(this.media&&(a._utc=r-(this.media.currentTime-a.time)),m.push(a)),++this._.position;for(e(this._.stage,m),u=0;u<m.length;u++)(a=m[u]).y=p.call(this,a),this._.runningList.push(a);for(u=0;u<this._.runningList.length;u++){a=this._.runningList[u];var c=(this._.width+a.width)*(r-a._utc)*o/this._.duration;"ltr"===a.mode&&(a.x=c-a.width),"rtl"===a.mode&&(a.x=this._.width-c),"top"!==a.mode&&"bottom"!==a.mode||(a.x=this._.width-a.width>>1),i(this._.stage,a)}}}(this._.engine.framing.bind(this),this._.engine.setup.bind(this),this._.engine.render.bind(this),this._.engine.remove.bind(this));return this._.requestID=a((function t(e){n.call(i,e),i._.requestID=a(t)})),this}function _(){return!this._.visible||this._.paused||(this._.paused=!0,d(this._.requestID),this._.requestID=0),this}function v(){if(!this.media)return this;this.clear(),l(this._.space);var t=u(this.comments,"time",this.media.currentTime);return this._.position=Math.max(0,t-1),this}function w(t){t.play=g.bind(this),t.pause=_.bind(this),t.seeking=v.bind(this),this.media.addEventListener("play",t.play),this.media.addEventListener("pause",t.pause),this.media.addEventListener("playing",t.play),this.media.addEventListener("waiting",t.pause),this.media.addEventListener("seeking",t.seeking)}function y(t){this.media.removeEventListener("play",t.play),this.media.removeEventListener("pause",t.pause),this.media.removeEventListener("playing",t.play),this.media.removeEventListener("waiting",t.pause),this.media.removeEventListener("seeking",t.seeking),t.play=null,t.pause=null,t.seeking=null}function x(t){this._={},this.container=t.container||document.createElement("div"),this.media=t.media,this._.visible=!0,this.engine=(t.engine||"DOM").toLowerCase(),this._.engine="canvas"===this.engine?o:i,this._.requestID=0,this._.speed=Math.max(0,t.speed)||144,this._.duration=4,this.comments=t.comments||[],this.comments.sort((function(t,e){return t.time-e.time}));for(var e=0;e<this.comments.length;e++)this.comments[e].mode=m(this.comments[e].mode);return this._.runningList=[],this._.position=0,this._.paused=!0,this.media&&(this._.listener={},w.call(this,this._.listener)),this._.stage=this._.engine.init(this.container),this._.stage.style.cssText+="position:relative;pointer-events:none;",this.resize(),this.container.appendChild(this._.stage),this._.space={},l(this._.space),this.media&&this.media.paused||(v.call(this),g.call(this)),this}function b(){if(!this.container)return this;for(var t in _.call(this),this.clear(),this.container.removeChild(this._.stage),this.media&&y.call(this,this._.listener),this)Object.prototype.hasOwnProperty.call(this,t)&&(this[t]=null);return this}var L=["mode","time","text","render","style"];function T(t){if(!t||"[object Object]"!==Object.prototype.toString.call(t))return this;for(var e={},i=0;i<L.length;i++)void 0!==t[L[i]]&&(e[L[i]]=t[L[i]]);if(e.text=(e.text||"").toString(),e.mode=m(e.mode),e._utc=f()/1e3,this.media){var n=0;void 0===e.time?(e.time=this.media.currentTime,n=this._.position):(n=u(this.comments,"time",e.time))<this._.position&&(this._.position+=1),this.comments.splice(n,0,e)}else this.comments.push(e);return this}function E(){return this._.visible?this:(this._.visible=!0,this.media&&this.media.paused||(v.call(this),g.call(this)),this)}function k(){return this._.visible?(_.call(this),this.clear(),this._.visible=!1,this):this}function C(){return this._.engine.clear(this._.stage,this._.runningList),this._.runningList=[],this}function z(){return this._.width=this.container.offsetWidth,this._.height=this.container.offsetHeight,this._.engine.resize(this._.stage,this._.width,this._.height),this._.duration=this._.width/this._.speed,this}var D={get:function(){return this._.speed},set:function(t){return"number"!=typeof t||isNaN(t)||!isFinite(t)||t<=0?this._.speed:(this._.speed=t,this._.width&&(this._.duration=this._.width/t),t)}};function M(t){t&&x.call(this,t)}return M.prototype.destroy=function(){return b.call(this)},M.prototype.emit=function(t){return T.call(this,t)},M.prototype.show=function(){return E.call(this)},M.prototype.hide=function(){return k.call(this)},M.prototype.clear=function(){return C.call(this)},M.prototype.resize=function(){return z.call(this)},Object.defineProperty(M.prototype,"speed",D),M}));
+        !function (t, e) {
+            "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : false && "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).Danmaku = e()
+        }(window, (function () {
+            "use strict";
+            var t = function () {
+                if ("undefined" == typeof document) return "transform";
+                for (var t = ["oTransform", "msTransform", "mozTransform", "webkitTransform", "transform"], e = document.createElement("div").style, i = 0; i < t.length; i++) if (t[i] in e) return t[i];
+                return "transform"
+            }();
+
+            function e(t) {
+                var e = document.createElement("div");
+                if (e.style.cssText = "position:absolute;", "function" == typeof t.render) {
+                    var i = t.render();
+                    if (i instanceof HTMLElement) return e.appendChild(i), e
+                }
+                if (e.textContent = t.text, t.style) for (var n in t.style) e.style[n] = t.style[n];
+                return e
+            }
+
+            var i = {
+                name: "dom", init: function () {
+                    var t = document.createElement("div");
+                    return t.style.cssText = "overflow:hidden;white-space:nowrap;transform:translateZ(0);", t
+                }, clear: function (t) {
+                    for (var e = t.lastChild; e;) t.removeChild(e), e = t.lastChild
+                }, resize: function (t, e, i) {
+                    t.style.width = e + "px", t.style.height = i + "px"
+                }, framing: function () {
+                }, setup: function (t, i) {
+                    var n = document.createDocumentFragment(), s = 0, r = null;
+                    for (s = 0; s < i.length; s++) (r = i[s]).node = r.node || e(r), n.appendChild(r.node);
+                    for (i.length && t.appendChild(n), s = 0; s < i.length; s++) (r = i[s]).width = r.width || r.node.offsetWidth, r.height = r.height || r.node.offsetHeight
+                }, render: function (e, i) {
+                    i.node.style[t] = "translate(" + i.x + "px," + i.y + "px)"
+                }, remove: function (t, e) {
+                    t.removeChild(e.node), this.media || (e.node = null)
+                }
+            }, n = "undefined" != typeof window && window.devicePixelRatio || 1, s = Object.create(null);
+
+            function r(t, e) {
+                if ("function" == typeof t.render) {
+                    var i = t.render();
+                    if (i instanceof HTMLCanvasElement) return t.width = i.width, t.height = i.height, i
+                }
+                var r = document.createElement("canvas"), h = r.getContext("2d"), o = t.style || {};
+                o.font = o.font || "10px sans-serif", o.textBaseline = o.textBaseline || "bottom";
+                var a = 1 * o.lineWidth;
+                for (var d in a = a > 0 && a !== 1 / 0 ? Math.ceil(a) : 1 * !!o.strokeStyle, h.font = o.font, t.width = t.width || Math.max(1, Math.ceil(h.measureText(t.text).width) + 2 * a), t.height = t.height || Math.ceil(function (t, e) {
+                    if (s[t]) return s[t];
+                    var i = 12, n = t.match(/(\d+(?:\.\d+)?)(px|%|em|rem)(?:\s*\/\s*(\d+(?:\.\d+)?)(px|%|em|rem)?)?/);
+                    if (n) {
+                        var r = 1 * n[1] || 10, h = n[2], o = 1 * n[3] || 1.2, a = n[4];
+                        "%" === h && (r *= e.container / 100), "em" === h && (r *= e.container), "rem" === h && (r *= e.root), "px" === a && (i = o), "%" === a && (i = r * o / 100), "em" === a && (i = r * o), "rem" === a && (i = e.root * o), void 0 === a && (i = r * o)
+                    }
+                    return s[t] = i, i
+                }(o.font, e)) + 2 * a, r.width = t.width * n, r.height = t.height * n, h.scale(n, n), o) h[d] = o[d];
+                var u = 0;
+                switch (o.textBaseline) {
+                    case"top":
+                    case"hanging":
+                        u = a;
+                        break;
+                    case"middle":
+                        u = t.height >> 1;
+                        break;
+                    default:
+                        u = t.height - a
+                }
+                return o.strokeStyle && h.strokeText(t.text, a, u), h.fillText(t.text, a, u), r
+            }
+
+            function h(t) {
+                return 1 * window.getComputedStyle(t, null).getPropertyValue("font-size").match(/(.+)px/)[1]
+            }
+
+            var o = {
+                    name: "canvas", init: function (t) {
+                        var e = document.createElement("canvas");
+                        return e.context = e.getContext("2d"), e._fontSize = {
+                            root: h(document.getElementsByTagName("html")[0]),
+                            container: h(t)
+                        }, e
+                    }, clear: function (t, e) {
+                        t.context.clearRect(0, 0, t.width, t.height);
+                        for (var i = 0; i < e.length; i++) e[i].canvas = null
+                    }, resize: function (t, e, i) {
+                        t.width = e * n, t.height = i * n, t.style.width = e + "px", t.style.height = i + "px"
+                    }, framing: function (t) {
+                        t.context.clearRect(0, 0, t.width, t.height)
+                    }, setup: function (t, e) {
+                        for (var i = 0; i < e.length; i++) {
+                            var n = e[i];
+                            n.canvas = r(n, t._fontSize)
+                        }
+                    }, render: function (t, e) {
+                        t.context.drawImage(e.canvas, e.x * n, e.y * n)
+                    }, remove: function (t, e) {
+                        e.canvas = null
+                    }
+                },
+                a = ("undefined" != typeof window && (window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame) || function (t) {
+                    return setTimeout(t, 50 / 3)
+                }).bind(window),
+                d = ("undefined" != typeof window && (window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame) || clearTimeout).bind(window);
+
+            function u(t, e, i) {
+                for (var n = 0, s = 0, r = t.length; s < r - 1;) i >= t[n = s + r >> 1][e] ? s = n : r = n;
+                return t[s] && i < t[s][e] ? s : r
+            }
+
+            function m(t) {
+                return /^(ltr|top|bottom)$/i.test(t) ? t.toLowerCase() : "rtl"
+            }
+
+            function c() {
+                var t = 9007199254740991;
+                return [{range: 0, time: -t, width: t, height: 0}, {range: t, time: t, width: 0, height: 0}]
+            }
+
+            function l(t) {
+                t.ltr = c(), t.rtl = c(), t.top = c(), t.bottom = c()
+            }
+
+            function f() {
+                return void 0 !== window.performance && window.performance.now ? window.performance.now() : Date.now()
+            }
+
+            function p(t) {
+                var e = this, i = this.media ? this.media.currentTime : f() / 1e3,
+                    n = this.media ? this.media.playbackRate : 1;
+
+                function s(t, s) {
+                    if ("top" === s.mode || "bottom" === s.mode) return i - t.time < e._.duration;
+                    var r = (e._.width + t.width) * (i - t.time) * n / e._.duration;
+                    if (t.width > r) return !0;
+                    var h = e._.duration + t.time - i, o = e._.width + s.width, a = e.media ? s.time : s._utc,
+                        d = o * (i - a) * n / e._.duration, u = e._.width - d;
+                    return h > e._.duration * u / (e._.width + s.width)
+                }
+
+                for (var r = this._.space[t.mode], h = 0, o = 0, a = 1; a < r.length; a++) {
+                    var d = r[a], u = t.height;
+                    if ("top" !== t.mode && "bottom" !== t.mode || (u += d.height), d.range - d.height - r[h].range >= u) {
+                        o = a;
+                        break
+                    }
+                    s(d, t) && (h = a)
+                }
+                var m = r[h].range,
+                    c = {range: m + t.height, time: this.media ? t.time : t._utc, width: t.width, height: t.height};
+                return r.splice(h + 1, o - h - 1, c), "bottom" === t.mode ? this._.height - t.height - m % this._.height : m % (this._.height - t.height)
+            }
+
+            function g() {
+                if (!this._.visible || !this._.paused) return this;
+                if (this._.paused = !1, this.media) for (var t = 0; t < this._.runningList.length; t++) {
+                    var e = this._.runningList[t];
+                    e._utc = f() / 1e3 - (this.media.currentTime - e.time)
+                }
+                var i = this, n = function (t, e, i, n) {
+                    return function (s) {
+                        t(this._.stage);
+                        var r = (s || f()) / 1e3, h = this.media ? this.media.currentTime : r,
+                            o = this.media ? this.media.playbackRate : 1, a = null, d = 0, u = 0;
+                        for (u = this._.runningList.length - 1; u >= 0; u--) a = this._.runningList[u], h - (d = this.media ? a.time : a._utc) > this._.duration && (n(this._.stage, a), this._.runningList.splice(u, 1));
+                        for (var m = []; this._.position < this.comments.length && (a = this.comments[this._.position], !((d = this.media ? a.time : a._utc) >= h));) h - d > this._.duration || (this.media && (a._utc = r - (this.media.currentTime - a.time)), m.push(a)), ++this._.position;
+                        for (e(this._.stage, m), u = 0; u < m.length; u++) (a = m[u]).y = p.call(this, a), this._.runningList.push(a);
+                        for (u = 0; u < this._.runningList.length; u++) {
+                            a = this._.runningList[u];
+                            var c = (this._.width + a.width) * (r - a._utc) * o / this._.duration;
+                            "ltr" === a.mode && (a.x = c - a.width), "rtl" === a.mode && (a.x = this._.width - c), "top" !== a.mode && "bottom" !== a.mode || (a.x = this._.width - a.width >> 1), i(this._.stage, a)
+                        }
+                    }
+                }(this._.engine.framing.bind(this), this._.engine.setup.bind(this), this._.engine.render.bind(this), this._.engine.remove.bind(this));
+                return this._.requestID = a((function t(e) {
+                    n.call(i, e), i._.requestID = a(t)
+                })), this
+            }
+
+            function _() {
+                return !this._.visible || this._.paused || (this._.paused = !0, d(this._.requestID), this._.requestID = 0), this
+            }
+
+            function v() {
+                if (!this.media) return this;
+                this.clear(), l(this._.space);
+                var t = u(this.comments, "time", this.media.currentTime);
+                return this._.position = Math.max(0, t - 1), this
+            }
+
+            function w(t) {
+                t.play = g.bind(this), t.pause = _.bind(this), t.seeking = v.bind(this), this.media.addEventListener("play", t.play), this.media.addEventListener("pause", t.pause), this.media.addEventListener("playing", t.play), this.media.addEventListener("waiting", t.pause), this.media.addEventListener("seeking", t.seeking)
+            }
+
+            function y(t) {
+                this.media.removeEventListener("play", t.play), this.media.removeEventListener("pause", t.pause), this.media.removeEventListener("playing", t.play), this.media.removeEventListener("waiting", t.pause), this.media.removeEventListener("seeking", t.seeking), t.play = null, t.pause = null, t.seeking = null
+            }
+
+            function x(t) {
+                this._ = {}, this.container = t.container || document.createElement("div"), this.media = t.media, this._.visible = !0, this.engine = (t.engine || "DOM").toLowerCase(), this._.engine = "canvas" === this.engine ? o : i, this._.requestID = 0, this._.speed = Math.max(0, t.speed) || 144, this._.duration = 4, this.comments = t.comments || [], this.comments.sort((function (t, e) {
+                    return t.time - e.time
+                }));
+                for (var e = 0; e < this.comments.length; e++) this.comments[e].mode = m(this.comments[e].mode);
+                return this._.runningList = [], this._.position = 0, this._.paused = !0, this.media && (this._.listener = {}, w.call(this, this._.listener)), this._.stage = this._.engine.init(this.container), this._.stage.style.cssText += "position:relative;pointer-events:none;", this.resize(), this.container.appendChild(this._.stage), this._.space = {}, l(this._.space), this.media && this.media.paused || (v.call(this), g.call(this)), this
+            }
+
+            function b() {
+                if (!this.container) return this;
+                for (var t in _.call(this), this.clear(), this.container.removeChild(this._.stage), this.media && y.call(this, this._.listener), this) Object.prototype.hasOwnProperty.call(this, t) && (this[t] = null);
+                return this
+            }
+
+            var L = ["mode", "time", "text", "render", "style"];
+
+            function T(t) {
+                if (!t || "[object Object]" !== Object.prototype.toString.call(t)) return this;
+                for (var e = {}, i = 0; i < L.length; i++) void 0 !== t[L[i]] && (e[L[i]] = t[L[i]]);
+                if (e.text = (e.text || "").toString(), e.mode = m(e.mode), e._utc = f() / 1e3, this.media) {
+                    var n = 0;
+                    void 0 === e.time ? (e.time = this.media.currentTime, n = this._.position) : (n = u(this.comments, "time", e.time)) < this._.position && (this._.position += 1), this.comments.splice(n, 0, e)
+                } else this.comments.push(e);
+                return this
+            }
+
+            function E() {
+                return this._.visible ? this : (this._.visible = !0, this.media && this.media.paused || (v.call(this), g.call(this)), this)
+            }
+
+            function k() {
+                return this._.visible ? (_.call(this), this.clear(), this._.visible = !1, this) : this
+            }
+
+            function C() {
+                return this._.engine.clear(this._.stage, this._.runningList), this._.runningList = [], this
+            }
+
+            function z() {
+                return this._.width = this.container.offsetWidth, this._.height = this.container.offsetHeight, this._.engine.resize(this._.stage, this._.width, this._.height), this._.duration = this._.width / this._.speed, this
+            }
+
+            var D = {
+                get: function () {
+                    return this._.speed
+                }, set: function (t) {
+                    return "number" != typeof t || isNaN(t) || !isFinite(t) || t <= 0 ? this._.speed : (this._.speed = t, this._.width && (this._.duration = this._.width / t), t)
+                }
+            };
+
+            function M(t) {
+                t && x.call(this, t)
+            }
+
+            return M.prototype.destroy = function () {
+                return b.call(this)
+            }, M.prototype.emit = function (t) {
+                return T.call(this, t)
+            }, M.prototype.show = function () {
+                return E.call(this)
+            }, M.prototype.hide = function () {
+                return k.call(this)
+            }, M.prototype.clear = function () {
+                return C.call(this)
+            }, M.prototype.resize = function () {
+                return z.call(this)
+            }, Object.defineProperty(M.prototype, "speed", D), M
+        }));
         /* eslint-enable */
         // 内联加载后立即验证
         if (typeof window.Danmaku !== 'undefined') {
@@ -729,7 +1145,7 @@
                 logger.info('[弹幕引擎] AMD 补丁已应用, 正在通过 Blob URL 执行脚本...');
 
                 // 创建 Blob 对象，欺骗浏览器这是一个本地 JS 文件
-                const blob = new Blob([patchedScript], { type: 'text/javascript' });
+                const blob = new Blob([patchedScript], {type: 'text/javascript'});
                 const url = URL.createObjectURL(blob);
 
                 const script = document.createElement('script');
@@ -775,7 +1191,7 @@
         for (const [placeholder, value] of Object.entries(replacements)) {
             dataObj = dataObj.replace(placeholder, value);
         }
-        const blob = new Blob([dataObj], { type: 'application/javascript' });
+        const blob = new Blob([dataObj], {type: 'application/javascript'});
         const workerUrl = URL.createObjectURL(blob);
         const worker = new Worker(workerUrl);
         // 创建完实例后，URL 就可以释放了，不影响 worker 运行
@@ -785,14 +1201,14 @@
 
     // 2. MD5 Worker (从外部加载 SparkMD5 库计算文件哈希)
     // SparkMD5 库路径通过 requireSparkMD5Path 配置
-    const md5WorkerBody = function() {
+    const md5WorkerBody = function () {
         // 从外部加载 SparkMD5 库
         importScripts('__SPARK_MD5_URL__');
 
         let spark = null;
 
-        self.onmessage = function(e) {
-            const { type, chunk, isLast } = e.data;
+        self.onmessage = function (e) {
+            const {type, chunk, isLast} = e.data;
             if (type === 'INIT') {
                 spark = new SparkMD5.ArrayBuffer();
             } else if (type === 'APPEND') {
@@ -800,7 +1216,7 @@
                 spark.append(chunk);
                 if (isLast) {
                     const hash = spark.end();
-                    self.postMessage({ success: true, hash: hash });
+                    self.postMessage({success: true, hash: hash});
                     spark = null;
                     self.close();
                 }
@@ -808,10 +1224,10 @@
         };
     };
     // 3. 弹幕去重 Worker (高性能版：只接收轻量数据)
-    const mergeWorkerBody = function() {
-        self.onmessage = function(e) {
+    const mergeWorkerBody = function () {
+        self.onmessage = function (e) {
             // 接收的数据结构变化了：lightComments 只有 {t: text, m: time, i: index}
-            const { lightComments, threshold, timeWindow, enable } = e.data;
+            const {lightComments, threshold, timeWindow, enable} = e.data;
 
             if (!enable || !lightComments || lightComments.length === 0) {
                 // 如果没开启，返回 null，主线程会直接使用原数据
@@ -822,30 +1238,38 @@
             // --- 移植原本的 similarityPercentage 函数 ---
             function similarityPercentage(a, b, maxAllowedDiff, buffer) {
                 if (a === b) return 100;
-                const n = a.length; const m = b.length;
+                const n = a.length;
+                const m = b.length;
                 if (n === 0 || m === 0) return 0;
                 if (n > m) return similarityPercentage(b, a, maxAllowedDiff, buffer);
                 if (buffer.length <= n + 1) {
                     const newBuffer = new Int32Array(n + 128);
                     const score = similarityPercentage(a, b, maxAllowedDiff, newBuffer);
-                    return { score: score, buffer: newBuffer };
+                    return {score: score, buffer: newBuffer};
                 }
                 const v = buffer;
                 for (let i = 0; i <= n; i++) v[i] = i;
                 for (let j = 1; j <= m; j++) {
-                    let pre = v[0]; v[0] = j; let rowMin = j;
+                    let pre = v[0];
+                    v[0] = j;
+                    let rowMin = j;
                     const charB = b.charCodeAt(j - 1);
                     for (let i = 1; i <= n; i++) {
                         const tmp = v[i];
                         const cost = (a.charCodeAt(i - 1) === charB) ? 0 : 1;
                         let val = v[i] + 1;
-                        const ins = v[i-1] + 1; if (ins < val) val = ins;
-                        const sub = pre + cost; if (sub < val) val = sub;
-                        v[i] = val; pre = tmp; if (val < rowMin) rowMin = val;
+                        const ins = v[i - 1] + 1;
+                        if (ins < val) val = ins;
+                        const sub = pre + cost;
+                        if (sub < val) val = sub;
+                        v[i] = val;
+                        pre = tmp;
+                        if (val < rowMin) rowMin = val;
                     }
                     if (rowMin > maxAllowedDiff) return 0;
                 }
-                const maxLen = m; const distance = v[n];
+                const maxLen = m;
+                const distance = v[n];
                 return ((maxLen - distance) / maxLen) * 100;
             }
 
@@ -860,7 +1284,9 @@
                 const text = lightComments[i].t;
                 let mask = 0;
                 const len = text.length > 50 ? 50 : text.length;
-                for (let k = 0; k < len; k++) { mask |= (1 << (text.charCodeAt(k) & 31)); }
+                for (let k = 0; k < len; k++) {
+                    mask |= (1 << (text.charCodeAt(k) & 31));
+                }
                 lightComments[i]._mask = mask;
             }
 
@@ -906,6 +1332,7 @@
             self.postMessage(resultIndices);
         };
     };
+
     // ================== Worker 核心定义结束 ==================
 
     class EDE {
@@ -943,10 +1370,10 @@
             // [优化] 改用数组存储日志行，避免字符串无限拼接导致内存泄漏
             this._logLines = [];
             this.listeners = [];
-            this.ERROR = { text: 'ERROR', emoji: '❗️' };
-            this.WARN = { text: 'WARN', emoji: '⚠️' };
-            this.INFO = { text: 'INFO', emoji: '❕' };
-            this.DEBUG = { text: 'DEBUG', emoji: '🔍' };
+            this.ERROR = {text: 'ERROR', emoji: '❗️'};
+            this.WARN = {text: 'WARN', emoji: '⚠️'};
+            this.INFO = {text: 'INFO', emoji: '❕'};
+            this.DEBUG = {text: 'DEBUG', emoji: '🔍'};
             // Emby 内部日志关键词（这些日志会被降级为 DEBUG）
             // [优化] 预转换为小写，避免每次检测都转换
             this._embyInternalPatternsLower = [
@@ -957,23 +1384,30 @@
                 'webvtt', 'hls error'
             ];
         }
+
         // [优化] value 属性改为 getter，按需拼接而非持续累积
         get value() {
             return this._logLines.join('');
         }
+
         set value(val) {
-            if (val === '') { this._logLines = []; }
+            if (val === '') {
+                this._logLines = [];
+            }
         }
+
         // 检测是否为 Emby 内部日志
         isEmbyInternalLog(args) {
             const str = args.map(arg => typeof arg === 'string' ? arg : '').join(' ').toLowerCase();
             return this._embyInternalPatternsLower.some(pattern => str.includes(pattern));
         }
+
         // 根据日志级别决定是否记录
         shouldLog(level) {
-            const levelMap = { 'ERROR': 1, 'WARN': 2, 'INFO': 3, 'DEBUG': 4 };
+            const levelMap = {'ERROR': 1, 'WARN': 2, 'INFO': 3, 'DEBUG': 4};
             return logLevel >= levelMap[level.text];
         }
+
         // [优化] 添加日志行，自动裁剪超量部分
         _appendLog(line) {
             this._logLines.push(line);
@@ -983,8 +1417,11 @@
             }
             this.notifyListeners();
         }
+
         init() {
-            if (this.initialized) { return this; }
+            if (this.initialized) {
+                return this;
+            }
             console.error = (...args) => {
                 this.originalError.apply(console, args);
                 if (this.shouldLog(this.ERROR)) {
@@ -1029,6 +1466,7 @@
             this.initialized = true;
             return this;
         }
+
         destroy(clearValue = true) {
             if (this.initialized) {
                 console.error = this.originalError;
@@ -1041,12 +1479,14 @@
             }
             return this;
         }
+
         format(level, args) {
             const emoji = level.emoji ? `[${level.emoji}] ` : '';
             return `[${new Date(Date.now()).toLocaleString()}] [${level.text}] ${emoji}: `
                 + args.map(arg => arg instanceof Error ? arg.message : (typeof arg === 'string' ? arg : JSON.stringify(arg)))
                     .join(' ') + '\n';
         }
+
         on(valueChangedCallback) {
             if (valueChangedCallback.toString().includes('console.log')
                 || valueChangedCallback.toString().includes('console.error')) {
@@ -1054,8 +1494,15 @@
             }
             this.listeners.push(() => valueChangedCallback(this.value));
         }
-        notifyListeners() { this.listeners.forEach(listener => listener()); }
-        clearValue() { this._logLines = []; this.notifyListeners(); }
+
+        notifyListeners() {
+            this.listeners.forEach(listener => listener());
+        }
+
+        clearValue() {
+            this._logLines = [];
+            this.notifyListeners();
+        }
     }
 
     function initListener() {
@@ -1065,13 +1512,15 @@
             window.ede.episode_info && (window.ede.episode_info = null);
             return;
         }
-        if (_media.getAttribute('ede_listening')) { return; }
+        if (_media.getAttribute('ede_listening')) {
+            return;
+        }
         logger.info('正在初始化事件监听器 (Listener)');
-        playbackEventsRefresh({ 'playbackstart': onPlaybackStart });
-        playbackEventsRefresh({ 'playbackstop': onPlaybackStop });
+        playbackEventsRefresh({'playbackstart': onPlaybackStart});
+        playbackEventsRefresh({'playbackstop': onPlaybackStop});
         _media.setAttribute('ede_listening', true);
-        refreshEventListener({ 'video-osd-show': onVideoOsdShow });
-        refreshEventListener({ 'video-osd-hide': onVideoOsdHide });
+        refreshEventListener({'video-osd-show': onVideoOsdShow});
+        refreshEventListener({'video-osd-hide': onVideoOsdHide});
         logger.info('事件监听器 (Listener) 初始化完成');
         if (OS.isAndroidEmbyNoisyX()) {
             logger.info('检测为安卓魔改版客户端，首次播放可能不触发 playbackstart 事件，在此手动初始化弹幕环境');
@@ -1090,7 +1539,7 @@
         // Emby 点"下一集/上一集"时不会离开 video-osd 页面，beforeDestroy 不会触发，
         // 必须在 playbackstop 时保存，否则推理匹配永远拿不到上一集的信息
         if (window.ede && window.ede.episode_info) {
-            window.ede.previous_episode_info = { ...window.ede.episode_info };
+            window.ede.previous_episode_info = {...window.ede.episode_info};
             logger.debug(`[推理匹配] 已保存当前集信息: episodeId=${window.ede.episode_info.episodeId}, episodeIndex=${window.ede.episode_info.episodeIndex}`);
         }
         onPlaybackStopPct(e, state);
@@ -1117,7 +1566,9 @@
 
     function initUI() {
         // 已初始化（全局锁 + DOM 检查双保险，防止脚本被加载多次时各自的局部变量互不影响）
-        if (window._ddDanmakuInitUILock || getById(eleIds.danmakuCtr)) { return; }
+        if (window._ddDanmakuInitUILock || getById(eleIds.danmakuCtr)) {
+            return;
+        }
         window._ddDanmakuInitUILock = true; // 挂在 window 上，跨脚本实例共享
         logger.info('正在初始化UI');
 
@@ -1179,12 +1630,16 @@
     }
 
     async function fatchEmbyItemInfo(id) {
-        if (!id) { return; }
+        if (!id) {
+            return;
+        }
         return await ApiClient.getItem(ApiClient.getCurrentUserId(), id);
     }
 
     async function fetchSearchEpisodes(anime, episode, prefix) {
-        if (!anime) { throw new Error('anime is required'); }
+        if (!anime) {
+            throw new Error('anime is required');
+        }
 
         // 步骤1: 使用 /api/v2/search/anime 搜索动画
         const searchUrl = `${prefix}/search/anime?keyword=${encodeURIComponent(anime)}`;
@@ -1196,7 +1651,7 @@
 
         if (!searchResult || !searchResult.animes || searchResult.animes.length === 0) {
             logger.debug(`[API请求] /search/anime 查询结果为空`);
-            return { animes: [] };
+            return {animes: []};
         }
 
         logger.info(`[API请求] /search/anime 查询成功，共 ${searchResult.animes.length} 个结果`);
@@ -1211,10 +1666,10 @@
             if (animeItem.bangumiId) {
                 bangumiPromises.push(
                     fetchJson(`${prefix}/bangumi/${animeItem.bangumiId}`)
-                        .then(result => ({ index: i, result }))
+                        .then(result => ({index: i, result}))
                         .catch((error) => {
                             logger.debug(`[API请求] /bangumi/${animeItem.bangumiId} 查询失败: ${error.message}`);
-                            return { index: i, result: null };
+                            return {index: i, result: null};
                         })
                 );
             }
@@ -1225,7 +1680,7 @@
         let enrichedCount = 0;
 
         // 给每个候选填充 episodes 信息
-        for (const { index, result: bangumiResult } of bangumiResults) {
+        for (const {index, result: bangumiResult} of bangumiResults) {
             if (!bangumiResult) continue;
 
             // 兼容不同 API 的返回格式：
@@ -1428,7 +1883,8 @@
         try {
             const pref = JSON.parse(localStorage.getItem(preferKey));
             if (pref?.animeId) preferredAnimeId = String(pref.animeId);
-        } catch(e) {}
+        } catch (e) {
+        }
 
         // 评分 + 过滤（合并为一步，减少一次遍历）
         const scored = [];
@@ -1448,10 +1904,13 @@
                 if (epNum === parsedSearch.episode) score.total += 0.15;
             }
 
-            scored.push({ ...candidate, score: score.total, scoreDetails: score });
+            scored.push({...candidate, score: score.total, scoreDetails: score});
         }
 
-        if (!scored.length) { logger.info(`[智能匹配] 无有效候选`); return null; }
+        if (!scored.length) {
+            logger.info(`[智能匹配] 无有效候选`);
+            return null;
+        }
 
         scored.sort((a, b) => b.score - a.score);
 
@@ -1461,7 +1920,10 @@
             topN.map((s, i) => `  ${i + 1}. "${s.animeTitle}"${s.episodeTitle ? ` - ${s.episodeTitle}` : ''} = ${s.score.toFixed(3)} (season:${s.scoreDetails?.seasonMatch || 0})`).join('\n'));
 
         const best = scored[0];
-        if (best.score <= 0.10) { logger.info(`[智能匹配] 最高分太低: ${best.score.toFixed(3)}`); return null; }
+        if (best.score <= 0.10) {
+            logger.info(`[智能匹配] 最高分太低: ${best.score.toFixed(3)}`);
+            return null;
+        }
 
         logger.info(`[智能匹配] ✓ 选中: "${best.animeTitle}"${best.episodeTitle ? ` - ${best.episodeTitle}` : ''} (${best.score.toFixed(3)})`);
 
@@ -1549,8 +2011,8 @@
         // 6. 类型加成 (-0.05~0.05)
         const hasSE = parsedSearch?.season || parsedSearch?.episode;
         const typeMap = hasSE
-            ? { tvseries: 0.05, tvspecial: 0.03, web: 0.02, movie: -0.05 }
-            : { movie: 0.05, tvseries: 0.02 };
+            ? {tvseries: 0.05, tvspecial: 0.03, web: 0.02, movie: -0.05}
+            : {movie: 0.05, tvseries: 0.02};
         const typeBonus = typeMap[candidate.type] || 0;
 
         const total = nameScore + yearScore + seasonScore + episodeScore + keywordScore + typeBonus;
@@ -1578,13 +2040,27 @@
         // 阿拉伯数字/中文季号
         const numMatch = t.match(/(?:第\s*([一二三四五六七八九十零\d]+)\s*[季部期]|season\s*(\d+)|s(\d+)(?![e\d\w]))/);
         if (numMatch) {
-            const chineseNums = { '一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'零':0 };
+            const chineseNums = {
+                '一': 1,
+                '二': 2,
+                '三': 3,
+                '四': 4,
+                '五': 5,
+                '六': 6,
+                '七': 7,
+                '八': 8,
+                '九': 9,
+                '十': 10,
+                '零': 0
+            };
             const m = numMatch[1];
             if (m && isNaN(parseInt(m))) {
                 if (m.length === 1 && chineseNums[m] !== undefined) return chineseNums[m];
                 else if (m.length === 2 && m[0] === '十') return 10 + (chineseNums[m[1]] || 0);
-                else if (m.includes('十')) { const parts = m.split('十'); return (chineseNums[parts[0]] || 1) * 10 + (chineseNums[parts[1]] || 0); }
-                else return chineseNums[m];
+                else if (m.includes('十')) {
+                    const parts = m.split('十');
+                    return (chineseNums[parts[0]] || 1) * 10 + (chineseNums[parts[1]] || 0);
+                } else return chineseNums[m];
             }
             return parseInt(numMatch[1] || numMatch[2] || numMatch[3]);
         }
@@ -1602,8 +2078,8 @@
         const romanMatch = t.match(/\b([ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩⅪⅫ]|ii|iii|iv|vi|vii|viii|ix|xi|xii)\b(?:\s*[季期部])?/);
         if (romanMatch) {
             const romanToNum = {
-                'Ⅰ':1,'Ⅱ':2,'Ⅲ':3,'Ⅳ':4,'Ⅴ':5,'Ⅵ':6,'Ⅶ':7,'Ⅷ':8,'Ⅸ':9,'Ⅹ':10,'Ⅺ':11,'Ⅻ':12,
-                'ii':2,'iii':3,'iv':4,'vi':6,'vii':7,'viii':8,'ix':9,'xi':11,'xii':12
+                'Ⅰ': 1, 'Ⅱ': 2, 'Ⅲ': 3, 'Ⅳ': 4, 'Ⅴ': 5, 'Ⅵ': 6, 'Ⅶ': 7, 'Ⅷ': 8, 'Ⅸ': 9, 'Ⅹ': 10, 'Ⅺ': 11, 'Ⅻ': 12,
+                'ii': 2, 'iii': 3, 'iv': 4, 'vi': 6, 'vii': 7, 'viii': 8, 'ix': 9, 'xi': 11, 'xii': 12
             };
             return romanToNum[romanMatch[1]] || null;
         }
@@ -1618,17 +2094,22 @@
         // 提取年份
         let year = null;
         const ym = keyword.match(/[\(\[]\s*(\d{4})\s*[\)\]]/);
-        if (ym) { year = parseInt(ym[1]); keyword = keyword.replace(ym[0], '').trim(); }
-        else {
+        if (ym) {
+            year = parseInt(ym[1]);
+            keyword = keyword.replace(ym[0], '').trim();
+        } else {
             const ym2 = keyword.match(/[\s.](\d{4})[\s.]/);
-            if (ym2 && ym2[1] >= 1990 && ym2[1] <= 2030) { year = parseInt(ym2[1]); keyword = keyword.replace(ym2[1], ' ').replace(/\s{2,}/g, ' ').trim(); }
+            if (ym2 && ym2[1] >= 1990 && ym2[1] <= 2030) {
+                year = parseInt(ym2[1]);
+                keyword = keyword.replace(ym2[1], ' ').replace(/\s{2,}/g, ' ').trim();
+            }
         }
 
         // 提取集数
         let episode = null;
         const se = /^(.+?)[\s._-]*S(\d{1,2})[\s._-]*E(\d{1,4})$/i.exec(keyword);
         if (se) {
-            return { title: cleanTitleTail(se[1]), season: parseInt(se[2]), episode: parseInt(se[3]), year };
+            return {title: cleanTitleTail(se[1]), season: parseInt(se[2]), episode: parseInt(se[3]), year};
         }
 
         const epPatterns = [
@@ -1639,7 +2120,10 @@
         ];
         for (const pat of epPatterns) {
             const m = keyword.match(pat);
-            if (m) { episode = parseInt(m[1]); break; }
+            if (m) {
+                episode = parseInt(m[1]);
+                break;
+            }
         }
         if (episode !== null) keyword = keyword.replace(/([Ee]?\d+|\[?\d{1,2}\]?\s*(?:集|话|OVA|OAD|END|完))/g, '');
 
@@ -1654,11 +2138,11 @@
         } else {
             // 旧的回退逻辑
             const patterns = [
-                { p: /^(.*?)[\s._-]*(?:S|Season)[\s._-]*(\d{1,2})$/i, h: m => parseInt(m[2]) },
-                { p: /^(.*?)\s*([Ⅰ-Ⅻ])$/, h: m => _ROMAN[m[2]] },
-                { p: /^(.*?)\s+(\d{1,2})$/, h: m => parseInt(m[2]) }
+                {p: /^(.*?)[\s._-]*(?:S|Season)[\s._-]*(\d{1,2})$/i, h: m => parseInt(m[2])},
+                {p: /^(.*?)\s*([Ⅰ-Ⅻ])$/, h: m => _ROMAN[m[2]]},
+                {p: /^(.*?)\s+(\d{1,2})$/, h: m => parseInt(m[2])}
             ];
-            for (const { p, h } of patterns) {
+            for (const {p, h} of patterns) {
                 const m = p.exec(keyword);
                 if (m) {
                     try {
@@ -1669,14 +2153,15 @@
                             keyword = t;
                             break;
                         }
-                    } catch(e) {}
+                    } catch (e) {
+                    }
                 }
             }
         }
 
         // 清理残余标记
         keyword = keyword.replace(/\s*-\s*(?:S\d+|SP|OVA|OAD|BD|剧场版)\s*$/i, '').replace(/\s+/g, ' ').trim();
-        return { title: cleanTitleTail(keyword), season, episode, year };
+        return {title: cleanTitleTail(keyword), season, episode, year};
     }
 
     // [优化] 清理标题中的附加信息，用于更精确的比较
@@ -1750,10 +2235,11 @@
             // 短字符串：使用编辑距离
             const dp = Array.from({length: n + 1}, (_, i) => i);
             for (let j = 1; j <= m; j++) {
-                let prev = dp[0]; dp[0] = j;
+                let prev = dp[0];
+                dp[0] = j;
                 for (let i = 1; i <= n; i++) {
                     const tmp = dp[i];
-                    dp[i] = s1[i-1] === s2[j-1] ? prev : Math.min(prev, dp[i], dp[i-1]) + 1;
+                    dp[i] = s1[i - 1] === s2[j - 1] ? prev : Math.min(prev, dp[i], dp[i - 1]) + 1;
                     prev = tmp;
                 }
             }
@@ -1766,7 +2252,8 @@
     }
 
     // 提取关键词
-    const _STOP_WORDS = new Set(['第','季','部','篇','章','话','集','期','season','episode','ep','ova','tv','movie','special','the','of','and','in','to','a','an']);
+    const _STOP_WORDS = new Set(['第', '季', '部', '篇', '章', '话', '集', '期', 'season', 'episode', 'ep', 'ova', 'tv', 'movie', 'special', 'the', 'of', 'and', 'in', 'to', 'a', 'an']);
+
     function extractKeywords(title) {
         return title.toLowerCase().replace(/[：:]/g, ' ').replace(/[^\w\s\u4e00-\u9fff]/g, ' ')
             .split(/[\s\u3000]+/).filter(w => w.length > 1 && !_STOP_WORDS.has(w) && !/^\d+$/.test(w));
@@ -1776,8 +2263,8 @@
     // 🔧 匹配精度增强 - 辅助函数
     // ========================================
 
-    const _CN_NUM = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-    const _ROMAN = {'Ⅰ':1,'Ⅱ':2,'Ⅲ':3,'Ⅳ':4,'Ⅴ':5,'Ⅵ':6,'Ⅶ':7,'Ⅷ':8,'Ⅸ':9,'Ⅹ':10,'Ⅺ':11,'Ⅻ':12};
+    const _CN_NUM = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
+    const _ROMAN = {'Ⅰ': 1, 'Ⅱ': 2, 'Ⅲ': 3, 'Ⅳ': 4, 'Ⅴ': 5, 'Ⅵ': 6, 'Ⅶ': 7, 'Ⅷ': 8, 'Ⅸ': 9, 'Ⅹ': 10, 'Ⅺ': 11, 'Ⅻ': 12};
 
     // 从标题中提取年份 "xxx (2024)" → 2024
     function extractYearFromTitle(title) {
@@ -1791,35 +2278,54 @@
     // "某某某 Ⅲ" → { title: "某某某", season: 3 }
     // "某某某" (无季度标记) → { title: "某某某", season: null }
     function parseCandidateTitle(title) {
-        if (!title) return { title: '', season: null };
+        if (!title) return {title: '', season: null};
         // 清除年份括号
         let clean = title.replace(/\(\d{4}\)/, '').trim();
 
         // [综合优化] 支持任意位置的季度提取
         const patterns = [
             // "第X季" / "第X部" (任意位置)
-            { p: /(.*?)\s*第\s*([一二三四五六七八九十零\d]+)\s*[季部期](.*)/i, h: m => _CN_NUM[m[2]] || parseInt(m[2]), f: m => m[1] + ' ' + m[3] },
+            {
+                p: /(.*?)\s*第\s*([一二三四五六七八九十零\d]+)\s*[季部期](.*)/i,
+                h: m => _CN_NUM[m[2]] || parseInt(m[2]),
+                f: m => m[1] + ' ' + m[3]
+            },
             // "Season X" / "S3" (任意位置)
-            { p: /(.*?)\s*(?:Season|S)\s*(\d{1,2})\b(.*)/i, h: m => parseInt(m[2]), f: m => m[1] + ' ' + m[3] },
+            {p: /(.*?)\s*(?:Season|S)\s*(\d{1,2})\b(.*)/i, h: m => parseInt(m[2]), f: m => m[1] + ' ' + m[3]},
             // "2nd Season" / "3rd Season" (任意位置)
-            { p: /(.*?)\s*(\d{1,2})(?:st|nd|rd|th)\s*Season(.*)/i, h: m => parseInt(m[2]), f: m => m[1] + ' ' + m[3] },
+            {p: /(.*?)\s*(\d{1,2})(?:st|nd|rd|th)\s*Season(.*)/i, h: m => parseInt(m[2]), f: m => m[1] + ' ' + m[3]},
             // 罗马数字 "XXX Ⅲ" (任意位置)
-            { p: /(.*?)\s*([Ⅰ-Ⅻ])(?:\s*[季期部])?(.*)/, h: m => _ROMAN[m[2]], f: m => m[1] + ' ' + m[3] },
+            {p: /(.*?)\s*([Ⅰ-Ⅻ])(?:\s*[季期部])?(.*)/, h: m => _ROMAN[m[2]], f: m => m[1] + ' ' + m[3]},
             // "XXX II" / "XXX III" (英文罗马) (任意位置)
-            { p: /(.*?)\s+\b(II|III|IV|V|VI|VII|VIII|IX|X)\b(?:\s*[季期部])?(.*)/i, h: m => ({ 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10 })[m[2].toUpperCase()], f: m => m[1] + ' ' + m[3] },
+            {
+                p: /(.*?)\s+\b(II|III|IV|V|VI|VII|VIII|IX|X)\b(?:\s*[季期部])?(.*)/i,
+                h: m => ({
+                    'II': 2,
+                    'III': 3,
+                    'IV': 4,
+                    'V': 5,
+                    'VI': 6,
+                    'VII': 7,
+                    'VIII': 8,
+                    'IX': 9,
+                    'X': 10
+                })[m[2].toUpperCase()],
+                f: m => m[1] + ' ' + m[3]
+            },
         ];
 
-        for (const { p, h, f } of patterns) {
+        for (const {p, h, f} of patterns) {
             const m = p.exec(clean);
             if (m) {
                 try {
                     const season = h(m);
-                    if (season) return { title: cleanTitleForComparison(f(m)).trim(), season };
-                } catch(e) {}
+                    if (season) return {title: cleanTitleForComparison(f(m)).trim(), season};
+                } catch (e) {
+                }
             }
         }
 
-        return { title: cleanTitleForComparison(clean).trim(), season: null };
+        return {title: cleanTitleForComparison(clean).trim(), season: null};
     }
 
     // 从候选标题中推断季度（兼容旧逻辑：优先独立解析，回退到相对检测）
@@ -1841,7 +2347,9 @@
         if (num) return parseInt(num[1]);
         const cn = after.match(/([一二三四五六七八九十])/);
         if (cn && _CN_NUM[cn[1]]) return _CN_NUM[cn[1]];
-        for (const [r, n] of Object.entries(_ROMAN)) { if (after.includes(r)) return n; }
+        for (const [r, n] of Object.entries(_ROMAN)) {
+            if (after.includes(r)) return n;
+        }
         return null;
     }
 
@@ -1860,7 +2368,9 @@
     }
 
     // 清理标题末尾噪音
-    function cleanTitleTail(t) { return t ? t.replace(/[\s._-]+$/, '').trim() : t; }
+    function cleanTitleTail(t) {
+        return t ? t.replace(/[\s._-]+$/, '').trim() : t;
+    }
 
     // 从 episodeTitle 提取集数
     function extractEpisodeNumber(title) {
@@ -1878,7 +2388,10 @@
         // 过滤黑名单 + 去重
         const bl = lsGetItem(lsKeys.episodeTitleBlacklist.id) || '';
         let re = null;
-        try { if (bl) re = new RegExp(bl, 'i'); } catch(e) {}
+        try {
+            if (bl) re = new RegExp(bl, 'i');
+        } catch (e) {
+        }
         const seen = new Set();
         const filtered = episodes.filter(ep => {
             if (re && ep.episodeTitle && re.test(ep.episodeTitle)) return false;
@@ -1888,9 +2401,13 @@
         });
         const list = filtered.length ? filtered : episodes;
         // 策略1: 标题提取集数
-        for (const ep of list) { if (extractEpisodeNumber(ep.episodeTitle) === targetNum) return ep; }
+        for (const ep of list) {
+            if (extractEpisodeNumber(ep.episodeTitle) === targetNum) return ep;
+        }
         // 策略2: episodeNumber 字段
-        for (const ep of list) { if (ep.episodeNumber && parseInt(ep.episodeNumber) === targetNum) return ep; }
+        for (const ep of list) {
+            if (ep.episodeNumber && parseInt(ep.episodeNumber) === targetNum) return ep;
+        }
         // 策略3: 索引 fallback
         return list.length >= targetNum ? list[targetNum - 1] : null;
     }
@@ -1952,6 +2469,7 @@
             return null; // 匹配失败时返回 null
         }
     }
+
     async function fetchComment(episodeId, overridePrefix) {
         // [修复] 支持指定源：推理匹配时传入上一集使用的源，避免多源混淆
         const prefix = overridePrefix || window.ede.episode_info?.apiPrefix || dandanplayApi.prefix;
@@ -1993,11 +2511,15 @@
     }
 
     function onPlaybackStopPct(e, state) {
-        if (!state.NowPlayingItem) { return logger.debug('跳过 Web 端自身错误触发的第二次播放停止事件'); }
+        if (!state.NowPlayingItem) {
+            return logger.debug('跳过 Web 端自身错误触发的第二次播放停止事件');
+        }
         logger.debug('监听到事件: 播放停止 (playbackstop)');
         const positionTicks = state.PlayState.PositionTicks;
         const runtimeTicks = state.NowPlayingItem.RunTimeTicks;
-        if (!runtimeTicks) { return logger.debug('无可播放时长,跳过处理'); }
+        if (!runtimeTicks) {
+            return logger.debug('无可播放时长,跳过处理');
+        }
         const pct = parseInt(positionTicks / runtimeTicks * 100);
         logger.debug(`结束播放百分比: ${pct}%`);
         const bangumiPostPercent = lsGetItem(lsKeys.bangumiPostPercent.id);
@@ -2007,15 +2529,15 @@
             && pct >= bangumiPostPercent && currentEpisodeInfo?.episodeId
         ) {
             logger.debug(`大于需提交的设定百分比: ${bangumiPostPercent}%`);
-            const { animeTitle, episodeTitle } = currentEpisodeInfo;
+            const {animeTitle, episodeTitle} = currentEpisodeInfo;
             const targetName = `${animeTitle} - ${episodeTitle}`;
-            const episodeInfo = { ...currentEpisodeInfo };
-            const backgroundFetchOpts = { abortOnDestroy: false };
-            putBangumiEpStatus(bangumiToken, { episodeInfo, fetchOpts: backgroundFetchOpts }).then(res => {
-                embyToast({ text: `Bangumi收藏更新成功, 目标: ${targetName}, 结束播放百分比: ${pct}%, 大于需提交的设定百分比: ${bangumiPostPercent}%`});
+            const episodeInfo = {...currentEpisodeInfo};
+            const backgroundFetchOpts = {abortOnDestroy: false};
+            putBangumiEpStatus(bangumiToken, {episodeInfo, fetchOpts: backgroundFetchOpts}).then(res => {
+                embyToast({text: `Bangumi收藏更新成功, 目标: ${targetName}, 结束播放百分比: ${pct}%, 大于需提交的设定百分比: ${bangumiPostPercent}%`});
                 logger.info(`Bangumi收藏更新成功, 目标: ${targetName}`);
             }).catch(error => {
-                embyToast({ text: `Bangumi收藏更新失败, 目标: ${targetName}, ${error.message}` });
+                embyToast({text: `Bangumi收藏更新失败, 目标: ${targetName}, ${error.message}`});
                 logger.error(`putBangumiEpStatus 失败, 目标: ${targetName}`, error);
             });
         }
@@ -2040,7 +2562,9 @@
     }
 
     async function getEpisodeBangumiRel(episode_info = window.ede.episode_info, fetchOpts = {}) {
-        if (!episode_info) { throw new Error('未获取到 episode_info'); }
+        if (!episode_info) {
+            throw new Error('未获取到 episode_info');
+        }
         const _bangumi_key = lsLocalKeys.bangumiEpInfoPrefix + episode_info.episodeId;
         let bangumiInfoLs = localStorage.getItem(_bangumi_key);
         if (bangumiInfoLs) {
@@ -2052,7 +2576,9 @@
         const animeId = episode_info.animeId;
         const bangumiId = episode_info.bangumiId || animeId;
         if (!subjectId) {
-            if (!bangumiId) { throw new Error('未获取到 bangumiId/animeId'); }
+            if (!bangumiId) {
+                throw new Error('未获取到 bangumiId/animeId');
+            }
             const officialPrefix = `${corsProxy}https://api.dandanplay.net/api/v2`;
             const normalizePrefix = prefix => (prefix || '').replace(/\/+$/, '');
             const primaryPrefix = normalizePrefix(episode_info.apiPrefix || dandanplayApi.prefix || officialPrefix);
@@ -2074,12 +2600,23 @@
             const danDanPlayBangumi = danDanPlayBangumiRes?.bangumi || danDanPlayBangumiRes;
             episode_info.bgmEpisodeIndex = offsetBgmEpisodeIndex(episode_info.bgmEpisodeIndex, danDanPlayBangumi);
             bangumiUrl = danDanPlayBangumi?.bangumiUrl;
-            if (!bangumiUrl) { throw new Error('未请求到 bangumiUrl'); }
+            if (!bangumiUrl) {
+                throw new Error('未请求到 bangumiUrl');
+            }
             subjectId = parseInt(bangumiUrl.match(/\/(\d+)$/)[1]);
         }
         const episodeIndex = episode_info ? episode_info.episodeIndex : null;
         const bgmEpisodeIndex = episode_info ? episode_info.bgmEpisodeIndex : null;
-        const bangumiInfo = { animeId, bangumiId, bangumiUrl, subjectId, episodeIndex, bgmEpisodeIndex, bangumiEpsRes, _bangumi_key };
+        const bangumiInfo = {
+            animeId,
+            bangumiId,
+            bangumiUrl,
+            subjectId,
+            episodeIndex,
+            bgmEpisodeIndex,
+            bangumiEpsRes,
+            _bangumi_key
+        };
         window.ede.bangumiInfo = bangumiInfo;
         localStorage.setItem(bangumiInfo._bangumi_key, JSON.stringify(bangumiInfo));
         return bangumiInfo;
@@ -2106,7 +2643,7 @@
     async function putBangumiEpStatus(token, opts = {}) {
         const fetchOpts = opts.fetchOpts || {};
         const bangumiInfo = await getEpisodeBangumiRel(opts.episodeInfo, fetchOpts);
-        const { subjectId, bgmEpisodeIndex, } = bangumiInfo;
+        const {subjectId, bgmEpisodeIndex,} = bangumiInfo;
         const episodeIndex = isValidEpisodeIndex(bgmEpisodeIndex) ? Number(bgmEpisodeIndex) : Number(bangumiInfo.episodeIndex);
         if (!isValidEpisodeIndex(episodeIndex)) {
             throw new Error('未获取到有效 Bangumi 章节索引');
@@ -2119,21 +2656,26 @@
             bangumiMe = await fetchBangumiApiGetMe(token, fetchOpts);
         }
         let msg = '';
-        const bangumiUserColl = await fetchJson(bangumiApi.getUserCollection(bangumiMe.username, subjectId), { ...fetchOpts, token });
+        const bangumiUserColl = await fetchJson(bangumiApi.getUserCollection(bangumiMe.username, subjectId), {
+            ...fetchOpts,
+            token
+        });
         if (bangumiUserColl.type === 2) { // 看过状态
             msg = 'Bangumi 条目已为看过状态,跳过更新';
             logger.debug(msg, bangumiUserColl);
             throw new Error(msg);
         }
         logger.debug('准备修改 Bangumi 条目收藏状态为在看, 如果不存在则创建, 如果存在则修改');
-        let body = { type: 3 }; // 在看状态
-        await fetchJson(bangumiApi.postUserCollection(subjectId), { ...fetchOpts, token, body });
+        let body = {type: 3}; // 在看状态
+        await fetchJson(bangumiApi.postUserCollection(subjectId), {...fetchOpts, token, body});
         if (!bangumiInfo.bangumiEpsRes) {
             const fetchUrl = bangumiApi.getUserSubjectEpisodeCollection(subjectId);
-            const bangumiEpsRes = await fetchJson(fetchUrl, { ...fetchOpts, token });
+            const bangumiEpsRes = await fetchJson(fetchUrl, {...fetchOpts, token});
             bangumiInfo.bangumiEpsRes = bangumiEpsRes;
             const bangumiEpColl = bangumiEpsRes.data[episodeIndex];
-            if (!bangumiEpColl) { throw new Error('未匹配到 bangumiEpColl'); }
+            if (!bangumiEpColl) {
+                throw new Error('未匹配到 bangumiEpColl');
+            }
             // bangumiInfo.episodeIndex = episodeIndex;
         }
         const bangumiEpColl = bangumiInfo.bangumiEpsRes.data[episodeIndex];
@@ -2145,7 +2687,7 @@
         }
         logger.debug('准备更新 Bangumi 章节收藏状态, 详情: ', bangumiEp);
         body.type = 2; // 看过状态
-        await fetchJson(bangumiApi.putUserEpisodeCollection(bangumiEp.id), { ...fetchOpts, token, body, method: 'PUT' });
+        await fetchJson(bangumiApi.putUserEpisodeCollection(bangumiEp.id), {...fetchOpts, token, body, method: 'PUT'});
         bangumiEp.type = body.type;
         logger.info(`成功更新 Bangumi 章节收藏状态, 在看 => 看过, 详情: `, bangumiEp);
         window.ede.bangumiInfo = bangumiInfo;
@@ -2154,9 +2696,9 @@
     }
 
     async function fetchJson(url, opts = {}) {
-        const { token, headers, body } = opts;
+        const {token, headers, body} = opts;
         const abortOnDestroy = opts.abortOnDestroy !== false;
-        let { method = 'GET' } = opts;
+        let {method = 'GET'} = opts;
         if (method === 'GET' && body) method = 'POST';
 
         // 判断是否为弹弹play API，用于决定是否发送 X-User-Agent
@@ -2193,7 +2735,7 @@
             if (opts.signal.aborted) {
                 controller.abort();
             } else {
-                opts.signal.addEventListener('abort', () => controller.abort(), { once: true });
+                opts.signal.addEventListener('abort', () => controller.abort(), {once: true});
             }
         }
 
@@ -2269,7 +2811,13 @@
             const totalMs = (performance.now() - startTime).toFixed(0);
 
             // [优化] 从 URL 提取简短 API 路径名用于日志（不暴露完整 URL）
-            const apiPath = (() => { try { return new URL(url).pathname.split('/').slice(-2).join('/'); } catch(e) { return method; } })();
+            const apiPath = (() => {
+                try {
+                    return new URL(url).pathname.split('/').slice(-2).join('/');
+                } catch (e) {
+                    return method;
+                }
+            })();
 
             // 统一日志输出（包含 PerformanceResourceTiming 的更精细数据，如果可用）
             if (perfTiming) {
@@ -2290,12 +2838,18 @@
                     logger.warn('responseText is not JSON:', parseError);
                 }
             }
-            return { success: true };
+            return {success: true};
         } catch (error) {
             clearTimeout(timeoutId);
             const endTime = performance.now();
             const duration = (endTime - startTime).toFixed(0);
-            const errPath = (() => { try { return new URL(url).pathname.split('/').slice(-2).join('/'); } catch(e) { return method; } })();
+            const errPath = (() => {
+                try {
+                    return new URL(url).pathname.split('/').slice(-2).join('/');
+                } catch (e) {
+                    return method;
+                }
+            })();
 
             if (error.name === 'AbortError') {
                 // 区分是被组件销毁取消的(人为)，还是超时取消的
@@ -2355,7 +2909,7 @@
         try {
             // 获取所有媒体库列表
             const libraries = await getAllLibraries();
-            logger.info('[dd-danmaku] 媒体库列表:', libraries.map(l => ({ id: l.id, name: l.name })));
+            logger.info('[dd-danmaku] 媒体库列表:', libraries.map(l => ({id: l.id, name: l.name})));
             if (!libraries || libraries.length === 0) {
                 logger.warn('[dd-danmaku] 无法获取媒体库列表');
                 return null;
@@ -2403,7 +2957,12 @@
                     Fields: 'ParentId,Name,Type,CollectionType'
                 });
                 const parentItem = await ApiClient.getJSON(parentUrl).catch(() => null);
-                logger.debug('[dd-danmaku] 递归查找父级:', parentItem ? { Id: parentItem.Id, Name: parentItem.Name, ParentId: parentItem.ParentId, Type: parentItem.Type } : 'null');
+                logger.debug('[dd-danmaku] 递归查找父级:', parentItem ? {
+                    Id: parentItem.Id,
+                    Name: parentItem.Name,
+                    ParentId: parentItem.ParentId,
+                    Type: parentItem.Type
+                } : 'null');
 
                 if (!parentItem) break;
 
@@ -2460,7 +3019,10 @@
                     const virtualFolders = await ApiClient.getJSON(virtualFoldersUrl).catch(() => null);
 
                     if (virtualFolders && virtualFolders.length > 0) {
-                        logger.debug('[dd-danmaku] VirtualFolders:', virtualFolders.map(f => ({ Name: f.Name, Locations: f.Locations })));
+                        logger.debug('[dd-danmaku] VirtualFolders:', virtualFolders.map(f => ({
+                            Name: f.Name,
+                            Locations: f.Locations
+                        })));
 
                         for (const folder of virtualFolders) {
                             if (folder.Locations && folder.Locations.length > 0) {
@@ -2540,7 +3102,11 @@
             const virtualFolders = await ApiClient.getJSON(virtualFoldersUrl).catch(() => null);
 
             if (virtualFolders && virtualFolders.length > 0) {
-                logger.debug('[dd-danmaku] VirtualFolders:', virtualFolders.map(f => ({ Name: f.Name, Locations: f.Locations, ItemId: f.ItemId })));
+                logger.debug('[dd-danmaku] VirtualFolders:', virtualFolders.map(f => ({
+                    Name: f.Name,
+                    Locations: f.Locations,
+                    ItemId: f.ItemId
+                })));
 
                 for (const folder of virtualFolders) {
                     if (folder.Locations && folder.Locations.length > 0) {
@@ -2602,7 +3168,9 @@
             // this only working on quickDebug
             item = await fatchEmbyItemInfo(window.ede.itemId);
         }
-        if (!item) { return null; } // getEmbyItemInfo from playbackManager null, will next called
+        if (!item) {
+            return null;
+        } // getEmbyItemInfo from playbackManager null, will next called
         if (!['Episode', 'Movie'].includes(item.Type)) {
             return logger.error('不支持的类型');
         }
@@ -2723,7 +3291,7 @@
             const newEpisode = episode + selectedSeasonInfo.episodeOffset;
             logger.info(`命中seasonInfo缓存: ${selectedSeasonInfo.name},偏移量: ${selectedSeasonInfo.episodeOffset},集: ${newEpisode}`);
             const animaInfo = await fetchSearchEpisodes(selectedSeasonInfo.name, newEpisode);
-            return { animaInfo, newEpisode, };
+            return {animaInfo, newEpisode,};
         }
         return null;
     }
@@ -2733,24 +3301,30 @@
         let animaInfo = await fetchSearchEpisodes(animeName);
         if (animaInfo.animes.length > 0) {
             logger.debug(`移除章节过滤,自动匹配成功,转换为目标章节索引 0`);
-            if (isNaN(episodeIndex)) { episodeIndex = 0; }
+            if (isNaN(episodeIndex)) {
+                episodeIndex = 0;
+            }
             // const episodeInfo = animaInfo.animes[0].episodes[episodeIndex - 1 ?? 0];
             const episodeInfo = animaInfo.animes[0].episodes[episodeIndex];
             if (!episodeInfo) {
                 return null;
             }
             animaInfo.animes[0].episodes = [episodeInfo];
-            return { animeName, animaInfo, };
+            return {animeName, animaInfo,};
         }
         // from: https://github.com/Izumiko/jellyfin-danmaku/blob/jellyfin/ede.js#L886
         const seriesOrMovieInfo = await fatchEmbyItemInfo(seriesOrMovieId);
-        if (!seriesOrMovieInfo.OriginalTitle) { return null; }
+        if (!seriesOrMovieInfo.OriginalTitle) {
+            return null;
+        }
         logger.info(`标题名: ${animeName},自动匹配未查询到结果,将使用原标题名,重试一次`);
         const animeOriginalTitle = seriesOrMovieInfo.OriginalTitle;
         animaInfo = await fetchSearchEpisodes(animeOriginalTitle, episodeIndex);
-        if (animaInfo.animes.length < 1) { return null; }
+        if (animaInfo.animes.length < 1) {
+            return null;
+        }
         logger.info(`使用原标题名: ${animeOriginalTitle},自动匹配成功`);
-        return { animeName, animeOriginalTitle, animaInfo, };
+        return {animeName, animeOriginalTitle, animaInfo,};
     }
 
     // --- 替换后的 calculateFileHash (使用 Worker) ---
@@ -2764,7 +3338,7 @@
         // 如果 streamUrl 会被 302 重定向到外部 CDN（如 115/阿里云盘），fetch 必定 CORS 失败
         // 提前探测可以避免不必要的下载等待和 Worker 创建
         try {
-            const probeRes = await fetch(streamUrl, { method: 'HEAD', mode: 'cors' });
+            const probeRes = await fetch(streamUrl, {method: 'HEAD', mode: 'cors'});
             if (!probeRes.ok && probeRes.status !== 206) {
                 logger.warn(`[Hash] 预检失败 (${probeRes.status})，可能是 strm/网盘 302 重定向，跳过哈希计算`);
                 return null;
@@ -2791,7 +3365,7 @@
                 worker.terminate();
                 resolve(null);
             };
-            worker.postMessage({ type: 'INIT' });
+            worker.postMessage({type: 'INIT'});
 
             const authHeaders = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -2803,23 +3377,23 @@
             try {
                 if (fileSize < CHUNK_SIZE * 2) {
                     logger.debug(`[Hash] 文件较小，下载全量计算...`);
-                    const response = await fetch(streamUrl, { headers: authHeaders });
+                    const response = await fetch(streamUrl, {headers: authHeaders});
                     if (!response.ok) throw new Error(`Fetch error: ${response.status}`);
                     const buffer = await response.arrayBuffer();
-                    worker.postMessage({ type: 'APPEND', chunk: buffer, isLast: true }, [buffer]);
+                    worker.postMessage({type: 'APPEND', chunk: buffer, isLast: true}, [buffer]);
                 } else {
                     logger.debug(`[Hash] 文件较大，下载头尾分片计算...`);
                     const headRes = await fetch(streamUrl, {
-                        headers: { ...authHeaders, 'Range': `bytes=0-${CHUNK_SIZE - 1}` }
+                        headers: {...authHeaders, 'Range': `bytes=0-${CHUNK_SIZE - 1}`}
                     });
                     const headBuffer = await headRes.arrayBuffer();
-                    worker.postMessage({ type: 'APPEND', chunk: headBuffer, isLast: false }, [headBuffer]);
+                    worker.postMessage({type: 'APPEND', chunk: headBuffer, isLast: false}, [headBuffer]);
 
                     const tailRes = await fetch(streamUrl, {
-                        headers: { ...authHeaders, 'Range': `bytes=${fileSize - CHUNK_SIZE}-${fileSize - 1}` }
+                        headers: {...authHeaders, 'Range': `bytes=${fileSize - CHUNK_SIZE}-${fileSize - 1}`}
                     });
                     const tailBuffer = await tailRes.arrayBuffer();
-                    worker.postMessage({ type: 'APPEND', chunk: tailBuffer, isLast: true }, [tailBuffer]);
+                    worker.postMessage({type: 'APPEND', chunk: tailBuffer, isLast: true}, [tailBuffer]);
                 }
             } catch (error) {
                 logger.error('[Hash] 下载或通信失败:', error);
@@ -2856,12 +3430,12 @@
         // [日志优化] 生成匹配流程唯一 ID
         const matchId = Date.now().toString(36).slice(-6);
 
-        const { animeName, episode, seriesOrMovieId, streamUrl, size, duration, seriesName, seasonNumber } = itemInfoMap;
+        const {animeName, episode, seriesOrMovieId, streamUrl, size, duration, seriesName, seasonNumber} = itemInfoMap;
         logger.debug(`[匹配 #${matchId}] searchEpisodes调用 - streamUrl: ${streamUrl ? '已获取' : '未获取'}, size: ${size}, duration: ${duration}`);
         const startTime = performance.now();
 
         // [新增] 手动集数偏移规则 - 优先级最高
-        let seasonEpisodeCandidates = [{ season: null, episode: episode }]; // 候选列表，默认包含原始集数
+        let seasonEpisodeCandidates = [{season: null, episode: episode}]; // 候选列表，默认包含原始集数
         const offsetRules = lsGetItem(lsKeys.episodeOffsetRules.id) || [];
         if (offsetRules.length > 0 && seriesName && seasonNumber) {
             const matchedRule = offsetRules.find(rule =>
@@ -2871,7 +3445,7 @@
             if (matchedRule) {
                 const mappedEpisode = episode + (matchedRule.episodeOffset || 0);
                 logger.info(`[匹配 #${matchId}] [手动偏移] 命中规则: "${matchedRule.seriesName}" S${String(seasonNumber).padStart(2, '0')}E${String(episode).padStart(2, '0')} → S${String(matchedRule.toSeason).padStart(2, '0')}E${String(mappedEpisode).padStart(2, '0')} (偏移: ${matchedRule.episodeOffset >= 0 ? '+' : ''}${matchedRule.episodeOffset})`);
-                seasonEpisodeCandidates.unshift({ season: matchedRule.toSeason, episode: mappedEpisode });
+                seasonEpisodeCandidates.unshift({season: matchedRule.toSeason, episode: mappedEpisode});
             }
         }
 
@@ -2886,8 +3460,8 @@
                     if (mappedSeasonEpisode && (mappedSeasonEpisode.season !== currentSeason || mappedSeasonEpisode.episode !== episode)) {
                         // 优先使用映射后的季集作为第一候选
                         seasonEpisodeCandidates = [
-                            { season: mappedSeasonEpisode.season, episode: mappedSeasonEpisode.episode }, // 第一候选：映射后
-                            { season: currentSeason, episode: episode } // 第二候选：原始（备用）
+                            {season: mappedSeasonEpisode.season, episode: mappedSeasonEpisode.episode}, // 第一候选：映射后
+                            {season: currentSeason, episode: episode} // 第二候选：原始（备用）
                         ];
                         logger.info(`[匹配 #${matchId}] [集数映射] 双向匹配: S${String(currentSeason).padStart(2, '0')}E${String(episode).padStart(2, '0')} <-> S${String(mappedSeasonEpisode.season).padStart(2, '0')}E${String(mappedSeasonEpisode.episode).padStart(2, '0')}`);
                     }
@@ -2902,13 +3476,21 @@
         // 构建API配置，支持多个自定义源（新数据结构）
         const customApiList = getCustomApiList();
         const apiConfigs = {
-            official: { name: '弹弹play', prefix: corsProxy + 'https://api.dandanplay.net/api/v2', enabled: lsGetItem(lsKeys.useOfficialApi.id) },
+            official: {
+                name: '弹弹play',
+                prefix: corsProxy + 'https://api.dandanplay.net/api/v2',
+                enabled: lsGetItem(lsKeys.useOfficialApi.id)
+            },
         };
         // 为每个启用的自定义源创建配置
         if (lsGetItem(lsKeys.useCustomApi.id) && customApiList.length > 0) {
             customApiList.forEach((item, index) => {
                 if (item.enabled) {
-                    apiConfigs[`custom_${index}`] = { name: item.name || `自定义源${index + 1}`, prefix: item.url, enabled: true };
+                    apiConfigs[`custom_${index}`] = {
+                        name: item.name || `自定义源${index + 1}`,
+                        prefix: item.url,
+                        enabled: true
+                    };
                 }
             });
         }
@@ -2988,14 +3570,35 @@
                             normalizeTitle(match.animeTitle || '')
                         );
                         if (similarity >= 0.4) {
-                            result = { directMatch: true, apiPrefix: config.prefix, apiName: config.name, episodeInfo: { ...match, episodes: [{ episodeId: match.episodeId, episodeTitle: match.episodeTitle }], imageUrl: match.imageUrl } };
+                            result = {
+                                directMatch: true,
+                                apiPrefix: config.prefix,
+                                apiName: config.name,
+                                episodeInfo: {
+                                    ...match,
+                                    episodes: [{episodeId: match.episodeId, episodeTitle: match.episodeTitle}],
+                                    imageUrl: match.imageUrl
+                                }
+                            };
                             logger.info(`[自动匹配] /match 精确命中，二次验证通过 (相似度: ${similarity.toFixed(2)})`);
                         } else {
                             // 相似度太低，降级为模糊匹配处理
                             logger.warn(`[自动匹配] /match 声称精确匹配但标题不够像 ("${animeName}" vs "${match.animeTitle}", 相似度: ${similarity.toFixed(2)})，降级处理`);
                             const bestMatch = selectBestMatch(animeName, matchResult.animes, null, 0.3);
                             if (bestMatch) {
-                                result = { directMatch: true, apiPrefix: config.prefix, apiName: config.name, episodeInfo: { ...bestMatch, episodes: [{ episodeId: bestMatch.episodeId || bestMatch.matchedEpisodeId, episodeTitle: bestMatch.episodeTitle || bestMatch.matchedEpisodeTitle }], imageUrl: bestMatch.imageUrl } };
+                                result = {
+                                    directMatch: true,
+                                    apiPrefix: config.prefix,
+                                    apiName: config.name,
+                                    episodeInfo: {
+                                        ...bestMatch,
+                                        episodes: [{
+                                            episodeId: bestMatch.episodeId || bestMatch.matchedEpisodeId,
+                                            episodeTitle: bestMatch.episodeTitle || bestMatch.matchedEpisodeTitle
+                                        }],
+                                        imageUrl: bestMatch.imageUrl
+                                    }
+                                };
                             }
                         }
                     }
@@ -3009,10 +3612,22 @@
                             const bestParsed = parseCandidateTitle(bestMatch.animeTitle);
                             const bestSeason = bestParsed.season || detectSeasonFromTitle(bestMatch.animeTitle, normalizeTitle(parsedAnim.title));
                             if (parsedAnim.season && parsedAnim.season > 1 && bestSeason && bestSeason !== parsedAnim.season) {
-                                logger.warn(`[自动匹配] /match 模糊结果季度不匹配 (期望: S${String(parsedAnim.season).padStart(2,'0')}, 选中: "${bestMatch.animeTitle}" → S${String(bestSeason).padStart(2,'0')})，放弃 /match 结果，转 /search`);
+                                logger.warn(`[自动匹配] /match 模糊结果季度不匹配 (期望: S${String(parsedAnim.season).padStart(2, '0')}, 选中: "${bestMatch.animeTitle}" → S${String(bestSeason).padStart(2, '0')})，放弃 /match 结果，转 /search`);
                                 // 不设置 result，让流程 fall through 到 /search 路径
                             } else {
-                                result = { directMatch: true, apiPrefix: config.prefix, apiName: config.name, episodeInfo: { ...bestMatch, episodes: [{ episodeId: bestMatch.episodeId || bestMatch.matchedEpisodeId, episodeTitle: bestMatch.episodeTitle || bestMatch.matchedEpisodeTitle }], imageUrl: bestMatch.imageUrl } };
+                                result = {
+                                    directMatch: true,
+                                    apiPrefix: config.prefix,
+                                    apiName: config.name,
+                                    episodeInfo: {
+                                        ...bestMatch,
+                                        episodes: [{
+                                            episodeId: bestMatch.episodeId || bestMatch.matchedEpisodeId,
+                                            episodeTitle: bestMatch.episodeTitle || bestMatch.matchedEpisodeTitle
+                                        }],
+                                        imageUrl: bestMatch.imageUrl
+                                    }
+                                };
                             }
                         }
                     }
@@ -3106,7 +3721,7 @@
                             logMsg = `[双向匹配] 最佳匹配: S${String(bestCandidate.season).padStart(2, '0')}E${String(bestCandidate.episode).padStart(2, '0')}`;
                         }
                         logger.info(`${logMsg}, 结果数: ${bestAnimaInfo.animes.length}`);
-                        result = { animaInfo: bestAnimaInfo, apiPrefix: config.prefix, apiName: config.name };
+                        result = {animaInfo: bestAnimaInfo, apiPrefix: config.prefix, apiName: config.name};
                     }
                     // 降级：不带集数搜索
                     else {
@@ -3118,7 +3733,7 @@
                         }
 
                         if (animaInfo?.animes?.length > 0) {
-                            result = { animaInfo, apiPrefix: config.prefix, apiName: config.name };
+                            result = {animaInfo, apiPrefix: config.prefix, apiName: config.name};
                         }
                         // 降级：原始标题搜索
                         else {
@@ -3132,7 +3747,12 @@
                                 }
 
                                 if (animaInfoOriginal?.animes?.length > 0) {
-                                    result = { animaInfo: animaInfoOriginal, animeOriginalTitle: seriesOrMovieInfo.OriginalTitle, apiPrefix: config.prefix, apiName: config.name };
+                                    result = {
+                                        animaInfo: animaInfoOriginal,
+                                        animeOriginalTitle: seriesOrMovieInfo.OriginalTitle,
+                                        apiPrefix: config.prefix,
+                                        apiName: config.name
+                                    };
                                 }
                             }
                         }
@@ -3162,8 +3782,10 @@
         const matchId = Date.now().toString(36).slice(-6);
 
         const itemInfoMap = await getMapByEmbyItemInfo();
-        if (!itemInfoMap) { return null; }
-        const { _episode_key, animeId, episode, seriesOrMovieId, animeName } = itemInfoMap;
+        if (!itemInfoMap) {
+            return null;
+        }
+        const {_episode_key, animeId, episode, seriesOrMovieId, animeName} = itemInfoMap;
 
         logger.info(`[匹配 #${matchId}] 开始获取弹幕: ${animeName} 第${episode}集`);
 
@@ -3288,7 +3910,7 @@
         }
 
         // [修正] 从 res 中解构出 apiPrefix 和 apiName
-        const { animeOriginalTitle, animaInfo, apiPrefix, apiName } = res;
+        const {animeOriginalTitle, animaInfo, apiPrefix, apiName} = res;
         let selectAnime_id = 1;
         if (animeId != -1) {
             for (let index = 0; index < animaInfo.animes.length; index++) {
@@ -3411,10 +4033,15 @@
             return;
         }
 
-        if (!comments) { return; }
+        if (!comments) {
+            return;
+        }
 
         if (window.ede.danmaku) {
-            try { window.ede.danmaku.hide(); window.ede.danmaku.destroy(); } catch (e) {
+            try {
+                window.ede.danmaku.hide();
+                window.ede.danmaku.destroy();
+            } catch (e) {
                 logger.warn('旧弹幕实例销毁异常', e);
             }
             window.ede.danmaku = null;
@@ -3443,7 +4070,7 @@
         if (!_media) {
             // this only working on quickDebug
             if (!window.ede.danmaku) {
-                window.ede.danmaku = { comments: _comments, };
+                window.ede.danmaku = {comments: _comments,};
             }
             // 设置弹窗内的弹幕信息
             buildCurrentDanmakuInfo(currentDanmakuInfoContainerId);
@@ -3451,7 +4078,9 @@
             logger.warn('用户已退出视频播放页面，停止创建。');
             return;
         }
-        if (!isVersionOld) { _media.style.position = 'absolute'; }
+        if (!isVersionOld) {
+            _media.style.position = 'absolute';
+        }
         // from https://github.com/Izumiko/jellyfin-danmaku/blob/jellyfin/ede.js#L1104
         const wrapperTop = 0;
         // 播放器 UI 顶部阴影
@@ -3560,7 +4189,7 @@
             // ResizeObserver 可能会在初始化时立即触发一次，或者在微小布局调整时触发
             // 通过 entries 获取精确的尺寸
             for (let entry of entries) {
-                const { width, height } = entry.contentRect;
+                const {width, height} = entry.contentRect;
 
                 // 判断尺寸变化幅度
                 // 只有当 宽 或 高 的变化超过 20px 时，才执行重载逻辑
@@ -3576,7 +4205,7 @@
                 resizeTimer = setTimeout(() => {
                     // 再次检查弹幕对象是否存在，防止报错
                     if (window.ede.danmaku) {
-                        logger.debug(`[Resize] 尺寸变化 (${width|0}x${height|0})，重载弹幕轨道...`);
+                        logger.debug(`[Resize] 尺寸变化 (${width | 0}x${height | 0})，重载弹幕轨道...`);
                         loadDanmaku(LOAD_TYPE.RELOAD);
                     }
                 }, 500);
@@ -3630,13 +4259,14 @@
         // [修复] 使用 reduce 代替 Math.max(...array) 避免大数组栈溢出
         const maxTime = comments.reduce((max, c) => c.time > max ? c.time : max, 0);
         const timeStep = lsGetItem(lsKeys.osdLineChartTime.id);
-        const timeCounts = Array.from({ length: Math.ceil(maxTime / timeStep) }, () => 0);
+        const timeCounts = Array.from({length: Math.ceil(maxTime / timeStep)}, () => 0);
         comments.forEach(c => {
             const index = Math.floor(c.time / timeStep);
             if (index < timeCounts.length) {
                 timeCounts[index]++;
             }
         });
+
         // [修改] 内部绘制函数：改为平滑波浪线
         function drawLineChart(data) {
             ctx.clearRect(0, 0, progressBarWidth, chartHeightNum);
@@ -3860,7 +4490,8 @@
                 return new Promise((resolve, reject) => {
                     // 二次检查
                     if (sessionId && window.ede && sessionId !== window.ede.lastLoadId) {
-                        reject('任务已过期'); return;
+                        reject('任务已过期');
+                        return;
                     }
 
                     if (!info) {
@@ -3956,6 +4587,7 @@
         _comments = danmakuAntiOverlapFilter(_comments);
         return _comments;
     }
+
     /**
      * [新增] 获取统一的弹幕字体大小 (公共方法)
      * 逻辑提取自原 danmakuParser，供 parser 和 antiOverlapFilter 复用
@@ -4080,7 +4712,7 @@
                     const last = trackList[i];
 
                     if (!last || currTime >= last.time + occupyTime) {
-                        trackList[i] = { time: currTime, width: 0 };
+                        trackList[i] = {time: currTime, width: 0};
                         return true;
                     }
                 }
@@ -4095,7 +4727,7 @@
                 const last = trackList[i];
 
                 if (!last) {
-                    trackList[i] = { time: currTime, width: currWidth };
+                    trackList[i] = {time: currTime, width: currWidth};
                     return true;
                 }
 
@@ -4110,7 +4742,7 @@
                 const safeTime = Math.max(safeTimeEnter, safeTimeExit);
 
                 if (currTime >= safeTime) {
-                    trackList[i] = { time: currTime, width: currWidth };
+                    trackList[i] = {time: currTime, width: currWidth};
                     return true;
                 }
             }
@@ -4158,7 +4790,7 @@
             msg += `\n已自动调整 ${lsKeys.mergeSimilarEnable.name}:true`;
         }
         if (msg.length != initMsgLenth) {
-            embyToast({ text: msg });
+            embyToast({text: msg});
             logger.debug('[自动过滤] ' + msg);
         }
     }
@@ -4237,11 +4869,15 @@
 
     /** 通过屏蔽关键词过滤弹幕 */
     function danmakuKeywordsFilter(comments) {
-        if (!lsGetItem(lsKeys.filterKeywordsEnable.id)) { return comments; }
+        if (!lsGetItem(lsKeys.filterKeywordsEnable.id)) {
+            return comments;
+        }
         const keywords = lsGetItem(lsKeys.filterKeywords.id)
             .split(/\r?\n/).map(k => k.trim()).filter(k => k.length > 0 && !k.startsWith('// '));
-        if (keywords.length === 0) { return comments; }
-        const cKeys = [ 'text', ...Object.keys(showSource) ];
+        if (keywords.length === 0) {
+            return comments;
+        }
+        const cKeys = ['text', ...Object.keys(showSource)];
         return comments.filter(comment =>
             !keywords.some(keyword => {
                 try {
@@ -4298,7 +4934,7 @@
                     if (item.t) {
                         // 如果有合并，创建一个新对象修改 text，避免污染源数据
                         // 浅拷贝速度很快
-                        return { ...originalComment, text: item.t, xCount: true }; // 标记一下
+                        return {...originalComment, text: item.t, xCount: true}; // 标记一下
                     }
                     return originalComment;
                 });
@@ -4341,7 +4977,7 @@
         if (buffer.length <= n + 1) {
             const newBuffer = new Int32Array(n + 128);
             const score = similarityPercentage(a, b, maxAllowedDiff, newBuffer);
-            return { score: score, buffer: newBuffer };
+            return {score: score, buffer: newBuffer};
         }
 
         const v = buffer; // 使用共享内存
@@ -4365,7 +5001,7 @@
 
                 // 手写 Math.min 逻辑，JS中比调用 Math.min 快
                 let val = v[i] + 1;       // 删除
-                const ins = v[i-1] + 1;   // 插入
+                const ins = v[i - 1] + 1;   // 插入
                 if (ins < val) val = ins;
                 const sub = pre + cost;   // 替换
                 if (sub < val) val = sub;
@@ -4404,7 +5040,7 @@
         // 读取转换设置 & 初始化统计
         const convertTopTo = lsGetItem(lsKeys.convertTopTo.id);
         const convertBottomTo = lsGetItem(lsKeys.convertBottomTo.id);
-        let stat = { t2b: 0, t2r: 0, b2t: 0, b2r: 0 };
+        let stat = {t2b: 0, t2r: 0, b2t: 0, b2r: 0};
         // -------------------------------------
         // const removeEmojiEnable = lsGetItem(lsKeys.removeEmojiEnable.id);
         //const $xml = new DOMParser().parseFromString(string, 'text/xml')
@@ -4413,7 +5049,7 @@
                 const p = $comment.p;
                 //if (p === null || $comment.childNodes[0] === undefined) return null;
                 const values = p.split(',');
-                let mode = { 6: 'ltr', 1: 'rtl', 5: 'top', 4: 'bottom' }[values[1]];
+                let mode = {6: 'ltr', 1: 'rtl', 5: 'top', 4: 'bottom'}[values[1]];
                 if (!mode) return null;
 
                 // 位置转换逻辑
@@ -4500,7 +5136,7 @@
         const time = document.querySelector(mediaQueryStr).currentTime;
         const fontOpacity = 'ff';
         const colorStr = `000000${color.toString(16)}${fontOpacity}`.slice(-8);
-        const mode = { 6: 'ltr', 1: 'rtl', 5: 'top', 4: 'bottom' }[dandanplayMode];
+        const mode = {6: 'ltr', 1: 'rtl', 5: 'top', 4: 'bottom'}[dandanplayMode];
         const comment = {
             text,
             mode,
@@ -4526,7 +5162,7 @@
             , 'emby-button',
         ]);
         const html = `<div id="${eleIds.dialogContainer}"></div>`;
-        embyDialog({ html, buttons: [{ name: '关闭' }] });
+        embyDialog({html, buttons: [{name: '关闭'}]});
         waitForElement('#' + eleIds.dialogContainer, afterEmbyDialogCreated);
     }
 
@@ -4553,7 +5189,9 @@
         tabsMenuContainer.append(embyTabs(danmakuTabOpts, danmakuTabOpts[0].id, 'id', 'name', (value) => {
             danmakuTabOpts.forEach(obj => {
                 const elem = getById(obj.id);
-                if (elem) { elem.hidden = obj.id !== value.id; }
+                if (elem) {
+                    elem.hidden = obj.id !== value.id;
+                }
             });
         }));
         formDialogHeader.append(tabsMenuContainer);
@@ -4574,7 +5212,9 @@
         try {
             danmakuTabOpts[0].buildMethod(danmakuTabOpts[0].id);
             builtTabs.add(danmakuTabOpts[0].id);
-        } catch (error) { logger.error(error); }
+        } catch (error) {
+            logger.error(error);
+        }
 
         // 其余 tab 延迟构建（不阻塞主线程，不影响弹幕动画）
         requestAnimationFrame(() => {
@@ -4583,7 +5223,9 @@
                 try {
                     tab.buildMethod(tab.id);
                     builtTabs.add(tab.id);
-                } catch (error) { logger.error(error); }
+                } catch (error) {
+                    logger.error(error);
+                }
             });
         });
         if (formDialogFooter) {
@@ -4593,7 +5235,7 @@
 
     function buildDanmakuSetting(containerId) {
         const container = getById(containerId);
-        let template =  `
+        let template = `
             <div style="display: flex; justify-content: center;">
                 <div>
                     <div id="${eleIds.danmakuSwitchDiv}" style="margin-bottom: 0.2em; display: flex; align-items: center; justify-content: space-between;">
@@ -4700,39 +5342,43 @@
         container.innerHTML = template.trim();
 
         getById(eleIds.danmakuSwitchDiv, container).querySelector('div:first-child').prepend(
-            embyButton({ id: eleIds.danmakuSwitch, label: '弹幕开关'
+            embyButton({
+                    id: eleIds.danmakuSwitch, label: '弹幕开关'
                     , iconKey: lsGetItem(lsKeys.switch.id) ? iconKeys.switch_on : iconKeys.switch_off
-                    , style: (lsGetItem(lsKeys.switch.id) ? 'color:#52b54b;' : '') + 'font-size:1.5em;padding:0;' }
+                    , style: (lsGetItem(lsKeys.switch.id) ? 'color:#52b54b;' : '') + 'font-size:1.5em;padding:0;'
+                }
                 // , style: lsGetItem(lsKeys.switch.id) ? 'color:#52b54b;font-size:1.5em;padding:0;': 'font-size:1.5em;padding:0;'}
                 , doDanmakuSwitch)
         );
         // 防重叠按钮
         getById(eleIds.antiOverlapDiv, container).prepend(
-            embyButton({ id: eleIds.antiOverlapBtn, label: '防重叠开关'
+            embyButton({
+                    id: eleIds.antiOverlapBtn, label: '防重叠开关'
                     , iconKey: lsGetItem(lsKeys.antiOverlap.id) ? iconKeys.switch_on : iconKeys.switch_off
-                    , style: (lsGetItem(lsKeys.antiOverlap.id) ? 'color:#52b54b;' : '') + 'font-size:1.5em;padding:0;' }
+                    , style: (lsGetItem(lsKeys.antiOverlap.id) ? 'color:#52b54b;' : '') + 'font-size:1.5em;padding:0;'
+                }
                 , doAntiOverlapSwitch)
         );
         // 滑块
         getById(eleIds.filterLevelDiv, container).append(
-            embySlider({ lsKey: lsKeys.filterLevel }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.filterLevel}, onSliderChange, onSliderChangeLabel)
         );
         getById(eleIds.heightPercentDiv, container).append(
-            embySlider({ lsKey: lsKeys.heightPercent }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.heightPercent}, onSliderChange, onSliderChangeLabel)
         );
         getById(eleIds.danmakuSizeDiv, container).append(
-            embySlider({ lsKey: lsKeys.fontSizeRate }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.fontSizeRate}, onSliderChange, onSliderChangeLabel)
         );
         getById(eleIds.danmakuOpacityDiv, container).append(
-            embySlider({ lsKey: lsKeys.fontOpacity }, onSliderChange, onSliderChangeLabel
+            embySlider({lsKey: lsKeys.fontOpacity}, onSliderChange, onSliderChangeLabel
             )
         );
         getById(eleIds.danmakuSpeedDiv, container).append(
-            embySlider({ lsKey: lsKeys.speed }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.speed}, onSliderChange, onSliderChangeLabel)
         );
         // 弹幕时间轴偏移秒数
         const btnContainer = getById(eleIds.timelineOffsetDiv, container);
-        const timelineOffsetOpts = { lsKey: lsKeys.timelineOffset };
+        const timelineOffsetOpts = {lsKey: lsKeys.timelineOffset};
         onSliderChangeLabel(lsGetItem(lsKeys.timelineOffset.id), timelineOffsetOpts);
         timeOffsetBtns.forEach(btn => {
             btnContainer.append(embyButton(btn, (e) => {
@@ -4740,7 +5386,9 @@
                     let oldValue = lsGetItem(lsKeys.timelineOffset.id);
                     let newValue = oldValue + (parseFloat(e.target.getAttribute('valueOffset')) || 0);
                     // 如果 offset 为 0,则 newValue 应该设置为 0
-                    if (newValue === oldValue) { newValue = 0; }
+                    if (newValue === oldValue) {
+                        newValue = 0;
+                    }
                     onSliderChange(newValue, timelineOffsetOpts);
                 }
             }));
@@ -4753,25 +5401,32 @@
     function buildSettingsBackup(container) {
         const settingsCtrlEle = getById(eleIds.settingsCtrl, container);
         settingsCtrlEle.append(
-            embyButton({ label: '配置', iconKey: iconKeys.more }, (e) => {
+            embyButton({label: '配置', iconKey: iconKeys.more}, (e) => {
                 const xChecked = !e.target.xChecked;
                 e.target.xChecked = xChecked;
                 e.target.title = xChecked ? '关闭' : '配置';
                 e.target.firstChild.innerHTML = xChecked ? iconKeys.close : iconKeys.more;
                 const settingsTextEle = getById(eleIds.settingsText);
                 settingsTextEle.style.display = xChecked ? '' : 'none';
-                if (xChecked) { settingsTextEle.value = getSettingsJson(2); }
+                if (xChecked) {
+                    settingsTextEle.value = getSettingsJson(2);
+                }
                 [eleIds.settingReloadBtn, eleIds.settingsImportBtn].forEach(id => {
                     getById(id).style.display = xChecked ? '' : 'none';
                 });
             })
         );
         settingsCtrlEle.append(
-            embyButton({ id: eleIds.settingReloadBtn, label: '刷新', iconKey: iconKeys.refresh, style: 'display: none;' }
+            embyButton({id: eleIds.settingReloadBtn, label: '刷新', iconKey: iconKeys.refresh, style: 'display: none;'}
                 , () => getById(eleIds.settingsText).value = getSettingsJson(2))
         );
         settingsCtrlEle.append(
-            embyButton({ id: eleIds.settingsImportBtn, label: '应用', iconKey: iconKeys.done, style: 'display: none;' }, () => {
+            embyButton({
+                id: eleIds.settingsImportBtn,
+                label: '应用',
+                iconKey: iconKeys.done,
+                style: 'display: none;'
+            }, () => {
                 // const settings = JSON.parse(getById(eleIds.settingsText).value);
                 // lsBatchSet(Object.fromEntries(objectEntries(settings).map(([key, valueObj]) => [key, valueObj.value])));
                 lsBatchSet(JSON.parse(getById(eleIds.settingsText).value));
@@ -4785,7 +5440,7 @@
         // --- 1. 弹幕粗细 ---
         var weightDiv = getById(eleIds.danmakuFontWeightDiv);
         weightDiv.append(
-            embySlider({ lsKey: lsKeys.fontWeight }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.fontWeight}, onSliderChange, onSliderChangeLabel)
         );
         var savedWeight = lsGetItem(lsKeys.fontWeight.id);
         if (weightDiv.nextElementSibling) {
@@ -4796,7 +5451,7 @@
         // --- 2. 弹幕斜体 ---
         var styleDiv = getById(eleIds.danmakuFontStyleDiv);
         styleDiv.append(
-            embySlider({ lsKey: lsKeys.fontStyle }
+            embySlider({lsKey: lsKeys.fontStyle}
                 , (val, opts) => {
                     onSliderChange(val, opts); // 保存
                     onSliderChangeLabel(styles.fontStyles[val].name, opts);
@@ -4820,12 +5475,12 @@
     function buildFontFamilySetting() {
         const fontFamilyVal = lsGetItem(lsKeys.fontFamily.id);
         let availableFonts = [
-            { family: lsKeys.fontFamily.defaultValue, fullName: lsKeys.fontFamily.defaultValue },
-            { family: 'Consolas', fullName: 'Consolas' },
-            { family: 'SimHei', fullName: '黑体' },
-            { family: 'SimSun', fullName: '宋体' },
-            { family: 'KaiTi', fullName: '楷体' },
-            { family: 'Microsoft YaHei', fullName: '微软雅黑' },
+            {family: lsKeys.fontFamily.defaultValue, fullName: lsKeys.fontFamily.defaultValue},
+            {family: 'Consolas', fullName: 'Consolas'},
+            {family: 'SimHei', fullName: '黑体'},
+            {family: 'SimSun', fullName: '宋体'},
+            {family: 'KaiTi', fullName: '楷体'},
+            {family: 'Microsoft YaHei', fullName: '微软雅黑'},
         ];
         if ('queryLocalFonts' in window) {
             queryLocalFonts().then(fonts => {
@@ -4849,7 +5504,7 @@
     function buildFontFamilyCtrl() {
         const fontFamilyCtrl = getById(eleIds.fontFamilyCtrl);
         fontFamilyCtrl.append(
-            embyButton({ label: '切换手填', iconKey: iconKeys.edit, }, (e) => {
+            embyButton({label: '切换手填', iconKey: iconKeys.edit,}, (e) => {
                 const xChecked = !e.target.xChecked;
                 e.target.xChecked = xChecked;
                 e.target.title = xChecked ? '手填' : '选择';
@@ -4861,11 +5516,11 @@
             })
         );
         fontFamilyCtrl.append(
-            embyButton({ label: '重置为默认', iconKey: iconKeys.refresh, }
+            embyButton({label: '重置为默认', iconKey: iconKeys.refresh,}
                 , () => {
                     if (lsCheckSet(lsKeys.fontFamily.id, lsKeys.fontFamily.defaultValue)) {
                         changeFontStylePreview();
-                        onSliderChangeLabel(lsKeys.fontFamily.defaultValue, { labelId: eleIds.fontFamilyLabel });
+                        onSliderChangeLabel(lsKeys.fontFamily.defaultValue, {labelId: eleIds.fontFamilyLabel});
                         getById(eleIds.fontFamilyInput).value = lsGetItem(lsKeys.fontFamily.id);
                         loadDanmaku(LOAD_TYPE.RELOAD);
                     }
@@ -4877,7 +5532,7 @@
         const fontFamilyDiv = getById(eleIds.fontFamilyDiv);
         fontFamilyDiv.innerHTML = '';
         fontFamilyDiv.append(
-            embySelect({ id: eleIds.fontFamilySelect, label: `${lsKeys.fontFamily.name}: `, }
+            embySelect({id: eleIds.fontFamilySelect, label: `${lsKeys.fontFamily.name}: `,}
                 , selectedIndexOrValue, opts, 'family', 'family'
                 , (value, index, option) => {
                     logger.debug('fontFamilyDivChange: ', value, index, option);
@@ -4885,17 +5540,21 @@
                     if (lsCheckSet(lsKeys.fontFamily.id, value)) {
                         changeFontStylePreview();
                         const labelVal = option.family !== option.fullName ? option.fullName : '';
-                        onSliderChangeLabel(labelVal, { labelId: eleIds.fontFamilyLabel });
+                        onSliderChangeLabel(labelVal, {labelId: eleIds.fontFamilyLabel});
                         loadDanmaku(LOAD_TYPE.RELOAD);
                     }
                 })
         );
         fontFamilyDiv.append(
-            embyInput({ id: eleIds.fontFamilyInput, value: lsGetItem(lsKeys.fontFamily.id)
-                    , type: 'search', style: 'display: none;' }
+            embyInput({
+                    id: eleIds.fontFamilyInput, value: lsGetItem(lsKeys.fontFamily.id)
+                    , type: 'search', style: 'display: none;'
+                }
                 , (e) => {
                     const inputVal = getTargetInput(e).value.trim();
-                    if (!inputVal) { return; }
+                    if (!inputVal) {
+                        return;
+                    }
                     if (lsCheckSet(lsKeys.fontFamily.id, inputVal)) {
                         changeFontStylePreview();
                         loadDanmaku(LOAD_TYPE.RELOAD);
@@ -4905,7 +5564,7 @@
         changeFontStylePreview();
         const fontFamilyOpt = opts.find(opt => opt.family === lsGetItem(lsKeys.fontFamily.id));
         const labelVal = fontFamilyOpt ? fontFamilyOpt.fullName : '';
-        onSliderChangeLabel(labelVal, { labelId: eleIds.fontFamilyLabel });
+        onSliderChangeLabel(labelVal, {labelId: eleIds.fontFamilyLabel});
     }
 
     // function fontCheck(family, callback) {
@@ -4944,7 +5603,7 @@
         const color = `${baseColor}${fontOpacity}`;
         const shadowColor = baseColor === '000000' ? `#ffffff${fontOpacity}` : `#000000${fontOpacity}`;
         const fontSizeReferent = fontStylePreview.previousElementSibling;
-        const fontSize  = parseFloat(getComputedStyle(fontSizeReferent).fontSize.replace('px', ''));
+        const fontSize = parseFloat(getComputedStyle(fontSizeReferent).fontSize.replace('px', ''));
         const cmtStyle = getCommentStyle(color, shadowColor, fontStyle, fontWeight, fontSize, fontFamily);
         Object.assign(fontStylePreview.style, cmtStyle);
     }
@@ -5055,7 +5714,7 @@
                 // [修复] 清除TMDB映射缓存
                 episodeMappingCache.clear();
 
-                embyToast({ text: '本地匹配缓存已清除，包括animeId、episodeId等所有匹配信息' });
+                embyToast({text: '本地匹配缓存已清除，包括animeId、episodeId等所有匹配信息'});
                 loadDanmaku(LOAD_TYPE.REFRESH); // 强制重新匹配和加载弹幕
             });
         }
@@ -5098,11 +5757,11 @@
                 const name = nameInput.value.trim();
                 let url = urlInput.value.trim();
                 if (!name || !url) {
-                    embyToast({ text: '请填写完整' });
+                    embyToast({text: '请填写完整'});
                     return;
                 }
                 if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                    embyToast({ text: '请输入有效的URL（以 http:// 或 https:// 开头）' });
+                    embyToast({text: '请输入有效的URL（以 http:// 或 https:// 开头）'});
                     return;
                 }
                 if (url.endsWith('/')) url = url.slice(0, -1);
@@ -5110,7 +5769,7 @@
                 nameInput.value = '';
                 urlInput.value = '';
                 renderSourceList();
-                embyToast({ text: '已添加弹幕源', secondaryText: name });
+                embyToast({text: '已添加弹幕源', secondaryText: name});
             };
 
             // 回车添加
@@ -5139,7 +5798,7 @@
                     // 启用开关
                     const switchDiv = document.createElement('div');
                     switchDiv.style.cssText = 'margin-right: 0.5em; flex-shrink: 0;';
-                    switchDiv.append(embyCheckbox({ label: '' }, item.enabled, (checked) => {
+                    switchDiv.append(embyCheckbox({label: ''}, item.enabled, (checked) => {
                         toggleCustomApiSource(index, checked);
                         renderSourceList();
                     }));
@@ -5188,7 +5847,9 @@
 
                             editNameInput.focus();
                             // 回车保存
-                            const onEnter = (e) => { if (e.key === 'Enter') editBtn.click(); };
+                            const onEnter = (e) => {
+                                if (e.key === 'Enter') editBtn.click();
+                            };
                             editNameInput.addEventListener('keydown', onEnter);
                             editUrlInput.addEventListener('keydown', onEnter);
                         } else {
@@ -5197,16 +5858,16 @@
                             const newName = inputs[0]?.value.trim();
                             const newUrl = inputs[1]?.value.trim();
                             if (!newName || !newUrl) {
-                                embyToast({ text: '名称和地址不能为空' });
+                                embyToast({text: '名称和地址不能为空'});
                                 return;
                             }
                             if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
-                                embyToast({ text: '请输入有效的URL（以 http:// 或 https:// 开头）' });
+                                embyToast({text: '请输入有效的URL（以 http:// 或 https:// 开头）'});
                                 return;
                             }
                             updateCustomApiSource(index, newName, newUrl);
                             renderSourceList();
-                            embyToast({ text: '已保存修改', secondaryText: newName });
+                            embyToast({text: '已保存修改', secondaryText: newName});
                         }
                     };
                     row.append(editBtn);
@@ -5251,7 +5912,7 @@
                     delBtn.onclick = () => {
                         removeCustomApiSource(index);
                         renderSourceList();
-                        embyToast({ text: '已删除弹幕源' });
+                        embyToast({text: '已删除弹幕源'});
                     };
                     row.append(delBtn);
 
@@ -5270,13 +5931,13 @@
         const opts = window.ede.searchDanmakuOpts;
         const appendSE = lsGetItem(lsKeys.appendSeasonEpisode.id);
         const searchValue = appendSE ? opts.animeName : (opts.seriesName || opts.animeName);
-        searchNameDiv.append(embyInput({ id: eleIds.danmakuSearchName, value: searchValue, type: 'search' }
+        searchNameDiv.append(embyInput({id: eleIds.danmakuSearchName, value: searchValue, type: 'search'}
             , doDanmakuSearchEpisode));
-        searchNameDiv.append(embyButton({ label: '搜索', iconKey: iconKeys.search}, doDanmakuSearchEpisode));
+        searchNameDiv.append(embyButton({label: '搜索', iconKey: iconKeys.search}, doDanmakuSearchEpisode));
 
         // 文件名拼接季集号开关
         getById(eleIds.appendSeasonEpisodeDiv).append(
-            embyCheckbox({ label: lsKeys.appendSeasonEpisode.name }, appendSE, (checked) => {
+            embyCheckbox({label: lsKeys.appendSeasonEpisode.name}, appendSE, (checked) => {
                 lsSetItem(lsKeys.appendSeasonEpisode.id, checked);
                 // 实时更新搜索框内容
                 const searchInput = getById(eleIds.danmakuSearchName);
@@ -5353,13 +6014,13 @@
         rightGroup.style.cssText = 'display: flex; align-items: center; gap: 15px;';
 
         // 弹弹play API开关
-        const officialCb = embyCheckbox({ label: '启用弹弹play' }, lsGetItem(lsKeys.useOfficialApi.id), (checked) => {
+        const officialCb = embyCheckbox({label: '启用弹弹play'}, lsGetItem(lsKeys.useOfficialApi.id), (checked) => {
             lsSetItem(lsKeys.useOfficialApi.id, checked);
         });
         officialCb.style.cssText = 'display: inline-flex !important; align-items: center; margin: 0 !important; white-space: nowrap;';
 
         // 自定义API开关
-        const customCb = embyCheckbox({ label: '启用自定义' }, lsGetItem(lsKeys.useCustomApi.id), (checked) => {
+        const customCb = embyCheckbox({label: '启用自定义'}, lsGetItem(lsKeys.useCustomApi.id), (checked) => {
             lsSetItem(lsKeys.useCustomApi.id, checked);
             const customContainer = getById('customApiContainer');
             if (customContainer) {
@@ -5381,13 +6042,17 @@
             customContainer.style.pointerEvents = customEnabled ? 'auto' : 'none';
         }
 
-        searchNameDiv.append(embyButton({ label: '切换[原]标题', iconKey: iconKeys.text_format }, doSearchTitleSwtich));
+        searchNameDiv.append(embyButton({label: '切换[原]标题', iconKey: iconKeys.text_format}, doSearchTitleSwtich));
         getById(eleIds.danmakuEpisodeLoad).append(
-            embyButton({ id: eleIds.danmakuSwitchEpisode, label: '加载弹幕', iconKey: iconKeys.done }, doDanmakuSwitchEpisode)
+            embyButton({
+                id: eleIds.danmakuSwitchEpisode,
+                label: '加载弹幕',
+                iconKey: iconKeys.done
+            }, doDanmakuSwitchEpisode)
         );
         const currentMatchedDiv = getById(eleIds.currentMatchedDiv);
         currentMatchedDiv.append(
-            embyButton({ label: '取消匹配/清空弹幕', iconKey: iconKeys.close }, (e) => {
+            embyButton({label: '取消匹配/清空弹幕', iconKey: iconKeys.close}, (e) => {
                 if (window.ede.episode_info && window.ede.episode_info.episodeId) {
                     window.ede.episode_info.episodeId = null;
                 }
@@ -5401,7 +6066,7 @@
 
     function buildDanmuPluginDiv() {
         getById(eleIds.danmuPluginDiv).append(embyCheckbox(
-            { label: lsKeys.useFetchPluginXml.name }, lsGetItem(lsKeys.useFetchPluginXml.id), (checked) => {
+            {label: lsKeys.useFetchPluginXml.name}, lsGetItem(lsKeys.useFetchPluginXml.id), (checked) => {
                 lsSetItem(lsKeys.useFetchPluginXml.id, checked);
             }
         ));
@@ -5414,8 +6079,10 @@
 
     function buildCurrentDanmakuInfo(containerId) {
         const container = getById(containerId);
-        if (!container) { return; }
-        const { episodeTitle, animeId, animeTitle, imageUrl, apiName, apiPrefix } = window.ede.episode_info || {};
+        if (!container) {
+            return;
+        }
+        const {episodeTitle, animeId, animeTitle, imageUrl, apiName, apiPrefix} = window.ede.episode_info || {};
         const loadSum = getDanmakuComments(window.ede).length;
         const downloadSum = window.ede.commentsParsed.length;
         let template = `
@@ -5499,17 +6166,19 @@
     }
 
     function buildDanmuListDiv(container) {
-        const { episodeId, } = window.ede.episode_info || {};
+        const {episodeId,} = window.ede.episode_info || {};
         const extCommentCache = window.ede.extCommentCache[window.ede.itemId] || {};
         const danmuListExts = Object.values(extCommentCache).map((value, index) => {
-            return { id: `ext${index + 1}`, name: `附加${index + 1}`, onChange: () => danmakuParser(value) };
+            return {id: `ext${index + 1}`, name: `附加${index + 1}`, onChange: () => danmakuParser(value)};
         });
         let danmuListTabOpts = danmuListOpts;
         if (danmuListExts.length > 0) {
-            const dandanplayListOpt = { id: 'dandanplay', name: '弹弹 play', onChange: () => {
+            const dandanplayListOpt = {
+                id: 'dandanplay', name: '弹弹 play', onChange: () => {
                     const comments = window.ede.danmuCache[episodeId];
                     return comments ? danmakuParser(comments) : [];
-                } };
+                }
+            };
             danmuListTabOpts = danmuListTabOpts.concat(dandanplayListOpt).concat(danmuListExts);
         }
         getById(eleIds.danmuListDiv, container).append(
@@ -5519,9 +6188,11 @@
 
     function buildExtInfo(container) {
         getById(eleIds.characterImgHeihtDiv, container).append(embySlider(
-            { labelId: eleIds.characterImgHeihtLabel, value: '12', min: 12, max: 100, step: 1 }
+            {labelId: eleIds.characterImgHeihtLabel, value: '12', min: 12, max: 100, step: 1}
             , (val, opts) => {
-                if (val === '12') { val = 'auto'; }
+                if (val === '12') {
+                    val = 'auto';
+                }
                 onSliderChangeLabel(val, opts);
                 Array.from(getById(eleIds.charactersDiv).children)
                     .map(c => c.style.height = val === 'auto' ? val : val + 'em');
@@ -5529,7 +6200,7 @@
         ));
         const extInfoCtrlDiv = getById(eleIds.extInfoCtrlDiv, container);
         extInfoCtrlDiv.append(
-            embyButton({ label: '额外信息', iconKey: iconKeys.more }, (e) => {
+            embyButton({label: '额外信息', iconKey: iconKeys.more}, (e) => {
                 const xChecked = !e.target.xChecked;
                 e.target.xChecked = xChecked;
                 e.target.title = xChecked ? '关闭' : '额外信息';
@@ -5537,7 +6208,9 @@
                 const extInfoDiv = getById(eleIds.extInfoDiv);
                 extInfoDiv.hidden = !xChecked;
                 const charactersDiv = getById(eleIds.charactersDiv);
-                if (charactersDiv.firstChild) { return; }
+                if (charactersDiv.firstChild) {
+                    return;
+                }
                 const bangumiInfo = window.ede.bangumiInfo;
                 if (bangumiInfo && bangumiInfo.characters
                     && bangumiInfo.animeId === window.ede.episode_info.animeId
@@ -5550,6 +6223,7 @@
                     bangumiInfo.characters = characters;
                     renderBangumiCharacters(charactersDiv, characters);
                 });
+
                 function renderBangumiCharacters(container, characters) {
                     // 图片域名替换：将默认 lain.bgm.tv 替换为用户自定义域名
                     const replaceBgmImageDomain = (url) => {
@@ -5803,9 +6477,9 @@
         `;
         container.innerHTML = template.trim();
         const topOpts = [
-            { id: 'default', name: '默认' },
-            { id: 'bottom', name: '底部' },
-            { id: 'rolling', name: '滚动' }
+            {id: 'default', name: '默认'},
+            {id: 'bottom', name: '底部'},
+            {id: 'rolling', name: '滚动'}
         ];
         getById('danmakuConvertTopToDiv', container).append(
             embyTabs(topOpts, lsGetItem(lsKeys.convertTopTo.id), 'id', 'name', (val) => {
@@ -5814,9 +6488,9 @@
             })
         );
         const bottomOpts = [
-            { id: 'default', name: '默认' },
-            { id: 'top', name: '顶部' },
-            { id: 'rolling', name: '滚动' }
+            {id: 'default', name: '默认'},
+            {id: 'top', name: '顶部'},
+            {id: 'rolling', name: '滚动'}
         ];
         getById('danmakuConvertBottomToDiv', container).append(
             embyTabs(bottomOpts, lsGetItem(lsKeys.convertBottomTo.id), 'id', 'name', (val) => {
@@ -5853,37 +6527,42 @@
                 , lsGetItem(lsKeys.showSource.id), Object.values(showSource), doDanmakuShowSourceSelect)
         );
         getById(eleIds.danmakuAutoFilterCountDiv).append(
-            embySlider({ lsKey: lsKeys.autoFilterCount }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.autoFilterCount}, onSliderChange, onSliderChangeLabel)
         );
         // 合并相似弹幕
         getById(eleIds.danmakuFilterProDiv, container).append(
-            embyCheckbox({ label: labels.enable }, lsGetItem(lsKeys.mergeSimilarEnable.id)
+            embyCheckbox({label: labels.enable}, lsGetItem(lsKeys.mergeSimilarEnable.id)
                 , (checked) => {
                     lsSetItem(lsKeys.mergeSimilarEnable.id, checked);
                     loadDanmaku(LOAD_TYPE.RELOAD);
                 }
             ));
         getById(eleIds.mergeSimilarPercentDiv).append(
-            embySlider({ lsKey: lsKeys.mergeSimilarPercent }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.mergeSimilarPercent}, onSliderChange, onSliderChangeLabel)
         );
         getById(eleIds.mergeSimilarTimeDiv).append(
-            embySlider({ lsKey: lsKeys.mergeSimilarTime }, onSliderChange, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.mergeSimilarTime}, onSliderChange, onSliderChangeLabel)
         );
         // 屏蔽关键词
         const keywordsContainer = getById(eleIds.filterKeywordsDiv, container);
         const keywordsEnableDiv = keywordsContainer.appendChild(document.createElement('div'));
-        const keywordsBtn = embyButton({ label: '加载关键词过滤', iconKey: iconKeys.done_disabled }, doDanmakuFilterKeywordsBtnClick);
+        const keywordsBtn = embyButton({
+            label: '加载关键词过滤',
+            iconKey: iconKeys.done_disabled
+        }, doDanmakuFilterKeywordsBtnClick);
         keywordsBtn.disabled = true;
         keywordsEnableDiv.setAttribute('style', 'display: flex; justify-content: space-between; align-items: center; width: 100%;');
         keywordsEnableDiv.append(embyCheckbox(
-            { id: eleIds.filterKeywordsEnableId, label: labels.enable }
+            {id: eleIds.filterKeywordsEnableId, label: labels.enable}
             , lsGetItem(lsKeys.filterKeywordsEnable.id), (flag) => updateFilterKeywordsBtn(keywordsBtn, flag
                 , getById(eleIds.filterKeywordsId).value.trim()))
         );
         keywordsEnableDiv.appendChild(document.createElement('div')).appendChild(keywordsBtn);
         keywordsContainer.appendChild(document.createElement('div')).appendChild(
-            embyTextarea({id: eleIds.filterKeywordsId, value: lsGetItem(lsKeys.filterKeywords.id)
-                , style: 'width: 100%;margin-top: 0.2em;', rows: 8}, (event) => updateFilterKeywordsBtn(keywordsBtn
+            embyTextarea({
+                id: eleIds.filterKeywordsId, value: lsGetItem(lsKeys.filterKeywords.id)
+                , style: 'width: 100%;margin-top: 0.2em;', rows: 8
+            }, (event) => updateFilterKeywordsBtn(keywordsBtn
                 , getById(eleIds.filterKeywordsEnableId).checked, event.target.value.trim()))
         );
         const label = document.createElement('label');
@@ -5906,7 +6585,10 @@
         const autoLoadDiv = getById(eleIds.autoLoadSwitchDiv, container);
         const autoLoadEnabled = lsGetItem(lsKeys.autoLoadSwitch.id);
         autoLoadDiv.append(
-            embyCheckbox({ id: eleIds.autoLoadSwitchBtn, label: lsKeys.autoLoadSwitch.name }, autoLoadEnabled, (checked) => {
+            embyCheckbox({
+                id: eleIds.autoLoadSwitchBtn,
+                label: lsKeys.autoLoadSwitch.name
+            }, autoLoadEnabled, (checked) => {
                 lsSetItem(lsKeys.autoLoadSwitch.id, checked);
             })
         );
@@ -5916,7 +6598,7 @@
         const matchEnabled = lsGetItem(lsKeys.matchApiEnable.id);
         matchModeDiv.style.display = matchEnabled ? '' : 'none';
         getById(eleIds.matchApiEnableDiv, container).append(
-            embyCheckbox({ label: lsKeys.matchApiEnable.name }, matchEnabled, (checked) => {
+            embyCheckbox({label: lsKeys.matchApiEnable.name}, matchEnabled, (checked) => {
                 lsSetItem(lsKeys.matchApiEnable.id, checked);
                 matchModeDiv.style.display = checked ? '' : 'none';
             })
@@ -5940,8 +6622,8 @@
 
         // 生成示例 JSON
         const exampleRules = [
-            { seriesName: '葬送的芙莉莲', fromSeason: 2, toSeason: 1, episodeOffset: 28 },
-            { seriesName: '某剧第三季', fromSeason: 3, toSeason: 2, episodeOffset: 12 }
+            {seriesName: '葬送的芙莉莲', fromSeason: 2, toSeason: 1, episodeOffset: 28},
+            {seriesName: '某剧第三季', fromSeason: 3, toSeason: 2, episodeOffset: 12}
         ];
         const exampleJson = JSON.stringify(exampleRules, null, 2);
 
@@ -6023,11 +6705,11 @@
                 lsSetItem(lsKeys.episodeOffsetRules.id, parsed);
                 statusLabel.innerText = `✅ 已保存 ${parsed.length} 条偏移规则`;
                 statusLabel.style.color = 'green';
-                embyToast({ text: `已保存 ${parsed.length} 条集数偏移规则` });
+                embyToast({text: `已保存 ${parsed.length} 条集数偏移规则`});
             } catch (e) {
                 statusLabel.innerText = `❌ JSON 格式错误: ${e.message}`;
                 statusLabel.style.color = 'red';
-                embyToast({ text: `保存失败: ${e.message}` });
+                embyToast({text: `保存失败: ${e.message}`});
             }
         });
 
@@ -6044,13 +6726,13 @@
             lsSetItem(lsKeys.episodeOffsetRules.id, []);
             getById('episodeOffsetStatus').innerText = '✅ 已清空所有偏移规则';
             getById('episodeOffsetStatus').style.color = 'green';
-            embyToast({ text: '已清空集数偏移规则' });
+            embyToast({text: '已清空集数偏移规则'});
         });
     }
 
     function buildOsdSetting() {
         getById(eleIds.osdCheckboxDiv).append(embyCheckbox(
-            { label: lsKeys.osdTitleEnable.name }, lsGetItem(lsKeys.osdTitleEnable.id), (checked) => {
+            {label: lsKeys.osdTitleEnable.name}, lsGetItem(lsKeys.osdTitleEnable.id), (checked) => {
                 lsSetItem(lsKeys.osdTitleEnable.id, checked);
                 const videoOsdContainer = document.querySelector(`${mediaContainerQueryStr} .videoOsdSecondaryText`);
                 const videoOsdDanmakuTitle = getById(eleIds.videoOsdDanmakuTitle, videoOsdContainer);
@@ -6062,13 +6744,13 @@
             }
         ));
         getById(eleIds.osdCheckboxDiv).append(embyCheckbox(
-            { label: lsKeys.osdHeaderClockEnable.name }, lsGetItem(lsKeys.osdHeaderClockEnable.id), (checked) => {
+            {label: lsKeys.osdHeaderClockEnable.name}, lsGetItem(lsKeys.osdHeaderClockEnable.id), (checked) => {
                 lsSetItem(lsKeys.osdHeaderClockEnable.id, checked);
                 checked ? addHeaderClock() : removeHeaderClock();
             }
         ));
         getById(eleIds.osdLineChartDiv).append(embyCheckbox(
-            { label: lsKeys.osdLineChartEnable.name }, lsGetItem(lsKeys.osdLineChartEnable.id), (checked) => {
+            {label: lsKeys.osdLineChartEnable.name}, lsGetItem(lsKeys.osdLineChartEnable.id), (checked) => {
                 lsSetItem(lsKeys.osdLineChartEnable.id, checked);
                 const progressBarLineChart = getById(eleIds.progressBarLineChart);
                 if (progressBarLineChart) {
@@ -6079,27 +6761,36 @@
             }
         ));
         getById(eleIds.osdLineChartDiv).append(embyCheckbox(
-            { label: lsKeys.osdLineChartSkipFilter.name }, lsGetItem(lsKeys.osdLineChartSkipFilter.id), (checked) => {
+            {label: lsKeys.osdLineChartSkipFilter.name}, lsGetItem(lsKeys.osdLineChartSkipFilter.id), (checked) => {
                 lsSetItem(lsKeys.osdLineChartSkipFilter.id, checked);
                 buildProgressBarChart(20);
             }
         ));
         getById(eleIds.osdLineChartTimeDiv).append(
-            embySlider({ lsKey: lsKeys.osdLineChartTime, needReload: false }
-                , (val, opts) => { onSliderChange(val, opts);buildProgressBarChart(20); }, onSliderChangeLabel)
+            embySlider({lsKey: lsKeys.osdLineChartTime, needReload: false}
+                , (val, opts) => {
+                    onSliderChange(val, opts);
+                    buildProgressBarChart(20);
+                }, onSliderChangeLabel)
         );
     }
 
     function buildPlaySetting(container) {
         const btnContainer = getById(eleIds.timeoutCallbackDiv, container);
-        const timeoutCallbacktOpts = { labelId: eleIds.timeoutCallbackLabel, key: lsKeys.timeoutCallbackValue.id, needReload: false };
+        const timeoutCallbacktOpts = {
+            labelId: eleIds.timeoutCallbackLabel,
+            key: lsKeys.timeoutCallbackValue.id,
+            needReload: false
+        };
         onSliderChangeLabel(lsGetItem(lsKeys.timeoutCallbackValue.id), timeoutCallbacktOpts);
         timeOffsetBtns.forEach(btn => {
             btnContainer.append(embyButton(btn, (e) => {
                 if (e.target) {
                     let oldValue = lsGetItem(lsKeys.timeoutCallbackValue.id);
                     let newValue = oldValue + (parseFloat(e.target.getAttribute('valueOffset')) || 0);
-                    if (newValue === oldValue || newValue < 0) { newValue = 0; }
+                    if (newValue === oldValue || newValue < 0) {
+                        newValue = 0;
+                    }
                     onSliderChange(newValue, timeoutCallbacktOpts);
                 }
             }));
@@ -6123,19 +6814,25 @@
         bangumiSettingsDiv.hidden = !bangumiEnable;
         const bangumiEnableLabel = getById(eleIds.bangumiEnableLabel, container);
         bangumiEnableLabel.append(embyCheckbox(
-            { label: lsKeys.bangumiEnable.name }, bangumiEnable, (checked) => {
+            {label: lsKeys.bangumiEnable.name}, bangumiEnable, (checked) => {
                 lsSetItem(lsKeys.bangumiEnable.id, checked);
                 bangumiSettingsDiv.hidden = !checked;
             }
         ));
         const bangumiTokenInputDiv = getById(eleIds.bangumiTokenInputDiv, container);
         bangumiTokenInputDiv.append(embyInput(
-            { id: eleIds.bangumiTokenInput, type: 'password', value: lsGetItem(lsKeys.bangumiToken.id) }, onEnterBangumiToken
+            {
+                id: eleIds.bangumiTokenInput,
+                type: 'password',
+                value: lsGetItem(lsKeys.bangumiToken.id)
+            }, onEnterBangumiToken
         ));
-        bangumiTokenInputDiv.append(embyButton({ label: '校验', iconKey: iconKeys.check}, onEnterBangumiToken));
+        bangumiTokenInputDiv.append(embyButton({label: '校验', iconKey: iconKeys.check}, onEnterBangumiToken));
         getById(eleIds.bangumiPostPercentDiv, container).append(embySlider(
-            { lsKey: lsKeys.bangumiPostPercent, needReload: false }
-            , (val, opts) => { onSliderChange(val, opts) }, onSliderChangeLabel
+            {lsKey: lsKeys.bangumiPostPercent, needReload: false}
+            , (val, opts) => {
+                onSliderChange(val, opts)
+            }, onSliderChangeLabel
         ));
         const bangumiTokenLinkDiv = getById(eleIds.bangumiTokenLinkDiv, container);
         bangumiTokenLinkDiv.append(embyALink(bangumiApi.accessTokenUrl, bangumiApi.accessTokenUrl));
@@ -6143,16 +6840,20 @@
         const bangumiApiPrefixInputDiv = getById(eleIds.bangumiApiPrefixInputDiv, container);
         if (bangumiApiPrefixInputDiv) {
             bangumiApiPrefixInputDiv.append(embyInput(
-                { id: 'bangumiApiPrefixInput', value: lsGetItem(lsKeys.bangumiApiPrefix.id) },
-                (e) => { lsSetItem(lsKeys.bangumiApiPrefix.id, getById('bangumiApiPrefixInput').value.trim()); }
+                {id: 'bangumiApiPrefixInput', value: lsGetItem(lsKeys.bangumiApiPrefix.id)},
+                (e) => {
+                    lsSetItem(lsKeys.bangumiApiPrefix.id, getById('bangumiApiPrefixInput').value.trim());
+                }
             ));
         }
         // Bangumi 图片域名输入框
         const bangumiImageDomainInputDiv = getById(eleIds.bangumiImageDomainInputDiv, container);
         if (bangumiImageDomainInputDiv) {
             bangumiImageDomainInputDiv.append(embyInput(
-                { id: 'bangumiImageDomainInput', value: lsGetItem(lsKeys.bangumiImageDomain.id) },
-                (e) => { lsSetItem(lsKeys.bangumiImageDomain.id, getById('bangumiImageDomainInput').value.trim()); }
+                {id: 'bangumiImageDomainInput', value: lsGetItem(lsKeys.bangumiImageDomain.id)},
+                (e) => {
+                    lsSetItem(lsKeys.bangumiImageDomain.id, getById('bangumiImageDomainInput').value.trim());
+                }
             ));
         }
     }
@@ -6173,7 +6874,7 @@
 
     async function fetchBangumiApiGetMe(bangumiToken, fetchOpts = {}) {
         try {
-            const res = await fetchJson(bangumiApi.getMe(), { ...fetchOpts, token: bangumiToken });
+            const res = await fetchJson(bangumiApi.getMe(), {...fetchOpts, token: bangumiToken});
             logger.debug('Bangumi Token 验证成功', res);
             localStorage.setItem(lsLocalKeys.bangumiMe, JSON.stringify(res));
             return res;
@@ -6189,23 +6890,27 @@
         tmdbSettingsDiv.hidden = !tmdbEnable;
         const tmdbEnableLabel = getById(eleIds.tmdbEnableLabel, container);
         tmdbEnableLabel.append(embyCheckbox(
-            { label: lsKeys.tmdbEpisodeMappingEnable.name }, tmdbEnable, (checked) => {
+            {label: lsKeys.tmdbEpisodeMappingEnable.name}, tmdbEnable, (checked) => {
                 lsSetItem(lsKeys.tmdbEpisodeMappingEnable.id, checked);
                 tmdbSettingsDiv.hidden = !checked;
             }
         ));
         const tmdbApiKeyInputDiv = getById(eleIds.tmdbApiKeyInputDiv, container);
         tmdbApiKeyInputDiv.append(embyInput(
-            { id: eleIds.tmdbApiKeyInput, type: 'password', value: lsGetItem(lsKeys.tmdbApiKey.id) }, onEnterTmdbApiKey
+            {id: eleIds.tmdbApiKeyInput, type: 'password', value: lsGetItem(lsKeys.tmdbApiKey.id)}, onEnterTmdbApiKey
         ));
-        tmdbApiKeyInputDiv.append(embyButton({ label: '校验', iconKey: iconKeys.check}, onEnterTmdbApiKey));
+        tmdbApiKeyInputDiv.append(embyButton({label: '校验', iconKey: iconKeys.check}, onEnterTmdbApiKey));
         const tmdbApiKeyLinkDiv = getById(eleIds.tmdbApiKeyLinkDiv, container);
         tmdbApiKeyLinkDiv.append(embyALink('https://www.themoviedb.org/settings/api', 'https://www.themoviedb.org/settings/api'));
 
         // TMDB API 域名输入框
         const tmdbApiBaseUrlInputDiv = getById(eleIds.tmdbApiBaseUrlInputDiv, container);
         tmdbApiBaseUrlInputDiv.append(embyInput(
-            { id: eleIds.tmdbApiBaseUrlInput, type: 'text', value: lsGetItem(lsKeys.tmdbApiBaseUrl.id) }, onEnterTmdbApiBaseUrl
+            {
+                id: eleIds.tmdbApiBaseUrlInput,
+                type: 'text',
+                value: lsGetItem(lsKeys.tmdbApiBaseUrl.id)
+            }, onEnterTmdbApiBaseUrl
         ));
         const tmdbApiBaseUrlLabel = getById(eleIds.tmdbApiBaseUrlLabel, container);
         tmdbApiBaseUrlLabel.innerText = '默认: https://api.themoviedb.org (如需使用代理或镜像站，可修改此域名)';
@@ -6258,7 +6963,7 @@
 
         const persistenceEnableLabel = getById(eleIds.persistenceEnableLabel, container);
         persistenceEnableLabel.append(embyCheckbox(
-            { label: lsKeys.configPersistenceEnable.name }, persistenceEnable, (checked) => {
+            {label: lsKeys.configPersistenceEnable.name}, persistenceEnable, (checked) => {
                 lsSetItem(lsKeys.configPersistenceEnable.id, checked, true); // 持久化开关自身不同步
                 persistenceSettingsDiv.hidden = !checked;
             }
@@ -6268,7 +6973,7 @@
         const persistenceAutoSyncLabel = getById(eleIds.persistenceAutoSyncLabel, container);
         const autoSyncEnable = lsGetItem(lsKeys.configPersistenceAutoSync.id);
         persistenceAutoSyncLabel.append(embyCheckbox(
-            { label: lsKeys.configPersistenceAutoSync.name }, autoSyncEnable, (checked) => {
+            {label: lsKeys.configPersistenceAutoSync.name}, autoSyncEnable, (checked) => {
                 lsSetItem(lsKeys.configPersistenceAutoSync.id, checked, true); // 实时同步开关自身不同步
             }
         ));
@@ -6294,11 +6999,11 @@
                     const result = await persistenceUploadAll();
                     statusLabel.innerText = `✅ 同步完成: 新建 ${result.created} 个, 更新 ${result.updated} 个`;
                     statusLabel.style.color = 'green';
-                    embyToast({ text: `配置已同步到服务器` });
+                    embyToast({text: `配置已同步到服务器`});
                 } catch (error) {
                     statusLabel.innerText = `❌ 同步失败: ${error.message}`;
                     statusLabel.style.color = 'red';
-                    embyToast({ text: `同步失败: ${error.message}` });
+                    embyToast({text: `同步失败: ${error.message}`});
                 }
             });
         }
@@ -6315,7 +7020,7 @@
                     if (count > 0) {
                         statusLabel.innerText = `✅ 恢复完成: 已加载 ${count} 个配置，刷新页面生效`;
                         statusLabel.style.color = 'green';
-                        embyToast({ text: `已从服务器恢复 ${count} 个配置，刷新页面生效` });
+                        embyToast({text: `已从服务器恢复 ${count} 个配置，刷新页面生效`});
                     } else if (count === 0) {
                         statusLabel.innerText = '⚠️ 服务器无配置数据，请先同步';
                         statusLabel.style.color = 'orange';
@@ -6326,7 +7031,7 @@
                 } catch (error) {
                     statusLabel.innerText = `❌ 恢复失败: ${error.message}`;
                     statusLabel.style.color = 'red';
-                    embyToast({ text: `恢复失败: ${error.message}` });
+                    embyToast({text: `恢复失败: ${error.message}`});
                 }
             });
         }
@@ -6357,7 +7062,7 @@
         try {
             // 使用 GET + query string 方式查询（Emby ServiceStack 对 POST body 解析有兼容问题）
             const url = `${getPersistenceBaseUrl()}/Query?Namespace=${encodeURIComponent(getPersistenceNamespace())}&api_key=${ApiClient.accessToken()}`;
-            const response = await fetch(url, { method: 'GET' });
+            const response = await fetch(url, {method: 'GET'});
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
             // API 返回字段是 PascalCase
@@ -6401,7 +7106,7 @@
                 const resp = await fetch(`${getPersistenceBaseUrl()}/Create`, {
                     method: 'POST',
                     headers: getPersistenceHeaders(),
-                    body: JSON.stringify({ Parameters: toCreate })
+                    body: JSON.stringify({Parameters: toCreate})
                 });
                 const r = await resp.json();
                 if (r.Success) created = toCreate.length;
@@ -6410,14 +7115,14 @@
                 const resp = await fetch(`${getPersistenceBaseUrl()}/Update`, {
                     method: 'POST',
                     headers: getPersistenceHeaders(),
-                    body: JSON.stringify({ Parameters: toUpdate })
+                    body: JSON.stringify({Parameters: toUpdate})
                 });
                 const r = await resp.json();
                 if (r.Success) updated = toUpdate.length;
             }
 
             logger.info(`[持久化] 批量保存完成: 新建 ${created} 个, 更新 ${updated} 个`);
-            return { created, updated };
+            return {created, updated};
         } catch (error) {
             logger.error('[持久化] 批量保存失败:', error);
             throw error;
@@ -6426,6 +7131,7 @@
 
     // 保存单个配置到服务器（防抖）
     const _persistenceSaveTimers = {};
+
     function persistenceSaveOneDebounced(key, value) {
         if (_persistenceSaveTimers[key]) clearTimeout(_persistenceSaveTimers[key]);
         _persistenceSaveTimers[key] = setTimeout(async () => {
@@ -6477,7 +7183,11 @@
                 const defaultValue = lsKeys[keyName].defaultValue;
                 let parsedValue;
                 if (param.Type === 'json' || Array.isArray(defaultValue) || typeof defaultValue === 'object') {
-                    try { parsedValue = JSON.parse(param.Value); } catch { parsedValue = param.Value; }
+                    try {
+                        parsedValue = JSON.parse(param.Value);
+                    } catch {
+                        parsedValue = param.Value;
+                    }
                 } else if (typeof defaultValue === 'boolean') {
                     parsedValue = param.Value === 'true';
                 } else if (typeof defaultValue === 'number') {
@@ -6637,8 +7347,8 @@
 
                     // 双向映射表
                     const tmdbKey = `S${String(tmdbSeason).padStart(2, '0')}E${String(tmdbEpisode).padStart(2, '0')}`;
-                    mapping.customToTmdb[seasonEpisodeKey] = { season: tmdbSeason, episode: tmdbEpisode };
-                    mapping.tmdbToCustom[tmdbKey] = { season: customSeason, episode: customEpisode };
+                    mapping.customToTmdb[seasonEpisodeKey] = {season: tmdbSeason, episode: tmdbEpisode};
+                    mapping.tmdbToCustom[tmdbKey] = {season: customSeason, episode: customEpisode};
 
                     logger.debug(`[集数映射] 映射: Custom S${String(customSeason).padStart(2, '0')}E${String(customEpisode).padStart(2, '0')} <-> TMDB S${String(tmdbSeason).padStart(2, '0')}E${String(tmdbEpisode).padStart(2, '0')}`);
 
@@ -6662,14 +7372,14 @@
         if (mapping.customToTmdb[key]) {
             const mapped = mapping.customToTmdb[key];
             logger.info(`[集数映射] Custom ${key} -> TMDB S${String(mapped.season).padStart(2, '0')}E${String(mapped.episode).padStart(2, '0')} (custom_to_tmdb)`);
-            return { season: mapped.season, episode: mapped.episode, direction: 'custom_to_tmdb' };
+            return {season: mapped.season, episode: mapped.episode, direction: 'custom_to_tmdb'};
         }
 
         // 方向2: 作为 TMDB 季集查 → 返回 Custom 季集
         if (mapping.tmdbToCustom[key]) {
             const mapped = mapping.tmdbToCustom[key];
             logger.info(`[集数映射] TMDB ${key} -> Custom S${String(mapped.season).padStart(2, '0')}E${String(mapped.episode).padStart(2, '0')} (tmdb_to_custom)`);
-            return { season: mapped.season, episode: mapped.episode, direction: 'tmdb_to_custom' };
+            return {season: mapped.season, episode: mapped.episode, direction: 'tmdb_to_custom'};
         }
 
         logger.debug(`[集数映射] ${key} 未找到任何映射`);
@@ -6920,15 +7630,15 @@
                 if (animeValue) new RegExp(animeValue, 'i');
                 if (episodeValue) new RegExp(episodeValue, 'i');
             } catch (e) {
-                embyToast({ text: `正则表达式语法错误: ${e.message}` });
+                embyToast({text: `正则表达式语法错误: ${e.message}`});
                 return;
             }
 
             lsSetItem(lsKeys.animeTitleBlacklist.id, animeValue);
             lsSetItem(lsKeys.episodeTitleBlacklist.id, episodeValue);
             lsSetItem(lsKeys.blacklistApplyToCustomApi.id, applyToCustomValue);
-            embyToast({ text: '搜索内容黑名单设置已保存' });
-            logger.info('[设置] 搜索内容黑名单已更新:', { animeValue, episodeValue, applyToCustomValue });
+            embyToast({text: '搜索内容黑名单设置已保存'});
+            logger.info('[设置] 搜索内容黑名单已更新:', {animeValue, episodeValue, applyToCustomValue});
         });
 
         // 恢复默认按钮事件
@@ -6944,7 +7654,7 @@
             lsSetItem(lsKeys.animeTitleBlacklist.id, '');
             lsSetItem(lsKeys.episodeTitleBlacklist.id, lsKeys.episodeTitleBlacklist.defaultValue);
             lsSetItem(lsKeys.blacklistApplyToCustomApi.id, lsKeys.blacklistApplyToCustomApi.defaultValue);
-            embyToast({ text: '已恢复默认设置' });
+            embyToast({text: '已恢复默认设置'});
         });
 
         // 测试按钮事件
@@ -7022,7 +7732,10 @@
             <div id="${obj.divId}" style="display: flex;" ></div>
             <div class="${classes.embyFieldDesc}">${obj.msg2 ? obj.msg2 : ''}</div>
         `;
-        customeUrl.mapping.map(obj => { getById(eleIds.customeUrlsDiv, container).innerHTML += getTemplate(obj); return obj; })
+        customeUrl.mapping.map(obj => {
+            getById(eleIds.customeUrlsDiv, container).innerHTML += getTemplate(obj);
+            return obj;
+        })
             .map(obj => {
                 const inputDiv = getById(obj.divId, container);
                 const onEnter = (e) => {
@@ -7035,14 +7748,16 @@
                     lsSetItem(obj.lsKey.id, value);
                     obj.rewrite(value);
                 };
-                inputDiv.append(embyInput({ type: 'search', value: lsGetItem(obj.lsKey.id) }, onEnter));
-                inputDiv.append(embyButton({ label: '确认', iconKey: iconKeys.check }, onEnter));
+                inputDiv.append(embyInput({type: 'search', value: lsGetItem(obj.lsKey.id)}, onEnter));
+                inputDiv.append(embyButton({label: '确认', iconKey: iconKeys.check}, onEnter));
             });
     }
 
     function buildAbout(containerId) {
         const container = getById(containerId);
-        if (!container) { return; }
+        if (!container) {
+            return;
+        }
         const template = `
             <div style="height: 30em;">
                 <div id="${eleIds.consoleLogCtrl}" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
@@ -7080,17 +7795,21 @@
     function buildConsoleLog(container) {
         const consoleLogEnable = lsGetItem(lsKeys.consoleLogEnable.id);
         getById(eleIds.consoleLogInfo, container).style.display = consoleLogEnable ? '' : 'none';
-        if (consoleLogEnable) { doConsoleLogChange(consoleLogEnable); }
+        if (consoleLogEnable) {
+            doConsoleLogChange(consoleLogEnable);
+        }
         // 左侧：日志开关和清空按钮
         const consoleLogCtrlLeftEle = getById(eleIds.consoleLogCtrlLeft, container);
-        consoleLogCtrlLeftEle.append(embyCheckbox({ label: lsKeys.consoleLogEnable.name }, consoleLogEnable, doConsoleLogChange));
+        consoleLogCtrlLeftEle.append(embyCheckbox({label: lsKeys.consoleLogEnable.name}, consoleLogEnable, doConsoleLogChange));
         const consoleLogCountLabel = document.createElement('label');
         consoleLogCountLabel.id = eleIds.consoleLogCountLabel;
         consoleLogCtrlLeftEle.append(
-            embyButton({ label: '清空', iconKey: iconKeys.block }, () => {
+            embyButton({label: '清空', iconKey: iconKeys.block}, () => {
                 getById(eleIds.consoleLogText, container).value = '';
                 getById(eleIds.consoleLogCountLabel).innerHTML = '';
-                if (window.ede.appLogAspect) { window.ede.appLogAspect.value = ''; }
+                if (window.ede.appLogAspect) {
+                    window.ede.appLogAspect.value = '';
+                }
             })
             , consoleLogCountLabel
         );
@@ -7113,33 +7832,37 @@
 
     function buildDebugCheckbox(container) {
         const debugWrapper = getById(eleIds.debugCheckbox, container);
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugShowDanmakuWrapper.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugShowDanmakuWrapper.name}
             , lsGetItem(lsKeys.debugShowDanmakuWrapper.id), (checked) => {
                 lsSetItem(lsKeys.debugShowDanmakuWrapper.id, checked);
                 const wrapper = getById(eleIds.danmakuWrapper);
                 wrapper.style.backgroundColor = checked ? styles.colors.highlight : '';
-                if (!checked) { return; }
+                if (!checked) {
+                    return;
+                }
                 logger.debug(`弹幕容器(#${eleIds.danmakuWrapper})宽高像素:`, wrapper.offsetWidth, wrapper.offsetHeight);
                 const stage = wrapper.firstChild;
                 logger.debug(`实际舞台(${stage.tagName})宽高像素:`, stage.offsetWidth, stage.offsetHeight);
             }
         ));
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugShowDanmakuCtrWrapper.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugShowDanmakuCtrWrapper.name}
             , lsGetItem(lsKeys.debugShowDanmakuCtrWrapper.id), (checked) => {
                 lsSetItem(lsKeys.debugShowDanmakuCtrWrapper.id, checked);
                 const wrapper = getById(eleIds.danmakuCtr);
                 wrapper.style.backgroundColor = checked ? styles.colors.highlight : '';
-                if (!checked) { return; }
+                if (!checked) {
+                    return;
+                }
                 logger.debug(`按钮容器(#${eleIds.danmakuCtr})宽高像素:`, wrapper.offsetWidth, wrapper.offsetHeight);
             }
         ));
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugReverseDanmu.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugReverseDanmu.name}
             , lsGetItem(lsKeys.debugReverseDanmu.id), (checked) => {
                 lsSetItem(lsKeys.debugReverseDanmu.id, checked);
                 const comments = window.ede.danmuCache[window.ede.episode_info.episodeId];
                 comments.map(c => {
                     const values = c.p.split(',');
-                    values[1]= { '6': '1', '1': '6', '5': '4', '4': '5' }[values[1]];
+                    values[1] = {'6': '1', '1': '6', '5': '4', '4': '5'}[values[1]];
                     c.p = values.join();
                 });
                 logger.debug('已' + lsKeys.debugReverseDanmu.name);
@@ -7154,7 +7877,7 @@
                 comments = comments.map(c => {
                     const values = c.p.split(',');
                     values[2] = colorFn();
-                    return { ...c, p: values.join() };
+                    return {...c, p: values.join()};
                 });
                 logger.debug('已' + lsKey.name);
             } else {
@@ -7164,13 +7887,13 @@
             }
             createDanmaku(comments);
         };
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugRandomDanmuColor.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugRandomDanmuColor.name}
             , lsGetItem(lsKeys.debugRandomDanmuColor.id), (checked) => {
                 toggleDanmuColor(checked, lsKeys.debugRandomDanmuColor
                     , () => parseInt(Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'), 16));
             }
         ));
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugForceDanmuWhite.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugForceDanmuWhite.name}
             , lsGetItem(lsKeys.debugForceDanmuWhite.id), (checked) => {
                 toggleDanmuColor(checked, lsKeys.debugForceDanmuWhite
                     , () => parseInt(styles.colors.info.toString(16).padStart(6, '0'), 16));
@@ -7210,7 +7933,7 @@
         }
         const debugDialogHyalinizeChecked = lsGetItem(lsKeys.debugDialogHyalinize.id);
         debugDialogHyalinizeOnChange(debugDialogHyalinizeChecked);
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugDialogHyalinize.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugDialogHyalinize.name}
             , debugDialogHyalinizeChecked, debugDialogHyalinizeOnChange)
         );
         // lsKeys.debugDialogWindow
@@ -7223,7 +7946,7 @@
         }
         const debugDialogWindowChecked = lsGetItem(lsKeys.debugDialogWindow.id);
         debugDialogWindowOnChange(debugDialogWindowChecked);
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugDialogWindow.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugDialogWindow.name}
             , debugDialogWindowChecked, debugDialogWindowOnChange)
         );
         // lsKeys.debugDialogRight
@@ -7238,12 +7961,12 @@
         }
         const debugDialogRightChecked = lsGetItem(lsKeys.debugDialogRight.id);
         debugDialogRightOnChange(debugDialogRightChecked);
-        debugWrapper.append(embyCheckbox({ label: lsKeys.debugDialogRight.name }
+        debugWrapper.append(embyCheckbox({label: lsKeys.debugDialogRight.name}
             , debugDialogRightChecked, debugDialogRightOnChange)
         );
         // lsKeys.debugTabIframeEnable
         if (lsGetItem(lsKeys.quickDebugOn.id)) { // @deprecated 已废弃,因跨域无法登录网站,无太大意义
-            debugWrapper.append(embyCheckbox({ label: lsKeys.debugTabIframeEnable.name }
+            debugWrapper.append(embyCheckbox({label: lsKeys.debugTabIframeEnable.name}
                 , lsGetItem(lsKeys.debugTabIframeEnable.id), (checked) => {
                     lsSetItem(lsKeys.debugTabIframeEnable.id, checked);
                     getById(tabIframeId + 'Btn').style.display = checked ? '' : 'none';
@@ -7253,7 +7976,7 @@
         // lsKeys.debugH5VideoAdapterEnable
         const h5VideoAdapter = getById(eleIds.h5VideoAdapter);
         if (h5VideoAdapter) {
-            debugWrapper.append(embyCheckbox({ label: lsKeys.debugH5VideoAdapterEnable.name }
+            debugWrapper.append(embyCheckbox({label: lsKeys.debugH5VideoAdapterEnable.name}
                 , lsGetItem(lsKeys.debugH5VideoAdapterEnable.id), (checked) => {
                     lsSetItem(lsKeys.debugH5VideoAdapterEnable.id, checked);
                     h5VideoAdapter.style.display = checked ? '' : 'none';
@@ -7265,20 +7988,24 @@
 
     function buildDebugButton(container) {
         const debugWrapper = getById(eleIds.debugButton, container);
-        debugWrapper.append(embyButton({ label: '打印环境信息', style: 'margin: 0.3em;' }, () => {
+        debugWrapper.append(embyButton({label: '打印环境信息', style: 'margin: 0.3em;'}, () => {
             require(['browser'], (browser) => {
                 logger.debug('Emby 内部自身判断: ', browser);
             });
         }));
-        debugWrapper.append(embyButton({ label: '打印弹幕引擎信息', style: 'margin: 0.3em;' }, () => {
+        debugWrapper.append(embyButton({label: '打印弹幕引擎信息', style: 'margin: 0.3em;'}, () => {
             const msg = `弹幕引擎是否存在: ${!!window.Danmaku}, 弹幕引擎是否实例化成功: ${!!window.ede.danmaku}`;
             logger.debug(msg);
-            embyToast({ text: msg });
+            embyToast({text: msg});
         }));
-        debugWrapper.append(embyButton({ label: '打印视频加载方', style: 'margin: 0.3em;' }, () => {
+        debugWrapper.append(embyButton({label: '打印视频加载方', style: 'margin: 0.3em;'}, () => {
             const _media = document.querySelector(mediaQueryStr);
-            if (!_media) { return logger.error('严重错误,页面中依旧不存在 <video> 标签') }
-            if (_media.currentTime < 1) { logger.error('严重错误,<video> 的 currentTime < 1') }
+            if (!_media) {
+                return logger.error('严重错误,页面中依旧不存在 <video> 标签')
+            }
+            if (_media.currentTime < 1) {
+                logger.error('严重错误,<video> 的 currentTime < 1')
+            }
             if (!_media.id) {
                 logger.debug('视频加载方为 Web 端 <video> 标签:', _media.parentNode.outerHTML);
             } else {
@@ -7291,15 +8018,23 @@
                 }
             }
         }));
-        debugWrapper.append(embyButton({ label: '清空章节引用缓存', class: classes.embyButtons.submit, style: 'margin: 0.3em;' }, () => {
+        debugWrapper.append(embyButton({
+            label: '清空章节引用缓存',
+            class: classes.embyButtons.submit,
+            style: 'margin: 0.3em;'
+        }, () => {
             lsBatchRemove([lsLocalKeys.animeEpisodePrefix, lsLocalKeys.bangumiEpInfoPrefix]);
             logger.debug('已清空章节引用缓存');
-            embyToast({ text: '已清空章节引用缓存' });
+            embyToast({text: '已清空章节引用缓存'});
         }));
-        debugWrapper.append(embyButton({ label: '重置设置', class: classes.embyButtons.submit, style: 'margin: 0.3em;' }, () => {
+        debugWrapper.append(embyButton({
+            label: '重置设置',
+            class: classes.embyButtons.submit,
+            style: 'margin: 0.3em;'
+        }, () => {
             settingsReset();
             logger.debug(`已重置设置, 跳过了 ${lsKeys.filterKeywords.name} 重置`);
-            embyToast({ text: `已重置设置, 跳过了 ${lsKeys.filterKeywords.name} 重置` });
+            embyToast({text: `已重置设置, 跳过了 ${lsKeys.filterKeywords.name} 重置`});
             loadDanmaku(LOAD_TYPE.INIT);
             closeEmbyDialog();
         }));
@@ -7335,16 +8070,20 @@
         `;
         container.innerHTML = template.trim();
         getById(eleIds.tabIframeHeightDiv, container).append(embySlider(
-            { labelId: eleIds.tabIframeHeightLabel, value: '29', min: 28, max: 100, step: 1 }
+            {labelId: eleIds.tabIframeHeightLabel, value: '29', min: 28, max: 100, step: 1}
             , (val, opts) => {
-                if (val === '28') { val = 'auto'; }
+                if (val === '28') {
+                    val = 'auto';
+                }
                 onSliderChangeLabel(val, opts);
                 getById(eleIds.tabIframe).style.height = val === 'auto' ? val : val + 'em';
             }
         ));
         getById(eleIds.tabIframeSrcInputDiv, container).append(embyInput(
-            { type: 'search', value: window.ede.bangumiInfo ? window.ede.bangumiInfo.bangumiUrl : '' }
-            , (e) => { getById(eleIds.tabIframe).src = e.target.value.trim(); }
+            {type: 'search', value: window.ede.bangumiInfo ? window.ede.bangumiInfo.bangumiUrl : ''}
+            , (e) => {
+                getById(eleIds.tabIframe).src = e.target.value.trim();
+            }
         ));
     }
 
@@ -7354,7 +8093,7 @@
         }
 
         const episode_info = window.ede.episode_info || {};
-        const { episodeId, animeTitle, episodeTitle } = episode_info;
+        const {episodeId, animeTitle, episodeTitle} = episode_info;
 
         const videoOsdContainer = document.querySelector(`${mediaContainerQueryStr} .videoOsdSecondaryText`);
         let videoOsdDanmakuTitle = getById(eleIds.videoOsdDanmakuTitle, videoOsdContainer);
@@ -7406,18 +8145,22 @@
 
     function quickDebug() {
         const flag = toggleSettingBtn2Header();
-        embyToast({ text: `${lsKeys.quickDebugOn.name}: ${flag}!` });
-        if (!window.ede) { window.ede = new EDE(); }
+        embyToast({text: `${lsKeys.quickDebugOn.name}: ${flag}!`});
+        if (!window.ede) {
+            window.ede = new EDE();
+        }
         lsSetItem(lsKeys.quickDebugOn.id, flag);
         checkRuntimeVars();
     }
 
     function checkRuntimeVars(exposeGlobalThis = true) {
         logger.debug('运行时变量检查');
-        logger.debug(lsKeys.customeCorsProxyUrl.name ,corsProxy);
+        logger.debug(lsKeys.customeCorsProxyUrl.name, corsProxy);
         logger.debug(lsKeys.customeDanmakuUrl.name, requireDanmakuPath);
         logger.debug('弹弹play API 模板', dandanplayApi);
-        if (exposeGlobalThis) { window.checkRuntimeVars = checkRuntimeVars; }
+        if (exposeGlobalThis) {
+            window.checkRuntimeVars = checkRuntimeVars;
+        }
     }
 
     function doDanmakuSwitch() {
@@ -7430,7 +8173,9 @@
             const wrapper = getById(eleIds.danmakuWrapper);
             if (flag) {
                 // 开启弹幕：恢复可见性
-                if (wrapper) { wrapper.style.visibility = 'visible'; }
+                if (wrapper) {
+                    wrapper.style.visibility = 'visible';
+                }
                 // 确保引擎处于 show 状态（首次可能是 hide 状态）
                 window.ede.danmaku.show();
                 // [修复] 如果视频处于暂停状态，确保弹幕也暂停
@@ -7448,14 +8193,18 @@
                                         logger.debug('[弹幕开关] Emby 暂停但 video.paused=false, 强制 dispatch pause');
                                         _media.dispatchEvent(new Event('pause'));
                                     }
-                                } catch (e) { /* ignore */ }
+                                } catch (e) { /* ignore */
+                                }
                             });
-                        } catch (e) { /* ignore */ }
+                        } catch (e) { /* ignore */
+                        }
                     }
                 }
             } else {
                 // 关闭弹幕：仅隐藏容器，引擎继续运行
-                if (wrapper) { wrapper.style.visibility = 'hidden'; }
+                if (wrapper) {
+                    wrapper.style.visibility = 'hidden';
+                }
             }
         }
         const osdDanmakuSwitchBtn = getById(eleIds.danmakuSwitchBtn);
@@ -7487,13 +8236,15 @@
         }
         // 重新加载弹幕以应用过滤
         loadDanmaku(LOAD_TYPE.RELOAD);
-        embyToast({ text: `防重叠: ${flag ? '开启 - 超出轨道的弹幕将被过滤' : '关闭 - 允许弹幕重叠显示'}` });
+        embyToast({text: `防重叠: ${flag ? '开启 - 超出轨道的弹幕将被过滤' : '关闭 - 允许弹幕重叠显示'}`});
     }
 
     // --- 手动搜索：并行模式 (速度优先，聚合结果) ---
     async function doDanmakuSearchEpisode() {
         let embySearch = getById(eleIds.danmakuSearchName);
-        if (!embySearch) { return; }
+        if (!embySearch) {
+            return;
+        }
         let searchName = embySearch.value;
         const danmakuRemarkEle = getById(eleIds.danmakuRemark);
         danmakuRemarkEle.parentNode.hidden = false;
@@ -7505,12 +8256,20 @@
         const apiPriority = lsGetItem(lsKeys.apiPriority.id);
         const customApiList = getCustomApiList();
         const apiConfigs = {
-            official: { name: '弹弹play', prefix: corsProxy + 'https://api.dandanplay.net/api/v2', enabled: lsGetItem(lsKeys.useOfficialApi.id) },
+            official: {
+                name: '弹弹play',
+                prefix: corsProxy + 'https://api.dandanplay.net/api/v2',
+                enabled: lsGetItem(lsKeys.useOfficialApi.id)
+            },
         };
         if (lsGetItem(lsKeys.useCustomApi.id) && customApiList.length > 0) {
             customApiList.forEach((item, index) => {
                 if (item.enabled) {
-                    apiConfigs[`custom_${index}`] = { name: item.name || `自定义源${index + 1}`, prefix: item.url, enabled: true };
+                    apiConfigs[`custom_${index}`] = {
+                        name: item.name || `自定义源${index + 1}`,
+                        prefix: item.url,
+                        enabled: true
+                    };
                 }
             });
         }
@@ -7594,7 +8353,11 @@
 
         let selectAnimeIdx = allAnimes.findIndex(anime => anime.animeId == window.ede.searchDanmakuOpts.animeId);
         selectAnimeIdx = selectAnimeIdx !== -1 ? selectAnimeIdx : 0;
-        const animeSelect = embySelect({ id: eleIds.danmakuAnimeSelect, label: '剧集: ', style: 'width: auto;max-width: 100%;' }
+        const animeSelect = embySelect({
+                id: eleIds.danmakuAnimeSelect,
+                label: '剧集: ',
+                style: 'width: auto;max-width: 100%;'
+            }
             , selectAnimeIdx, allAnimes, 'animeId', opt => `${opt.animeTitle} 类型：${opt.typeDescription} 来源：${opt.apiName}`, doDanmakuAnimeSelect);
         danmakuAnimeDiv.append(animeSelect);
 
@@ -7615,7 +8378,7 @@
             const appendSE = lsGetItem(lsKeys.appendSeasonEpisode.id);
             return searchInputEle.value = appendSE ? opts.animeName : (opts.seriesName || opts.animeName);
         }
-        const { _episode_key, seriesOrMovieId } = window.ede.searchDanmakuOpts;
+        const {_episode_key, seriesOrMovieId} = window.ede.searchDanmakuOpts;
         const episode_info = JSON.parse(localStorage.getItem(_episode_key) || 'null');
         const animeOriginalTitle = episode_info?.animeOriginalTitle;
         if (animeOriginalTitle) {
@@ -7634,7 +8397,7 @@
                     window.ede.episode_info.animeOriginalTitle = item.OriginalTitle;
                 }
             } else {
-                embyToast({ text: '未找到原始标题' });
+                embyToast({text: '未找到原始标题'});
             }
         });
     }
@@ -7708,7 +8471,10 @@
             anime.filteredEpisodes = [];
         } else {
             // 切换剧集时，默认选中第一个分集
-            const episodeNumSelect = embySelect({ id: eleIds.danmakuEpisodeNumSelect, label: '集数: ' }, 0, displayEpisodes, 'episodeId', (opt, i) => `${i + 1} - ${opt.episodeTitle}`);
+            const episodeNumSelect = embySelect({
+                id: eleIds.danmakuEpisodeNumSelect,
+                label: '集数: '
+            }, 0, displayEpisodes, 'episodeId', (opt, i) => `${i + 1} - ${opt.episodeTitle}`);
             episodeNumSelect.style.maxWidth = '100%';
             numDiv.append(episodeNumSelect);
             // [黑名单] 存储过滤后的分集列表，供 doDanmakuSwitchEpisode 使用
@@ -7729,7 +8495,7 @@
         const anime = window.ede.searchDanmakuOpts.animes[animeSelect.selectedIndex];
 
         // [修正] 构造一个更完整的 episodeInfo 对象，并使用正确的 unique_episode_key
-        const { _episode_key, seriesOrMovieId } = window.ede.searchDanmakuOpts;
+        const {_episode_key, seriesOrMovieId} = window.ede.searchDanmakuOpts;
         const episodeInfo = {
             episodeId: episodeNumSelect.value,
             episodeTitle: episodeNumSelect.options[episodeNumSelect.selectedIndex].text,
@@ -7776,7 +8542,7 @@
                 timestamp: Date.now()
             }));
             logger.info(`[偏好记忆] 已记录: "${anime.animeTitle}" (ID: ${anime.animeId})`);
-        } catch(e) {
+        } catch (e) {
             logger.debug(`[偏好记忆] 记录失败:`, e);
         }
 
@@ -7965,7 +8731,9 @@
         let enable = getById(eleIds.filterKeywordsEnableId).checked;
         lsCheckSet(lsKeys.filterKeywordsEnable.id, enable);
 
-        if (!lsCheckSet(lsKeys.filterKeywords.id, keywords) && keywords === '') { return; }
+        if (!lsCheckSet(lsKeys.filterKeywords.id, keywords) && keywords === '') {
+            return;
+        }
         loadDanmaku(LOAD_TYPE.RELOAD);
     }
 
@@ -8030,7 +8798,7 @@
      * function will not setAttribute
      */
     function embyInput(props, onEnter, onChange) {
-        const input = document.createElement('input', { is: 'emby-input' });
+        const input = document.createElement('input', {is: 'emby-input'});
         objectEntries(props).forEach(([key, value]) => {
             if (typeof value !== 'function') {
                 input.setAttribute(key, value);
@@ -8042,9 +8810,15 @@
         });
         input.className = classes.embyInput; // searchfields-txtSearch: 半圆角
         if (typeof onEnter === 'function') {
-            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { onEnter(e); } });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    onEnter(e);
+                }
+            });
         }
-        if (typeof onChange === 'function') { input.addEventListener('change', onChange); }
+        if (typeof onChange === 'function') {
+            input.addEventListener('change', onChange);
+        }
         // 控制器输入左右超出边界时切换元素
         input.addEventListener('keydown', (event) => {
             if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
@@ -8052,7 +8826,7 @@
                     (input.selectionEnd === input.value.length && event.key === 'ArrowRight'))) {
                 event.stopPropagation();
                 event.preventDefault()
-                var options = {sourceElement: event.target, repeat: event.repeat, originalEvent: event };
+                var options = {sourceElement: event.target, repeat: event.repeat, originalEvent: event};
                 require(['inputmanager'], (inputmanager) => {
                     inputmanager.trigger(event.key.replace('Arrow', '').toLowerCase(), options);
                 });
@@ -8070,7 +8844,6 @@
     }
 
 
-
     /** props: {id: 'btnId', label: 'label text', style: '', iconKey: '',...} for setAttribute(key, value)
      * 'iconKey' will innerHTML <i>iconKey</i>|function will not setAttribute
      */
@@ -8080,7 +8853,9 @@
         button.setAttribute('is', 'emby-button');
         button.setAttribute('type', 'button');
         objectEntries(props).forEach(([key, value]) => {
-            if (key !== 'iconKey' &&  typeof value !== 'function') { button.setAttribute(key, value); }
+            if (key !== 'iconKey' && typeof value !== 'function') {
+                button.setAttribute(key, value);
+            }
         });
         if (props.iconKey) {
             button.setAttribute('title', props.label);
@@ -8091,7 +8866,9 @@
             button.classList.add(...classes.embyButtons.basic.split(' '));
             button.textContent = props.label;
         }
-        if (typeof onClick === 'function') { button.addEventListener('click', onClick); }
+        if (typeof onClick === 'function') {
+            button.addEventListener('click', onClick);
+        }
         return button;
     }
 
@@ -8126,7 +8903,7 @@
 
     function embyTabs(options, selectedValue, optionValueKey, optionTitleKey, onChange) {
         // !!! important: this is must { is: 'emby-xxx' }, unknown reason
-        const tabs = document.createElement('div', { is: 'emby-tabs' });
+        const tabs = document.createElement('div', {is: 'emby-tabs'});
         tabs.setAttribute('data-index', '0');
         tabs.className = classes.embyTabsDiv1;
         tabs.style.width = 'fit-content';
@@ -8152,20 +8929,22 @@
     }
 
     function embySelect(props, selectedIndexOrValue, options, optionValueKey, optionTitleKey, onChange) {
-        const defaultProps = { class: 'emby-select' };
-        props = { ...defaultProps, ...props };
+        const defaultProps = {class: 'emby-select'};
+        props = {...defaultProps, ...props};
         if (!Number.isInteger(selectedIndexOrValue)) {
             selectedIndexOrValue = options.indexOf(selectedIndexOrValue);
         }
         // !!! important: this is must { is: 'emby-select' }
-        const selectElement = document.createElement('select', { is: 'emby-select'});
+        const selectElement = document.createElement('select', {is: 'emby-select'});
         require(['browser'], (browser) => {
             if (browser.tv) {
                 selectElement.classList.add(classes.embySelectTv);
             }
         });
         objectEntries(props).forEach(([key, value]) => {
-            if (typeof value !== 'function') { selectElement.setAttribute(key, value); }
+            if (typeof value !== 'function') {
+                selectElement.setAttribute(key, value);
+            }
         });
         options.forEach((option, index) => {
             const value = getValueOrInvoke(option, optionValueKey);
@@ -8197,18 +8976,18 @@
         checkboxContainer.setAttribute('style', isVertical ? '' : styles.embyCheckboxList);
         checkboxContainer.setAttribute('id', id);
         options.forEach(option => {
-            checkboxContainer.append(embyCheckbox({ name: checkBoxName, label: option.name, value: option.id }
-                , (selectedStrArray ? selectedStrArray.indexOf(option.id) > -1 : false) , onChange));
+            checkboxContainer.append(embyCheckbox({name: checkBoxName, label: option.name, value: option.id}
+                , (selectedStrArray ? selectedStrArray.indexOf(option.id) > -1 : false), onChange));
         });
         return checkboxContainer;
     }
 
-    function embyCheckbox({ id, name, label, value }, checked = false, onChange) {
+    function embyCheckbox({id, name, label, value}, checked = false, onChange) {
         const checkboxLabel = document.createElement('label');
         checkboxLabel.classList.add('emby-checkbox-label');
         checkboxLabel.setAttribute('style', 'width: auto;');
         // !!! important: this is must { is: 'emby-xxx' }, unknown reason
-        const checkbox = document.createElement('input', { is: 'emby-checkbox' });
+        const checkbox = document.createElement('input', {is: 'emby-checkbox'});
         checkbox.setAttribute('type', 'checkbox');
         checkbox.setAttribute('id', id);
         checkbox.setAttribute('name', name);
@@ -8231,18 +9010,22 @@
      * function will not setAttribute
      */
     function embyTextarea(props, onBlur) {
-        const defaultProps = { rows: 10, styleResize: 'vertical', readonly: false };
-        props = { ...defaultProps, ...props };
-        const textarea = document.createElement('textarea', { is: 'emby-textarea' });
+        const defaultProps = {rows: 10, styleResize: 'vertical', readonly: false};
+        props = {...defaultProps, ...props};
+        const textarea = document.createElement('textarea', {is: 'emby-textarea'});
         objectEntries(props).forEach(([key, value]) => {
             if (typeof value !== 'function' && key !== 'readonly'
-                && key !== 'styleResize' && key !== 'value') { textarea.setAttribute(key, value); }
+                && key !== 'styleResize' && key !== 'value') {
+                textarea.setAttribute(key, value);
+            }
         });
         textarea.className = 'txtOverview emby-textarea';
         textarea.readOnly = props.readonly;
         textarea.style.resize = props.styleResize;
         textarea.value = props.value;
-        if (typeof onBlur === 'function') { textarea.addEventListener('blur', onBlur); }
+        if (typeof onBlur === 'function') {
+            textarea.addEventListener('blur', onBlur);
+        }
         return textarea;
     }
 
@@ -8257,21 +9040,31 @@
     function embySlider(opts = {}, onChange, onSliding) {
         const defaultOpts = {
             orient: 'horizontal',
-            'data-bubble': false, 'data-hoverthumb': true , style: '',
+            'data-bubble': false, 'data-hoverthumb': true, style: '',
         };
-        const options = { ...defaultOpts, ...opts };
+        const options = {...defaultOpts, ...opts};
         // !!! important: this is must { is: 'emby-xxx' }, unknown reason
-        const slider = document.createElement('input', { is: 'emby-slider' });
+        const slider = document.createElement('input', {is: 'emby-slider'});
         slider.setAttribute('type', 'range');
-        if (opts.id) { slider.setAttribute('id', opts.id); }
+        if (opts.id) {
+            slider.setAttribute('id', opts.id);
+        }
         objectEntries(options).forEach(([key, value]) => {
             if (key === 'lsKey') {
                 opts.key = value.id;
                 const optsKeys = Object.keys(opts);
-                if (!optsKeys.includes('value')) { options.value = lsGetItem(value.id); }
-                if (!optsKeys.includes('min') && value.min !== undefined) { slider.setAttribute('min', value.min); }
-                if (!optsKeys.includes('max') && value.max !== undefined) { slider.setAttribute('max', value.max); }
-                if (!optsKeys.includes('step') && value.step !== undefined) { slider.setAttribute('step', value.step); }
+                if (!optsKeys.includes('value')) {
+                    options.value = lsGetItem(value.id);
+                }
+                if (!optsKeys.includes('min') && value.min !== undefined) {
+                    slider.setAttribute('min', value.min);
+                }
+                if (!optsKeys.includes('max') && value.max !== undefined) {
+                    slider.setAttribute('max', value.max);
+                }
+                if (!optsKeys.includes('step') && value.step !== undefined) {
+                    slider.setAttribute('step', value.step);
+                }
             } else {
                 slider.setAttribute(key, value);
             }
@@ -8294,7 +9087,7 @@
         }
         if (options.value) {
             slider.setValue(options.value);
-            waitForElement({ element: slider, needParent: true }, (ele) => {
+            waitForElement({element: slider, needParent: true}, (ele) => {
                 const e = new Event('change');
                 e.isManual = true;
                 slider.dispatchEvent(e);
@@ -8323,10 +9116,12 @@
      * dialog have buttons prop: [{ type: 'submit', id: 'cancel', name:'取消', description: '无操作', href: 'index.html',  }]
      */
     async function embyDialog(opts = {}) {
-        const defaultOpts = { text: '', title: '', timeout: 0, html: '', buttons: [] };
-        opts = { ...defaultOpts, ...opts };
+        const defaultOpts = {text: '', title: '', timeout: 0, html: '', buttons: []};
+        opts = {...defaultOpts, ...opts};
         return require(['dialog']).then(items => items[0](opts))
-            .catch(error => { logger.debug('点击弹出框外部取消: ' + error) });
+            .catch(error => {
+                logger.debug('点击弹出框外部取消: ' + error)
+            });
     }
 
     function closeEmbyDialog() {
@@ -8366,19 +9161,20 @@
 
     // see: ../web/modules/common/dialogs/alert.js
     async function embyAlert(opts = {}) {
-        const defaultOpts = { text: '', title: '', timeout: 0, html: ''};
-        opts = { ...defaultOpts, ...opts };
+        const defaultOpts = {text: '', title: '', timeout: 0, html: ''};
+        opts = {...defaultOpts, ...opts};
         return require(['alert']).then(items => items[0](opts))
-            .catch(error => { logger.debug('点击弹出框外部取消: ' + error) });
+            .catch(error => {
+                logger.debug('点击弹出框外部取消: ' + error)
+            });
     }
 
     // see: ../web/modules/toast/toast.js, 严禁滥用,因遮挡画面影响体验,不建议使用 icon,会导致小秘版弹窗居中且图标过大
     async function embyToast(opts = {}) {
-        const defaultOpts = { text: '', secondaryText: '', icon: '', iconStrikeThrough: false};
-        opts = { ...defaultOpts, ...opts };
+        const defaultOpts = {text: '', secondaryText: '', icon: '', iconStrikeThrough: false};
+        opts = {...defaultOpts, ...opts};
         return require(['toast'], toast => toast(opts));
     }
-
 
 
     function getValueOrInvoke(option, keyOrFunc) {
@@ -8431,7 +9227,7 @@
             const oldPrefix = lsGetItem(lsKeys.customApiPrefix.id);
             // [修复] 旧配置迁移时校验 URL 格式，防止不完整 URL 导致 Worker 报错
             if (oldPrefix && oldPrefix.trim() && (oldPrefix.trim().startsWith('http://') || oldPrefix.trim().startsWith('https://'))) {
-                list.push({ name: '自定义源1', url: oldPrefix.trim(), enabled: true });
+                list.push({name: '自定义源1', url: oldPrefix.trim(), enabled: true});
                 lsSetItem(lsKeys.customApiList.id, list);
             }
         }
@@ -8458,7 +9254,7 @@
         const list = getCustomApiList();
         // 检查URL是否已存在
         if (!list.some(item => item.url === url)) {
-            list.push({ name: name || `自定义源${list.length + 1}`, url: url, enabled: true });
+            list.push({name: name || `自定义源${list.length + 1}`, url: url, enabled: true});
             lsSetItem(lsKeys.customApiList.id, list);
             // 同时更新旧配置（兼容性）
             if (list.length === 1) {
@@ -8527,25 +9323,40 @@
     // 缓存相关方法
     function lsGetItem(id) {
         const key = lsGetKeyById(id);
-        if (!key) { return null; }
+        if (!key) {
+            return null;
+        }
         const defaultValue = lsKeys[key].defaultValue;
         const item = localStorage.getItem(id);
         // [修复] 如果 localStorage 中没有值，或者值为空字符串且默认值不为空，则返回默认值
-        if (item === null || (item === '' && defaultValue !== '')) { return defaultValue; }
+        if (item === null || (item === '' && defaultValue !== '')) {
+            return defaultValue;
+        }
         // [优化] 合并 Array 和 Object 的判断，去除重复的 Array.isArray 检查
-        if (typeof defaultValue === 'object' && defaultValue !== null) { return JSON.parse(item); }
-        if (typeof defaultValue === 'boolean') { return item === 'true'; }
-        if (typeof defaultValue === 'number') { return parseFloat(item); }
+        if (typeof defaultValue === 'object' && defaultValue !== null) {
+            return JSON.parse(item);
+        }
+        if (typeof defaultValue === 'boolean') {
+            return item === 'true';
+        }
+        if (typeof defaultValue === 'number') {
+            return parseFloat(item);
+        }
         return item;
     }
+
     function lsCheckOld(id, value) {
         return JSON.stringify(lsGetItem(id)) === JSON.stringify(value);
     }
+
     function lsCheckSet(id, value) {
-        if (lsCheckOld(id, value)) { return false; }
+        if (lsCheckOld(id, value)) {
+            return false;
+        }
         lsSetItem(id, value);
         return true;
     }
+
     /** 批量设置缓存
      * @param {object} keyValues - 键值对对象,如 {key1: value1, key2: value2}
      * @returns {boolean} - 是否有更新
@@ -8557,8 +9368,11 @@
             objectEntries(keyValues).forEach(([key, value]) => lsSetItem(key, value));
         }
     }
+
     function lsSetItem(id, value, skipSync) {
-        if (!lsGetKeyById(id)) { return; }
+        if (!lsGetKeyById(id)) {
+            return;
+        }
         let stringValue;
         if (Array.isArray(value)) {
             stringValue = JSON.stringify(value);
@@ -8577,6 +9391,7 @@
             persistenceSaveOneDebounced(id, value);
         }
     }
+
     // [优化] 构建 id→key 反向索引 Map，lsGetItem/lsSetItem 查找从 O(n) 降到 O(1)
     const _lsIdToKeyMap = new Map();
     Object.keys(lsKeys).forEach(key => _lsIdToKeyMap.set(lsKeys[key].id, key));
@@ -8584,10 +9399,14 @@
     function lsGetKeyById(id) {
         return _lsIdToKeyMap.get(id) || null;
     }
+
     function lsBatchRemove(prefixes) {
         const keysToRemove = Object.keys(localStorage)
             .filter(key => prefixes.some(prefix => key.startsWith(prefix)));
-        keysToRemove.forEach(key => { logger.debug('Removing cache key:', key); localStorage.removeItem(key); });
+        keysToRemove.forEach(key => {
+            logger.debug('Removing cache key:', key);
+            localStorage.removeItem(key);
+        });
         return keysToRemove.length > 0;
     }
 
@@ -8661,17 +9480,22 @@
 
     function addEasterEggListener() {
         const target = getByClass(classes.headerUserButton);
-        if (!target) { return; }
+        if (!target) {
+            return;
+        }
         let longPressTimeout;
+
         function startLongPress() {
             longPressTimeout = setTimeout(() => {
                 logger.debug('恭喜你发现了隐藏功能, 长按了 2 秒!');
                 quickDebug();
             }, 2000);
         }
+
         function cancelLongPress() {
             clearTimeout(longPressTimeout);
         }
+
         const isMobile = OS.isMobile();
         let startEventName = isMobile ? 'touchstart' : 'mousedown';
         let endEventName = isMobile ? 'touchend' : 'mouseup';
@@ -8737,7 +9561,11 @@
         warpper.append(clockElement);
 
         function updateClock() {
-            const timeString = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const timeString = new Date().toLocaleTimeString(undefined, {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
             clockElement.textContent = timeString;
             // console.log(timeString);
             headerClockEle = getById('headerClock');
@@ -8745,6 +9573,7 @@
                 clearInterval(intervalId);
             }
         }
+
         updateClock();
         const intervalId = setInterval(updateClock, 1000);
 
@@ -8768,7 +9597,9 @@
     async function playbackEventsRefresh(eventsMap) {
         const [playbackManager, events] = await Promise.all([new Promise(resolve => require(['playbackManager'], resolve)), new Promise(resolve => require(['events'], resolve))]);
         const player = playbackManager.getCurrentPlayer();
-        if (!player) { return; }
+        if (!player) {
+            return;
+        }
         objectEntries(eventsMap).forEach(([eventName, fn]) => {
             // 无法修改 fn ,会导致引用变更重复添加,events.off 中的 array.indexOf(fn) 返回 -1
             events.off(player, eventName, fn);
@@ -8787,7 +9618,9 @@
         logger.info('播放页不存在 video 标签,适配器处理开始');
         _media = document.createElement('video');
         // !!! Apple 设备上此属性必须存在,否则 currentTime = 0 无法更新; 而其他设备反而不能有
-        if (OS.isApple()) { _media.src = ''; }
+        if (OS.isApple()) {
+            _media.src = '';
+        }
         _media.style.display = 'none';
         _media.id = eleIds.h5VideoAdapter;
         _media.classList.add('htmlvideoplayer', 'moveUpSubtitles');   // 沿用 Emby class
@@ -8862,10 +9695,14 @@
     // 平滑补充<video> timeupdate 中秒级间隔缺失的 100ms 间隙
     function videoTimeUpdateInterval(media, enable) {
         const _media = media || document.querySelector(mediaQueryStr);
-        if (!_media) { return; }
+        if (!_media) {
+            return;
+        }
         if (enable && !_media.timeupdateIntervalId) {
             // [修复] 移除重复的 setInterval 调用，只保留一个
-            _media.timeupdateIntervalId = setInterval(() => { _media.currentTime += 100 / 1000 }, 100);
+            _media.timeupdateIntervalId = setInterval(() => {
+                _media.currentTime += 100 / 1000
+            }, 100);
         } else if (!enable && _media.timeupdateIntervalId) {
             clearInterval(_media.timeupdateIntervalId);
             _media.timeupdateIntervalId = null;
@@ -8873,11 +9710,13 @@
     }
 
     function beforeDestroy(e) {
-        if (e.detail.type !== 'video-osd') { return; }
+        if (e.detail.type !== 'video-osd') {
+            return;
+        }
 
         // [备份逻辑] 智能推断需要这个，必须放在清空前
         if (window.ede && window.ede.episode_info) {
-            window.ede.previous_episode_info = { ...window.ede.episode_info };
+            window.ede.previous_episode_info = {...window.ede.episode_info};
         }
 
         // =========== [UI 瞬间清空区] ===========
@@ -8890,7 +9729,9 @@
         // 2. 立即隐藏/清空弹幕画布 (解决屏幕弹幕残留)
         // [优化] 统一使用 destroy() 一步到位，包含 hide+clear+解绑事件+释放内部引用
         if (window.ede && window.ede.danmaku) {
-            try { window.ede.danmaku.destroy(); } catch (e) {
+            try {
+                window.ede.danmaku.destroy();
+            } catch (e) {
                 logger.warn('弹幕实例销毁异常', e);
             }
             window.ede.danmaku = null;
@@ -8954,7 +9795,9 @@
         // 仅在进入播放页(video-osd)时才初始化和设置数据
         if (e.detail.type === 'video-osd') {
             // 1. 确保对象已初始化
-            if (!window.ede) { window.ede = new EDE(); }
+            if (!window.ede) {
+                window.ede = new EDE();
+            }
 
             // [修复] 2. 移到这里：确保 window.ede 存在后再赋值
             window.ede.itemId = e.detail.params.id ? e.detail.params.id : '';
@@ -8988,8 +9831,8 @@
         });
     }
 
-    refreshEventListener({ 'viewshow': onViewShow });
-    refreshEventListener({ 'viewbeforehide': beforeDestroy });
+    refreshEventListener({'viewshow': onViewShow});
+    refreshEventListener({'viewbeforehide': beforeDestroy});
 
     // [修复] CustomCssJS 兼容：如果脚本在页面已加载后注入，viewshow 事件可能已经错过
     // 需要立即检查当前是否已在播放页面，如果是则手动触发初始化

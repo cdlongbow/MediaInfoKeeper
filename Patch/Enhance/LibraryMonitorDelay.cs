@@ -4,14 +4,12 @@ using HarmonyLib;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 将插件的“通知媒体库刷新（秒）”配置同步到 Emby 的 LibraryMonitor 等待时间。
+    ///     将插件的“通知媒体库刷新（秒）”配置同步到 Emby 的 LibraryMonitor 等待时间。
     /// </summary>
-    internal static class LibraryMonitorDelay
-    {
-        private static readonly object SyncRoot = new object();
+    internal static class LibraryMonitorDelay {
+        private static readonly object SyncRoot = new();
 
         private static Harmony harmony;
         private static ILogger logger;
@@ -22,12 +20,9 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && getterMethod != null && isPatched;
 
-        public static void Initialize(ILogger pluginLogger, bool enable, int delaySeconds)
-        {
-            lock (SyncRoot)
-            {
-                if (harmony != null)
-                {
+        public static void Initialize(ILogger pluginLogger, bool enable, int delaySeconds) {
+            lock (SyncRoot) {
+                if (harmony != null) {
                     Configure(enable, delaySeconds);
                     return;
                 }
@@ -36,15 +31,13 @@ namespace MediaInfoKeeper.Patch
                 isEnabled = enable;
                 overrideDelaySeconds = delaySeconds;
 
-                try
-                {
+                try {
                     var mediaBrowserModelAssembly = typeof(ServerConfiguration).Assembly;
                     var serverConfigurationType = typeof(ServerConfiguration);
                     getterMethod = PatchMethodResolver.Resolve(
                         serverConfigurationType,
                         mediaBrowserModelAssembly.GetName().Version,
-                        new MethodSignatureProfile
-                        {
+                        new MethodSignatureProfile {
                             Name = "serverconfiguration-get-librarymonitordelayseconds-exact",
                             MethodName = "get_LibraryMonitorDelaySeconds",
                             BindingFlags = BindingFlags.Instance | BindingFlags.Public,
@@ -55,17 +48,16 @@ namespace MediaInfoKeeper.Patch
                         logger,
                         "LibraryMonitorDelay.ServerConfiguration.get_LibraryMonitorDelaySeconds");
 
-                    if (getterMethod == null)
-                    {
-                        PatchLog.InitFailed(logger, nameof(LibraryMonitorDelay), "ServerConfiguration.get_LibraryMonitorDelaySeconds 未找到");
+                    if (getterMethod == null) {
+                        PatchLog.InitFailed(logger, nameof(LibraryMonitorDelay),
+                            "ServerConfiguration.get_LibraryMonitorDelaySeconds 未找到");
                         return;
                     }
 
                     harmony = new Harmony("mediainfokeeper.librarymonitordelay");
                     Patch();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     logger?.Error("LibraryMonitorDelay 初始化失败。");
                     logger?.Error(ex.Message);
                     logger?.Error(ex.ToString());
@@ -75,28 +67,19 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enable, int delaySeconds)
-        {
-            lock (SyncRoot)
-            {
+        public static void Configure(bool enable, int delaySeconds) {
+            lock (SyncRoot) {
                 isEnabled = enable;
                 overrideDelaySeconds = delaySeconds;
 
-                if (harmony == null || getterMethod == null)
-                {
-                    return;
-                }
+                if (harmony == null || getterMethod == null) return;
 
                 Patch();
             }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || getterMethod == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || getterMethod == null) return;
 
             harmony.Patch(
                 getterMethod,
@@ -106,12 +89,8 @@ namespace MediaInfoKeeper.Patch
         }
 
         [HarmonyPostfix]
-        private static void GetLibraryMonitorDelaySecondsPostfix(ref int __result)
-        {
-            if (!isEnabled || overrideDelaySeconds < 0)
-            {
-                return;
-            }
+        private static void GetLibraryMonitorDelaySecondsPostfix(ref int __result) {
+            if (!isEnabled || overrideDelaySeconds < 0) return;
 
             __result = Math.Max(0, overrideDelaySeconds);
         }

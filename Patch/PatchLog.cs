@@ -1,16 +1,13 @@
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 封装补丁等待、解析与安装过程的统一日志输出。
+    ///     封装补丁等待、解析与安装过程的统一日志输出。
     /// </summary>
-    internal static class PatchLog
-    {
-        public static void Waiting(ILogger logger, string module, string dependency, bool enabled)
-        {
+    internal static class PatchLog {
+        public static void Waiting(ILogger logger, string module, string dependency, bool enabled) {
             logger?.Info(
                 "补丁等待：模块={0}，依赖={1}，启用={2}",
                 module ?? "unknown",
@@ -18,8 +15,7 @@ namespace MediaInfoKeeper.Patch
                 enabled);
         }
 
-        public static void InitFailed(ILogger logger, string module, string reason)
-        {
+        public static void InitFailed(ILogger logger, string module, string reason) {
             logger?.Warn(
                 "补丁初始化失败：模块={0}，原因={1}",
                 module ?? "unknown",
@@ -32,8 +28,7 @@ namespace MediaInfoKeeper.Patch
             string level,
             string profile,
             string method,
-            string dllVersion)
-        {
+            string dllVersion) {
             logger?.Debug(
                 "补丁解析：模块={0}，级别={1}，配置={2}，dll版本={3}，命中={4}",
                 context ?? "unknown",
@@ -43,8 +38,7 @@ namespace MediaInfoKeeper.Patch
                 method ?? "unknown");
         }
 
-        public static void ResolveFailed(ILogger logger, string context, string type, string asmVersion)
-        {
+        public static void ResolveFailed(ILogger logger, string context, string type, string asmVersion) {
             logger?.Warn(
                 "补丁解析失败：模块={0}，类型={1}，dll版本={2}",
                 context ?? "unknown",
@@ -52,10 +46,8 @@ namespace MediaInfoKeeper.Patch
                 asmVersion ?? "<unknown>");
         }
 
-        public static void Patched(ILogger logger, string module, MethodInfo method)
-        {
-            if (method == null)
-            {
+        public static void Patched(ILogger logger, string module, MethodInfo method) {
+            if (method == null) {
                 Patched(logger, module, "<null>", null);
                 return;
             }
@@ -70,13 +62,11 @@ namespace MediaInfoKeeper.Patch
             Patched(logger, module, signature, dllVersion);
         }
 
-        public static void Patched(ILogger logger, string module, string method)
-        {
+        public static void Patched(ILogger logger, string module, string method) {
             Patched(logger, module, method, null);
         }
 
-        public static void Patched(ILogger logger, string module, string method, string dllVersion)
-        {
+        public static void Patched(ILogger logger, string module, string method, string dllVersion) {
             logger?.Debug(
                 "补丁安装：模块={0}，dll版本={1}，方法={2}",
                 module ?? "unknown",
@@ -84,8 +74,7 @@ namespace MediaInfoKeeper.Patch
                 method ?? "unknown");
         }
 
-        public static void Candidates(ILogger logger, string module, string candidates)
-        {
+        public static void Candidates(ILogger logger, string module, string candidates) {
             logger?.Debug(
                 "补丁候选：模块={0}，候选={1}",
                 module ?? "unknown",

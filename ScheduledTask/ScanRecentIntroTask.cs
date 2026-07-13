@@ -3,21 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaInfoKeeper.Services;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Tasks;
+using MediaInfoKeeper.Services;
 
-namespace MediaInfoKeeper.ScheduledTask
-{
-    public class ScanRecentIntroTask : IScheduledTask
-    {
-        private readonly ILogger logger;
+namespace MediaInfoKeeper.ScheduledTask {
+    public class ScanRecentIntroTask : IScheduledTask {
         private readonly ILibraryManager libraryManager;
-        public ScanRecentIntroTask(ILogManager logManager, ILibraryManager libraryManager)
-        {
-            this.logger = logManager.GetLogger(Plugin.PluginName);
+        private readonly ILogger logger;
+
+        public ScanRecentIntroTask(ILogManager logManager, ILibraryManager libraryManager) {
+            logger = logManager.GetLogger(Plugin.PluginName);
             this.libraryManager = libraryManager;
         }
 
@@ -29,32 +27,29 @@ namespace MediaInfoKeeper.ScheduledTask
 
         public string Category => Plugin.TaskCategoryName;
 
-        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
-        {
+        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() {
             return Array.Empty<TaskTriggerInfo>();
         }
 
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
-        {
-            this.logger.Info("最近入库片头扫描计划任务开始");
+        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress) {
+            logger.Info("最近入库片头扫描计划任务开始");
             var episodes = FetchRecentEpisodes();
             await IntroScanRunner
                 .ScanEpisodesAsync(episodes, cancellationToken, progress)
                 .ConfigureAwait(false);
-            this.logger.Info("最近入库片头扫描计划任务完成");
+            logger.Info("最近入库片头扫描计划任务完成");
         }
 
-        private List<Episode> FetchRecentEpisodes()
-        {
+        private List<Episode> FetchRecentEpisodes() {
             var taskOptions = Plugin.Instance.Options.MainPage.ScheduledTasksEditor.ScanRecentIntro;
             var limit = taskOptions.ScanRecentIntroLimit;
             var episodes = Plugin.LibraryService.FetchScheduledTaskLibraryItems(
                     taskOptions.ScanRecentIntroLibraries,
-                    orderByDateCreatedDesc: true,
-                    take: Math.Max(1, limit))
+                    true,
+                    Math.Max(1, limit))
                 .OfType<Episode>()
                 .ToList();
-            this.logger.Info($"扫描条目数 {episodes.Count}");
+            logger.Info($"扫描条目数 {episodes.Count}");
             return episodes;
         }
     }

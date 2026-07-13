@@ -1,22 +1,20 @@
-namespace MediaInfoKeeper.Options.UIBaseClasses.Store
-{
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text.Json;
-    using System.Text.Json.Nodes;
-    using Emby.Web.GenericEdit;
-    using MediaBrowser.Common;
-    using MediaBrowser.Common.Configuration;
-    using MediaBrowser.Model.IO;
-    using MediaBrowser.Model.Logging;
-    using MediaBrowser.Model.Serialization;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Emby.Web.GenericEdit;
+using MediaBrowser.Common;
+using MediaBrowser.Common.Configuration;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Serialization;
+using JsonSerializerOptions = MediaBrowser.Model.Serialization.JsonSerializerOptions;
 
+namespace MediaInfoKeeper.Options.UIBaseClasses.Store {
     internal class SimpleFileStore<TOptionType> : SimpleContentStore<TOptionType>
-        where TOptionType : EditableOptionsBase, new()
-    {
-        private static readonly HashSet<string> NonPersistentPropertyNames = new HashSet<string>(StringComparer.Ordinal)
-        {
+        where TOptionType : EditableOptionsBase, new() {
+        private static readonly HashSet<string> NonPersistentPropertyNames = new(StringComparer.Ordinal) {
             "EditorTitle",
             "EditorDescription",
             "FeatureRequiresPremiere",
@@ -47,249 +45,193 @@ namespace MediaInfoKeeper.Options.UIBaseClasses.Store
             "ShowTmdbReplacementStatus"
         };
 
-        private readonly ILogger logger;
-        private readonly string pluginFullName;
-        private readonly object lockObj = new object();
-        private readonly IJsonSerializer jsonSerializer;
         private readonly IFileSystem fileSystem;
+        private readonly IJsonSerializer jsonSerializer;
+        private readonly object lockObj = new();
+
+        private readonly ILogger logger;
         private readonly string pluginconfigPath;
+        private readonly string pluginFullName;
         private TOptionType options;
 
-        public SimpleFileStore(IApplicationHost applicationHost, ILogger logger, string pluginFullName)
-        {
+        public SimpleFileStore(IApplicationHost applicationHost, ILogger logger, string pluginFullName) {
             this.logger = logger;
             this.pluginFullName = pluginFullName;
-            this.jsonSerializer = applicationHost.Resolve<IJsonSerializer>();
-            this.fileSystem = applicationHost.Resolve<IFileSystem>();
+            jsonSerializer = applicationHost.Resolve<IJsonSerializer>();
+            fileSystem = applicationHost.Resolve<IFileSystem>();
 
             var applicationPaths = applicationHost.Resolve<IApplicationPaths>();
-            this.pluginconfigPath = applicationPaths.PluginConfigurationsPath;
+            pluginconfigPath = applicationPaths.PluginConfigurationsPath;
 
-            if (!this.fileSystem.DirectoryExists(this.pluginconfigPath))
-            {
-                this.fileSystem.CreateDirectory(this.pluginconfigPath);
-            }
+            if (!fileSystem.DirectoryExists(pluginconfigPath)) fileSystem.CreateDirectory(pluginconfigPath);
 
-            this.OptionsFileName = string.Format("{0}.json", pluginFullName);
+            OptionsFileName = string.Format("{0}.json", pluginFullName);
         }
+
+        public virtual string OptionsFileName { get; }
+
+        public string OptionsFilePath => Path.Combine(pluginconfigPath, OptionsFileName);
 
         public event EventHandler<FileSavingEventArgs> FileSaving;
 
         public event EventHandler<FileSavedEventArgs> FileSaved;
 
-        public virtual string OptionsFileName { get; }
+        public override TOptionType GetOptions() {
+            lock (lockObj) {
+                if (options == null) return ReloadOptions();
 
-        public string OptionsFilePath => Path.Combine(this.pluginconfigPath, this.OptionsFileName);
-
-        public override TOptionType GetOptions()
-        {
-            lock (this.lockObj)
-            {
-                if (this.options == null)
-                {
-                    return this.ReloadOptions();
-                }
-
-                return this.options;
+                return options;
             }
         }
 
-        public TOptionType LoadOptionsFromDisk()
-        {
-            lock (this.lockObj)
-            {
-                return this.LoadOptionsFromDiskCore() ?? new TOptionType();
+        public TOptionType LoadOptionsFromDisk() {
+            lock (lockObj) {
+                return LoadOptionsFromDiskCore() ?? new TOptionType();
             }
         }
 
-        public TOptionType ReloadOptions()
-        {
-            lock (this.lockObj)
-            {
-                this.options = this.LoadOptionsFromDiskCore() ?? new TOptionType();
-                return this.options ?? new TOptionType();
+        public TOptionType ReloadOptions() {
+            lock (lockObj) {
+                options = LoadOptionsFromDiskCore() ?? new TOptionType();
+                return options ?? new TOptionType();
             }
         }
 
-        private TOptionType LoadOptionsFromDiskCore()
-        {
+        private TOptionType LoadOptionsFromDiskCore() {
             var tempOptions = new TOptionType();
 
-            try
-            {
-                if (!this.fileSystem.FileExists(this.OptionsFilePath))
-                {
-                    return tempOptions;
-                }
+            try {
+                if (!fileSystem.FileExists(OptionsFilePath)) return tempOptions;
 
-                using (var stream = this.fileSystem.OpenRead(this.OptionsFilePath))
-                {
+                using (var stream = fileSystem.OpenRead(OptionsFilePath)) {
                     JsonNode rootNode = null;
-                    try
-                    {
+                    try {
                         rootNode = JsonNode.Parse(stream);
                     }
-                    catch (Exception ex)
-                    {
-                        this.logger.Warn("无法解析配置 JSON，回退为原始反序列化结果：{0}", ex.Message);
+                    catch (Exception ex) {
+                        logger.Warn("无法解析配置 JSON，回退为原始反序列化结果：{0}", ex.Message);
                     }
 
-                    if (rootNode != null)
-                    {
-                        rootNode = this.TransformLoadedJson(rootNode) ?? rootNode;
+                    if (rootNode != null) {
+                        rootNode = TransformLoadedJson(rootNode) ?? rootNode;
                         using var transformedStream = new MemoryStream();
-                        using (var writer = new Utf8JsonWriter(transformedStream, new JsonWriterOptions { Indented = true }))
-                        {
+                        using (var writer =
+                               new Utf8JsonWriter(transformedStream, new JsonWriterOptions { Indented = true })) {
                             rootNode.WriteTo(writer);
                             writer.Flush();
                         }
 
                         transformedStream.Position = 0;
-                        var transformed = tempOptions.DeserializeFromJsonStream(transformedStream, this.jsonSerializer);
+                        var transformed = tempOptions.DeserializeFromJsonStream(transformedStream, jsonSerializer);
                         return transformed as TOptionType ?? tempOptions;
                     }
 
                     stream.Position = 0;
-                    var deserialized = tempOptions.DeserializeFromJsonStream(stream, this.jsonSerializer);
+                    var deserialized = tempOptions.DeserializeFromJsonStream(stream, jsonSerializer);
                     return deserialized as TOptionType ?? tempOptions;
                 }
             }
-            catch (Exception ex)
-            {
-                this.logger.ErrorException("Error loading plugin options for {0} from {1}", ex, this.pluginFullName, this.OptionsFilePath);
+            catch (Exception ex) {
+                logger.ErrorException("Error loading plugin options for {0} from {1}", ex, pluginFullName,
+                    OptionsFilePath);
                 return tempOptions;
             }
         }
 
-        public override void SetOptions(TOptionType newOptions)
-        {
-            SetOptionsInternal(newOptions, raiseEvents: true);
+        public override void SetOptions(TOptionType newOptions) {
+            SetOptionsInternal(newOptions, true);
         }
 
-        protected void SetOptionsSilently(TOptionType newOptions)
-        {
-            SetOptionsInternal(newOptions, raiseEvents: false);
+        protected void SetOptionsSilently(TOptionType newOptions) {
+            SetOptionsInternal(newOptions, false);
         }
 
-        private void SetOptionsInternal(TOptionType newOptions, bool raiseEvents)
-        {
-            if (newOptions == null)
-            {
-                throw new ArgumentNullException(nameof(newOptions));
-            }
+        private void SetOptionsInternal(TOptionType newOptions, bool raiseEvents) {
+            if (newOptions == null) throw new ArgumentNullException(nameof(newOptions));
 
-            if (raiseEvents)
-            {
+            if (raiseEvents) {
                 var savingArgs = new FileSavingEventArgs(newOptions);
-                this.FileSaving?.Invoke(this, savingArgs);
+                FileSaving?.Invoke(this, savingArgs);
 
-                if (savingArgs.Cancel)
-                {
-                    return;
-                }
+                if (savingArgs.Cancel) return;
             }
 
-            lock (this.lockObj)
-            {
-                using (var stream = this.fileSystem.GetFileStream(this.OptionsFilePath, FileOpenMode.Create, FileAccessMode.Write))
-                {
+            lock (lockObj) {
+                using (var stream =
+                       fileSystem.GetFileStream(OptionsFilePath, FileOpenMode.Create, FileAccessMode.Write)) {
                     WriteSanitizedOptions(stream, newOptions);
                 }
             }
 
-            lock (this.lockObj)
-            {
-                this.options = newOptions;
+            lock (lockObj) {
+                options = newOptions;
             }
 
-            if (raiseEvents)
-            {
+            if (raiseEvents) {
                 var savedArgs = new FileSavedEventArgs(newOptions);
-                this.FileSaved?.Invoke(this, savedArgs);
+                FileSaved?.Invoke(this, savedArgs);
             }
         }
 
-        private void WriteSanitizedOptions(Stream destination, TOptionType options)
-        {
+        private void WriteSanitizedOptions(Stream destination, TOptionType options) {
             using var buffer = new MemoryStream();
-            this.jsonSerializer.SerializeToStream(
+            jsonSerializer.SerializeToStream(
                 options,
                 buffer,
-                new MediaBrowser.Model.Serialization.JsonSerializerOptions { Indent = true });
+                new JsonSerializerOptions { Indent = true });
 
             buffer.Position = 0;
             JsonNode rootNode = null;
-            try
-            {
+            try {
                 rootNode = JsonNode.Parse(buffer);
             }
-            catch (Exception ex)
-            {
-                this.logger.Warn("无法解析配置 JSON，回退为原始序列化结果：{0}", ex.Message);
+            catch (Exception ex) {
+                logger.Warn("无法解析配置 JSON，回退为原始序列化结果：{0}", ex.Message);
             }
 
-            if (rootNode == null)
-            {
+            if (rootNode == null) {
                 buffer.Position = 0;
                 buffer.CopyTo(destination);
                 return;
             }
 
-            rootNode = this.TransformSavingJson(rootNode, options) ?? rootNode;
+            rootNode = TransformSavingJson(rootNode, options) ?? rootNode;
             SanitizeJsonNode(rootNode);
             using var writer = new Utf8JsonWriter(destination, new JsonWriterOptions { Indented = true });
             rootNode.WriteTo(writer);
             writer.Flush();
         }
 
-        protected virtual JsonNode TransformLoadedJson(JsonNode rootNode)
-        {
+        protected virtual JsonNode TransformLoadedJson(JsonNode rootNode) {
             return rootNode;
         }
 
-        protected virtual JsonNode TransformSavingJson(JsonNode rootNode, TOptionType options)
-        {
+        protected virtual JsonNode TransformSavingJson(JsonNode rootNode, TOptionType options) {
             return rootNode;
         }
 
-        private static void SanitizeJsonNode(JsonNode node)
-        {
-            if (node is JsonObject jsonObject)
-            {
+        private static void SanitizeJsonNode(JsonNode node) {
+            if (node is JsonObject jsonObject) {
                 var propertyNames = new List<string>();
-                foreach (var property in jsonObject)
-                {
-                    propertyNames.Add(property.Key);
-                }
+                foreach (var property in jsonObject) propertyNames.Add(property.Key);
 
-                foreach (var propertyName in propertyNames)
-                {
-                    if (NonPersistentPropertyNames.Contains(propertyName))
-                    {
+                foreach (var propertyName in propertyNames) {
+                    if (NonPersistentPropertyNames.Contains(propertyName)) {
                         jsonObject.Remove(propertyName);
                         continue;
                     }
 
                     var childNode = jsonObject[propertyName];
-                    if (childNode != null)
-                    {
-                        SanitizeJsonNode(childNode);
-                    }
+                    if (childNode != null) SanitizeJsonNode(childNode);
                 }
 
                 return;
             }
 
             if (node is JsonArray jsonArray)
-            {
                 foreach (var childNode in jsonArray)
-                {
                     if (childNode != null)
-                    {
                         SanitizeJsonNode(childNode);
-                    }
-                }
-            }
         }
     }
 }

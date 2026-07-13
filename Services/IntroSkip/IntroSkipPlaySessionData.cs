@@ -1,12 +1,9 @@
-using MediaBrowser.Controller.Entities;
 using System;
+using MediaBrowser.Controller.Entities;
 
-namespace MediaInfoKeeper.Services.IntroSkip
-{
-    public class IntroSkipPlaySessionData
-    {
-        public IntroSkipPlaySessionData(BaseItem item)
-        {
+namespace MediaInfoKeeper.Services.IntroSkip {
+    public class IntroSkipPlaySessionData {
+        public IntroSkipPlaySessionData(BaseItem item) {
             IntroStart = Plugin.IntroSkipChapterApi.GetIntroStart(item);
             IntroEnd = Plugin.IntroSkipChapterApi.GetIntroEnd(item);
             CreditsStart = Plugin.IntroSkipChapterApi.GetCreditsStart(item);

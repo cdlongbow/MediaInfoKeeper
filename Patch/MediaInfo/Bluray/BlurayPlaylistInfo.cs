@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 
-namespace MediaInfoKeeper.Patch.MediaInfo.Bluray
-{
-    internal sealed class BlurayPlaylistInfo
-    {
+namespace MediaInfoKeeper.Patch.MediaInfo.Bluray {
+    internal sealed class BlurayPlaylistInfo {
         public string PlaylistName { get; set; }
 
         public double TotalLengthSeconds { get; set; }
@@ -14,15 +12,14 @@ namespace MediaInfoKeeper.Patch.MediaInfo.Bluray
 
         public int SubtitleStreamCount { get; set; }
 
-        public List<double> Chapters { get; } = new List<double>();
+        public List<double> Chapters { get; } = new();
 
-        public List<string> ClipFileNames { get; } = new List<string>();
+        public List<string> ClipFileNames { get; } = new();
 
-        public List<BlurayPlaylistStream> Streams { get; } = new List<BlurayPlaylistStream>();
+        public List<BlurayPlaylistStream> Streams { get; } = new();
     }
 
-    internal sealed class BlurayPlaylistStream
-    {
+    internal sealed class BlurayPlaylistStream {
         public int Order { get; set; }
 
         public int Pid { get; set; }

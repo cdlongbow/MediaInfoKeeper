@@ -5,277 +5,219 @@ using System.Linq;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Services
-{
+namespace MediaInfoKeeper.Services {
     /// <summary>
-    /// 监听媒体库路径下的新入库 .strm 文件，记录 Created 与 Changed 事件日志。
+    ///     监听媒体库路径下的新入库 .strm 文件，记录 Created 与 Changed 事件日志。
     /// </summary>
-    public sealed class StrmFileWatcher : IDisposable
-    {
-        private readonly ILibraryMonitor libraryMonitor;
+    public sealed class StrmFileWatcher : IDisposable {
+        private readonly Dictionary<string, DateTime> createdEvents = new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly TimeSpan directoryReportDedupeWindow = TimeSpan.FromSeconds(2);
+
+        private readonly Dictionary<string, DateTime> lastModifiedEvents = new(StringComparer.OrdinalIgnoreCase);
+
         private readonly ILibraryManager libraryManager;
+        private readonly ILibraryMonitor libraryMonitor;
         private readonly LibraryService libraryService;
         private readonly ILogger logger;
-        private readonly object syncRoot = new object();
-        private readonly TimeSpan directoryReportDedupeWindow = TimeSpan.FromSeconds(2);
         private readonly TimeSpan modifiedEventDedupeWindow = TimeSpan.FromMilliseconds(100);
+        private readonly object syncRoot = new();
 
-        private readonly Dictionary<string, FileSystemWatcher> watchers =
-            new Dictionary<string, FileSystemWatcher>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, DateTime> createdEvents =
-            new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, DateTime> lastModifiedEvents =
-            new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, FileSystemWatcher> watchers = new(StringComparer.OrdinalIgnoreCase);
+
+        private volatile bool disposed;
 
         private volatile bool enabled;
-        private volatile bool disposed;
 
         public StrmFileWatcher(
             ILibraryMonitor libraryMonitor,
             ILibraryManager libraryManager,
             LibraryService libraryService,
-            ILogger logger)
-        {
+            ILogger logger) {
             this.libraryMonitor = libraryMonitor;
             this.libraryManager = libraryManager;
             this.libraryService = libraryService;
             this.logger = logger;
         }
 
-        /// <summary>
-        /// 配置监听开关。
-        /// </summary>
-        public void Configure(bool isEnabled, int delaySeconds)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
+        public void Dispose() {
+            if (disposed) return;
 
-            this.enabled = isEnabled;
+            disposed = true;
+            enabled = false;
+
+            lock (syncRoot) {
+                foreach (var watcher in watchers.Values)
+                    try {
+                        watcher.EnableRaisingEvents = false;
+                        watcher.Dispose();
+                    }
+                    catch {
+                    }
+
+                watchers.Clear();
+                createdEvents.Clear();
+                lastModifiedEvents.Clear();
+            }
+        }
+
+        /// <summary>
+        ///     配置监听开关。
+        /// </summary>
+        public void Configure(bool isEnabled, int delaySeconds) {
+            if (disposed) return;
+
+            enabled = isEnabled;
             RebuildWatchers(isEnabled);
         }
 
         /// <summary>
-        /// 根据当前配置重建文件监听器。
+        ///     根据当前配置重建文件监听器。
         /// </summary>
-        private void RebuildWatchers(bool isEnabled)
-        {
-            lock (this.syncRoot)
-            {
-                foreach (var existing in this.watchers.Values)
-                {
-                    try
-                    {
+        private void RebuildWatchers(bool isEnabled) {
+            lock (syncRoot) {
+                foreach (var existing in watchers.Values)
+                    try {
                         existing.EnableRaisingEvents = false;
                         existing.Dispose();
                     }
-                    catch
-                    {
+                    catch {
                     }
-                }
 
-                this.watchers.Clear();
-                this.createdEvents.Clear();
-                this.lastModifiedEvents.Clear();
+                watchers.Clear();
+                createdEvents.Clear();
+                lastModifiedEvents.Clear();
 
-                if (!isEnabled)
-                {
-                    this.logger?.Info("StrmFileWatcher 已禁用");
+                if (!isEnabled) {
+                    logger?.Info("StrmFileWatcher 已禁用");
                     return;
                 }
 
-                var roots = (this.libraryService?.GetAllLibraryPaths() ?? new List<string>())
+                var roots = (libraryService?.GetAllLibraryPaths() ?? new List<string>())
                     .Where(path => !string.IsNullOrWhiteSpace(path))
                     .Select(path => path.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
                 foreach (var root in roots)
-                {
-                    try
-                    {
-                        var watcher = new FileSystemWatcher(root, "*")
-                        {
+                    try {
+                        var watcher = new FileSystemWatcher(root, "*") {
                             IncludeSubdirectories = true,
-                            NotifyFilter = NotifyFilters.FileName | NotifyFilters.CreationTime | NotifyFilters.LastWrite,
+                            NotifyFilter =
+                                NotifyFilters.FileName | NotifyFilters.CreationTime | NotifyFilters.LastWrite,
                             InternalBufferSize = 64 * 1024,
                             EnableRaisingEvents = true
                         };
 
                         watcher.Created += (sender, args) => OnCreated(args?.FullPath);
                         watcher.Changed += (sender, args) => OnModified(args?.FullPath);
-                        this.watchers[root] = watcher;
+                        watchers[root] = watcher;
                     }
-                    catch (Exception ex)
-                    {
-                        this.logger?.Warn($"StrmFileWatcher 监听路径失败: {root}");
-                        this.logger?.Warn(ex.Message);
+                    catch (Exception ex) {
+                        logger?.Warn($"StrmFileWatcher 监听路径失败: {root}");
+                        logger?.Warn(ex.Message);
                     }
-                }
 
-                this.logger?.Debug(
-                    $"StrmFileWatcher 已启动，监听路径: {string.Join(", ", this.watchers.Keys.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))}");
+                logger?.Debug(
+                    $"StrmFileWatcher 已启动，监听路径: {string.Join(", ", watchers.Keys.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))}");
             }
         }
 
         /// <summary>
-        /// 记录新增文件事件。
+        ///     记录新增文件事件。
         /// </summary>
-        private void OnCreated(string path)
-        {
-            if (!IsWatchedMediaFile(path))
-            {
-                return;
-            }
+        private void OnCreated(string path) {
+            if (!IsWatchedMediaFile(path)) return;
 
             var directoryPath = Path.GetDirectoryName(path);
-            if (string.IsNullOrWhiteSpace(directoryPath))
-            {
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(directoryPath)) return;
 
             var shouldReportDirectory = RecordCreatedEvent(directoryPath, path);
-            this.logger?.Info($"新增媒体文件，{Path.GetFileName(path) ?? path}");
-            if (!shouldReportDirectory)
-            {
-                return;
-            }
+            logger?.Info($"新增媒体文件，{Path.GetFileName(path) ?? path}");
+            if (!shouldReportDirectory) return;
 
-            try
-            {
-                this.libraryMonitor?.ReportFileSystemChanged(directoryPath);
+            try {
+                libraryMonitor?.ReportFileSystemChanged(directoryPath);
             }
-            catch (Exception ex)
-            {
-                this.logger?.Error($"StrmFileWatcher 通知 Emby 入库扫描失败: {directoryPath}");
-                this.logger?.Error(ex.Message);
+            catch (Exception ex) {
+                logger?.Error($"StrmFileWatcher 通知 Emby 入库扫描失败: {directoryPath}");
+                logger?.Error(ex.Message);
             }
         }
 
         /// <summary>
-        /// 记录文件内容修改事件。
+        ///     记录文件内容修改事件。
         /// </summary>
-        private void OnModified(string path)
-        {
-            if (!IsWatchedShortcut(path))
-            {
-                return;
-            }
+        private void OnModified(string path) {
+            if (!IsWatchedShortcut(path)) return;
 
-            if (ShouldSkipModifiedLog(path))
-            {
-                return;
-            }
+            if (ShouldSkipModifiedLog(path)) return;
 
-            this.logger?.Info($"{Path.GetFileName(path) ?? path} 内容修改");
+            logger?.Info($"{Path.GetFileName(path) ?? path} 内容修改");
         }
 
-        private bool IsWatchedShortcut(string path)
-        {
-            return this.enabled &&
-                   !this.disposed &&
+        private bool IsWatchedShortcut(string path) {
+            return enabled &&
+                   !disposed &&
                    !string.IsNullOrWhiteSpace(path) &&
                    LibraryService.IsFileShortcut(path);
         }
 
-        private bool IsWatchedMediaFile(string path)
-        {
-            return this.enabled &&
-                   !this.disposed &&
+        private bool IsWatchedMediaFile(string path) {
+            return enabled &&
+                   !disposed &&
                    !string.IsNullOrWhiteSpace(path) &&
-                   (this.libraryManager.IsVideoFile(path.AsSpan()) ||
-                    this.libraryManager.IsAudioFile(path.AsSpan()));
+                   (libraryManager.IsVideoFile(path.AsSpan()) ||
+                    libraryManager.IsAudioFile(path.AsSpan()));
         }
 
-        private bool RecordCreatedEvent(string directoryPath, string path)
-        {
+        private bool RecordCreatedEvent(string directoryPath, string path) {
             var now = DateTime.UtcNow;
 
-            lock (this.syncRoot)
-            {
-                var shouldReportDirectory = !this.createdEvents.TryGetValue(directoryPath, out var createdAt) ||
-                                            now - createdAt >= this.directoryReportDedupeWindow;
-                this.createdEvents[directoryPath] = now;
-                this.createdEvents[path] = now;
-                this.lastModifiedEvents[path] = now;
-                PruneEventCache(this.createdEvents, now);
-                PruneEventCache(this.lastModifiedEvents, now);
+            lock (syncRoot) {
+                var shouldReportDirectory = !createdEvents.TryGetValue(directoryPath, out var createdAt) ||
+                                            now - createdAt >= directoryReportDedupeWindow;
+                createdEvents[directoryPath] = now;
+                createdEvents[path] = now;
+                lastModifiedEvents[path] = now;
+                PruneEventCache(createdEvents, now);
+                PruneEventCache(lastModifiedEvents, now);
                 return shouldReportDirectory;
             }
         }
 
-        private bool ShouldSkipModifiedLog(string path)
-        {
+        private bool ShouldSkipModifiedLog(string path) {
             var now = DateTime.UtcNow;
 
-            lock (this.syncRoot)
-            {
-                if (this.createdEvents.TryGetValue(path, out var createdAt) &&
-                    now - createdAt < this.modifiedEventDedupeWindow)
-                {
-                    this.lastModifiedEvents[path] = now;
-                    PruneEventCache(this.createdEvents, now);
-                    PruneEventCache(this.lastModifiedEvents, now);
+            lock (syncRoot) {
+                if (createdEvents.TryGetValue(path, out var createdAt) &&
+                    now - createdAt < modifiedEventDedupeWindow) {
+                    lastModifiedEvents[path] = now;
+                    PruneEventCache(createdEvents, now);
+                    PruneEventCache(lastModifiedEvents, now);
                     return true;
                 }
 
-                if (this.lastModifiedEvents.TryGetValue(path, out var lastSeen) &&
-                    now - lastSeen < this.modifiedEventDedupeWindow)
-                {
+                if (lastModifiedEvents.TryGetValue(path, out var lastSeen) &&
+                    now - lastSeen < modifiedEventDedupeWindow)
                     return true;
-                }
 
-                this.lastModifiedEvents[path] = now;
-                PruneEventCache(this.createdEvents, now);
-                PruneEventCache(this.lastModifiedEvents, now);
+                lastModifiedEvents[path] = now;
+                PruneEventCache(createdEvents, now);
+                PruneEventCache(lastModifiedEvents, now);
 
                 return false;
             }
         }
 
-        private void PruneEventCache(Dictionary<string, DateTime> events, DateTime now)
-        {
-            var staleBefore = now - this.modifiedEventDedupeWindow;
+        private void PruneEventCache(Dictionary<string, DateTime> events, DateTime now) {
+            var staleBefore = now - modifiedEventDedupeWindow;
             var stalePaths = events
                 .Where(pair => pair.Value < staleBefore)
                 .Select(pair => pair.Key)
                 .ToList();
 
-            foreach (var stalePath in stalePaths)
-            {
-                events.Remove(stalePath);
-            }
-        }
-
-        public void Dispose()
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            this.disposed = true;
-            this.enabled = false;
-
-            lock (this.syncRoot)
-            {
-                foreach (var watcher in this.watchers.Values)
-                {
-                    try
-                    {
-                        watcher.EnableRaisingEvents = false;
-                        watcher.Dispose();
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                this.watchers.Clear();
-                this.createdEvents.Clear();
-                this.lastModifiedEvents.Clear();
-            }
+            foreach (var stalePath in stalePaths) events.Remove(stalePath);
         }
     }
 }

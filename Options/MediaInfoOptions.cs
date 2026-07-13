@@ -6,10 +6,8 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.Attributes;
 using MediaBrowser.Model.GenericEdit;
 
-namespace MediaInfoKeeper.Options
-{
-    public class MediaInfoOptions : EditableOptionsBase
-    {
+namespace MediaInfoKeeper.Options {
+    public class MediaInfoOptions : EditableOptionsBase {
         public override string EditorTitle => "媒体信息";
 
         public override string EditorDescription => string.Empty;
@@ -17,7 +15,7 @@ namespace MediaInfoKeeper.Options
         [DisplayName("入库时提取媒体信息")]
         [Description("入库时若 JSON 不存在或恢复失败，提取媒体信息并写入 JSON。")]
         public bool ExtractMediaInfoOnItemAdded { get; set; } = true;
-        
+
         [DisplayName("条目移除时删除 JSON")]
         [Description("启用后，条目移除时删除已持久化的 JSON。")]
         public bool DeleteMediaInfoJsonOnRemove { get; set; } = false;
@@ -37,31 +35,26 @@ namespace MediaInfoKeeper.Options
 
         [DisplayName("提取尝试次数")]
         [Description("媒体信息刷新后仍检测不到音频或视频流时的最大尝试次数，包含首次提取。")]
-        [MinValue(1), MaxValue(10)]
+        [MinValue(1)]
+        [MaxValue(10)]
         public int ExtractMediaInfoAttemptCount { get; set; } = 3;
 
         [DisplayName("提取任务并发数")]
         [Description("设置媒体信息提取的最大并发数，修改后重启生效，默认 1。")]
-        [MinValue(1), MaxValue(20)]
+        [MinValue(1)]
+        [MaxValue(20)]
         public int MaxConcurrentCount { get; set; } = 1;
 
-        public void Initialize()
-        {
+        public void Initialize() {
         }
 
-        public override IEditObjectContainer CreateEditContainer()
-        {
+        public override IEditObjectContainer CreateEditContainer() {
             var container = (EditObjectContainer)base.CreateEditContainer();
             var root = container.EditorRoot;
-            if (root?.EditorItems == null || root.EditorItems.Length == 0)
-            {
-                return container;
-            }
+            if (root?.EditorItems == null || root.EditorItems.Length == 0) return container;
 
-            root.EditorItems = new EditorBase[]
-            {
-                new EditorGroup("媒体信息", root.EditorItems, "group1", root.Id, null)
-                {
+            root.EditorItems = new EditorBase[] {
+                new EditorGroup("媒体信息", root.EditorItems, "group1", root.Id, null) {
                     Description = "插件会持续监听 .strm 文件内容变更，并阻止 Emby 系统 ffprobe/ffmpeg 运行；仅在插件内部需要提取媒体信息时按需放行。"
                 }
             };
@@ -69,18 +62,12 @@ namespace MediaInfoKeeper.Options
             return container;
         }
 
-        internal static string GetDefaultMediaInfoJsonRootFolder()
-        {
-            try
-            {
+        internal static string GetDefaultMediaInfoJsonRootFolder() {
+            try {
                 var programDataPath = Plugin.Instance?.AppHost?.Resolve<IApplicationPaths>()?.ProgramDataPath;
-                if (!string.IsNullOrWhiteSpace(programDataPath))
-                {
-                    return Path.Combine(programDataPath, "data", Plugin.PluginName);
-                }
+                if (!string.IsNullOrWhiteSpace(programDataPath)) return Path.Combine(programDataPath, "data", Plugin.PluginName);
             }
-            catch
-            {
+            catch {
             }
 
             return Path.Combine("/config", "data", Plugin.PluginName);

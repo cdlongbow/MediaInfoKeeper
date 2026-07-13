@@ -1,18 +1,15 @@
-namespace MediaInfoKeeper.Options.View
-{
-    using System;
-    using System.Threading.Tasks;
-    using MediaBrowser.Common;
-    using MediaBrowser.Model.Plugins;
-    using MediaBrowser.Model.Plugins.UI.Views;
-    using MediaBrowser.Model.Tasks;
-    using MediaInfoKeeper.Options;
-    using MediaInfoKeeper.Options.Store;
-    using MediaInfoKeeper.Options.UIBaseClasses.Views;
-    using MediaInfoKeeper.ScheduledTask;
+using System;
+using System.Threading.Tasks;
+using MediaBrowser.Common;
+using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Plugins.UI.Views;
+using MediaBrowser.Model.Tasks;
+using MediaInfoKeeper.Options.Store;
+using MediaInfoKeeper.Options.UIBaseClasses.Views;
+using MediaInfoKeeper.ScheduledTask;
 
-    internal class MainPageView : PluginPageView
-    {
+namespace MediaInfoKeeper.Options.View {
+    internal class MainPageView : PluginPageView {
         private const string UpdatePluginDialogCommandId = "main.scheduled.updatePlugin";
         private const string UpdatePluginRunCommandId = "main.scheduled.run.updatePlugin";
         private const string RefreshRecentMetadataDialogCommandId = "main.scheduled.refreshRecentMetadata";
@@ -37,134 +34,91 @@ namespace MediaInfoKeeper.Options.View
         private readonly MainPageOptionsStore store;
 
         public MainPageView(IApplicationHost applicationHost, PluginInfo pluginInfo, MainPageOptionsStore store)
-            : base(pluginInfo.Id)
-        {
+            : base(pluginInfo.Id) {
             this.applicationHost = applicationHost;
             this.pluginInfo = pluginInfo;
             this.store = store;
-            this.ContentData = store.GetOptions();
+            ContentData = store.GetOptions();
         }
 
-        public MainPageOptions Options => this.ContentData as MainPageOptions;
+        public MainPageOptions Options => ContentData as MainPageOptions;
 
-        public override Task<IPluginUIView> RunCommand(string itemId, string commandId, string data)
-        {
+        public override Task<IPluginUIView> RunCommand(string itemId, string commandId, string data) {
             if (string.Equals(commandId, UpdatePluginDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new UpdatePluginTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(new UpdatePluginTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, RefreshRecentMetadataDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new RefreshRecentMetadataTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(new RefreshRecentMetadataTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, ScanRecentIntroDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new ScanRecentIntroTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(new ScanRecentIntroTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, SubmitTheIntroDbMarkersDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new SubmitTheIntroDbMarkersTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(
+                    new SubmitTheIntroDbMarkersTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, ExtractRecentMediaInfoDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new ExtractRecentMediaInfoTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(
+                    new ExtractRecentMediaInfoTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, ExportExistingMediaInfoDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new ExportExistingMediaInfoTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(
+                    new ExportExistingMediaInfoTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, RestoreMediaInfoDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new RestoreMediaInfoTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(new RestoreMediaInfoTaskDialogView(pluginInfo.Id, Options));
 
             if (string.Equals(commandId, ScanExternalFilesDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(new ScanExternalFilesTaskDialogView(this.pluginInfo.Id, this.Options));
-            }
+                return Task.FromResult<IPluginUIView>(new ScanExternalFilesTaskDialogView(pluginInfo.Id, Options));
 
-            if (string.Equals(commandId, RestartEmbyDialogCommandId, StringComparison.Ordinal))
-            {
-                return Task.FromResult<IPluginUIView>(this);
-            }
+            if (string.Equals(commandId, RestartEmbyDialogCommandId, StringComparison.Ordinal)) return Task.FromResult<IPluginUIView>(this);
 
             if (string.Equals(commandId, UpdatePluginRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<UpdatePluginTask>();
-            }
+                return RunScheduledTaskAsync<UpdatePluginTask>();
 
             if (string.Equals(commandId, RefreshRecentMetadataRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<RefreshRecentMetadataTask>();
-            }
+                return RunScheduledTaskAsync<RefreshRecentMetadataTask>();
 
             if (string.Equals(commandId, ScanRecentIntroRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<ScanRecentIntroTask>();
-            }
+                return RunScheduledTaskAsync<ScanRecentIntroTask>();
 
             if (string.Equals(commandId, SubmitTheIntroDbMarkersRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<SubmitTheIntroDbMarkersTask>();
-            }
+                return RunScheduledTaskAsync<SubmitTheIntroDbMarkersTask>();
 
             if (string.Equals(commandId, ExtractRecentMediaInfoRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<ExtractRecentMediaInfoTask>();
-            }
+                return RunScheduledTaskAsync<ExtractRecentMediaInfoTask>();
 
             if (string.Equals(commandId, ExportExistingMediaInfoRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<ExportExistingMediaInfoTask>();
-            }
+                return RunScheduledTaskAsync<ExportExistingMediaInfoTask>();
 
             if (string.Equals(commandId, RestoreMediaInfoRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<RestoreMediaInfoTask>();
-            }
+                return RunScheduledTaskAsync<RestoreMediaInfoTask>();
 
             if (string.Equals(commandId, ScanExternalFilesRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<ScanExternalFilesTask>();
-            }
+                return RunScheduledTaskAsync<ScanExternalFilesTask>();
 
             if (string.Equals(commandId, RestartEmbyRunCommandId, StringComparison.Ordinal))
-            {
-                return this.RunScheduledTaskAsync<RestartEmbyTask>();
-            }
+                return RunScheduledTaskAsync<RestartEmbyTask>();
 
             return base.RunCommand(itemId, commandId, data);
         }
 
-        public override async Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data)
-        {
-            this.store.SetOptions(this.Options);
+        public override async Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data) {
+            store.SetOptions(Options);
             return await base.OnSaveCommand(itemId, commandId, data).ConfigureAwait(false);
         }
 
-        public override void OnDialogResult(IPluginUIView dialogView, bool completedOk, object data)
-        {
+        public override void OnDialogResult(IPluginUIView dialogView, bool completedOk, object data) {
             base.OnDialogResult(dialogView, completedOk, data);
-            if (!completedOk)
-            {
-                return;
-            }
+            if (!completedOk) return;
 
-            this.store.SetOptions(this.Options);
+            store.SetOptions(Options);
         }
 
         private Task<IPluginUIView> RunScheduledTaskAsync<TTask>()
-            where TTask : IScheduledTask
-        {
-            var taskManager = this.applicationHost.Resolve<ITaskManager>();
-            taskManager?.QueueScheduledTask<TTask>(new TaskOptions
-            {
+            where TTask : IScheduledTask {
+            var taskManager = applicationHost.Resolve<ITaskManager>();
+            taskManager?.QueueScheduledTask<TTask>(new TaskOptions {
                 HasManualInteraction = true
             });
 

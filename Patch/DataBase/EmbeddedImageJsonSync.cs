@@ -6,13 +6,11 @@ using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 图片列表写入数据库成功后，同步覆盖音频主图 JSON。
+    ///     图片列表写入数据库成功后，同步覆盖音频主图 JSON。
     /// </summary>
-    public static class EmbeddedImageJsonSync
-    {
+    public static class EmbeddedImageJsonSync {
         private static Harmony harmony;
         private static ILogger logger;
         private static MethodInfo saveImages;
@@ -21,10 +19,8 @@ namespace MediaInfoKeeper.Patch
 
         public static bool IsReady => harmony != null && (!isEnabled || isPatched);
 
-        public static void Initialize(ILogger pluginLogger, bool enable)
-        {
-            if (harmony != null)
-            {
+        public static void Initialize(ILogger pluginLogger, bool enable) {
+            if (harmony != null) {
                 Configure(enable);
                 return;
             }
@@ -32,8 +28,7 @@ namespace MediaInfoKeeper.Patch
             logger = pluginLogger;
             isEnabled = enable;
 
-            try
-            {
+            try {
                 var embyServerImplementationsAssembly = Assembly.Load("Emby.Server.Implementations");
                 var sqliteItemRepository =
                     embyServerImplementationsAssembly.GetType("Emby.Server.Implementations.Data.SqliteItemRepository");
@@ -41,8 +36,7 @@ namespace MediaInfoKeeper.Patch
                 saveImages = PatchMethodResolver.Resolve(
                     sqliteItemRepository,
                     version,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "sqliteitemrepository-saveimages-exact",
                         MethodName = "SaveImages",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
@@ -52,21 +46,16 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "EmbeddedImageJsonSync.SaveImages");
 
-                if (saveImages == null)
-                {
+                if (saveImages == null) {
                     PatchLog.InitFailed(logger, nameof(EmbeddedImageJsonSync), "目标方法缺失");
                     return;
                 }
 
                 harmony = new Harmony("mediainfokeeper.database.embeddedimagejsonpersist");
 
-                if (isEnabled)
-                {
-                    Patch();
-                }
+                if (isEnabled) Patch();
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 logger?.Error("EmbeddedImageJsonSync 初始化失败。");
                 logger?.Error(e.Message);
                 logger?.Error(e.ToString());
@@ -75,70 +64,46 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enable)
-        {
+        public static void Configure(bool enable) {
             isEnabled = enable;
 
-            if (harmony == null)
-            {
-                return;
-            }
+            if (harmony == null) return;
 
             if (isEnabled)
-            {
                 Patch();
-            }
             else
-            {
                 Unpatch();
-            }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null) return;
 
             harmony.Patch(saveImages,
                 postfix: new HarmonyMethod(typeof(EmbeddedImageJsonSync), nameof(SaveImagesPostfix)));
             isPatched = true;
         }
 
-        private static void Unpatch()
-        {
-            if (!isPatched || harmony == null)
-            {
-                return;
-            }
+        private static void Unpatch() {
+            if (!isPatched || harmony == null) return;
 
             harmony.Unpatch(saveImages, HarmonyPatchType.Postfix, harmony.Id);
             isPatched = false;
         }
 
         [HarmonyPostfix]
-        private static void SaveImagesPostfix(long id, ItemImageInfo[] images, bool __runOriginal)
-        {
+        private static void SaveImagesPostfix(long id, ItemImageInfo[] images, bool __runOriginal) {
             if (!__runOriginal ||
                 images == null ||
                 !Array.Exists(images, image => image?.Type == ImageType.Primary))
-            {
                 return;
-            }
 
             var item = Plugin.LibraryManager?.GetItemById(id);
-            if (item is not Audio)
-            {
-                return;
-            }
+            if (item is not Audio) return;
 
-            try
-            {
+            try {
                 Plugin.EmbeddedInfoStore?.OverWriteImageToFile(item);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error($"音频主图已写入数据库，但同步 JSON 失败: {item.FileName ?? item.Path ?? item.InternalId.ToString()}");
                 logger?.Error(ex.Message);
                 logger?.Debug(ex.StackTrace);

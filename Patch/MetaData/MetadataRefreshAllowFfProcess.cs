@@ -5,12 +5,10 @@ using HarmonyLib;
 using MediaBrowser.Controller.Api;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
-    public static class MetadataRefreshAllowFfProcess
-    {
+namespace MediaInfoKeeper.Patch {
+    public static class MetadataRefreshAllowFfProcess {
         private const string QueryParameterName = "AllowFfProcess";
-        private static readonly AsyncLocal<bool> CurrentAllowance = new AsyncLocal<bool>();
+        private static readonly AsyncLocal<bool> CurrentAllowance = new();
         private static Harmony harmony;
         private static MethodInfo postMethod;
         private static ILogger logger;
@@ -20,37 +18,28 @@ namespace MediaInfoKeeper.Patch
 
         public static bool HasCurrentAllowance => CurrentAllowance.Value;
 
-        public static void Initialize(ILogger pluginLogger, bool enabled)
-        {
+        public static void Initialize(ILogger pluginLogger, bool enabled) {
             configuredEnabled = enabled;
 
-            if (harmony != null)
-            {
-                return;
-            }
+            if (harmony != null) return;
 
             logger = pluginLogger;
-            if (!enabled)
-            {
-                return;
-            }
+            if (!enabled) return;
 
-            try
-            {
+            try {
                 var embyApi = Assembly.Load("Emby.Api");
                 var itemRefreshServiceType = embyApi?.GetType("Emby.Api.ItemRefreshService");
                 var refreshItemType = embyApi?.GetType("Emby.Api.RefreshItem");
-                if (itemRefreshServiceType == null || refreshItemType == null)
-                {
-                    PatchLog.InitFailed(logger, nameof(MetadataRefreshAllowFfProcess), "未找到 ItemRefreshService 或 RefreshItem 类型");
+                if (itemRefreshServiceType == null || refreshItemType == null) {
+                    PatchLog.InitFailed(logger, nameof(MetadataRefreshAllowFfProcess),
+                        "未找到 ItemRefreshService 或 RefreshItem 类型");
                     return;
                 }
 
                 postMethod = PatchMethodResolver.Resolve(
                     itemRefreshServiceType,
                     embyApi.GetName().Version,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "item-refresh-post-exact",
                         MethodName = "Post",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public,
@@ -60,8 +49,7 @@ namespace MediaInfoKeeper.Patch
                     logger,
                     "MetadataRefreshAllowFfProcess.Post");
 
-                if (postMethod == null)
-                {
+                if (postMethod == null) {
                     PatchLog.InitFailed(logger, nameof(MetadataRefreshAllowFfProcess), "未命中 ItemRefreshService.Post");
                     return;
                 }
@@ -70,11 +58,10 @@ namespace MediaInfoKeeper.Patch
                 PatchLog.Patched(logger, nameof(MetadataRefreshAllowFfProcess), postMethod);
                 harmony.Patch(
                     postMethod,
-                    prefix: new HarmonyMethod(typeof(MetadataRefreshAllowFfProcess), nameof(PostPrefix)),
+                    new HarmonyMethod(typeof(MetadataRefreshAllowFfProcess), nameof(PostPrefix)),
                     finalizer: new HarmonyMethod(typeof(MetadataRefreshAllowFfProcess), nameof(PostFinalizer)));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("刷新元数据允许 FF 处理补丁初始化失败");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -82,34 +69,28 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enabled)
-        {
+        public static void Configure(bool enabled) {
             configuredEnabled = enabled;
         }
 
-        private static void PostPrefix(object __instance, out bool __state)
-        {
+        private static void PostPrefix(object __instance, out bool __state) {
             __state = CurrentAllowance.Value;
             CurrentAllowance.Value = configuredEnabled && ReadAllowFfProcess(__instance);
         }
 
-        private static void PostFinalizer(bool __state)
-        {
+        private static void PostFinalizer(bool __state) {
             CurrentAllowance.Value = __state;
         }
 
-        private static bool ReadAllowFfProcess(object instance)
-        {
-            try
-            {
+        private static bool ReadAllowFfProcess(object instance) {
+            try {
                 var request = (instance as BaseApiService)?.Request;
                 var raw = request?.QueryString?[QueryParameterName];
                 return string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase) ||
                        string.Equals(raw, "1", StringComparison.OrdinalIgnoreCase) ||
                        string.Equals(raw, "yes", StringComparison.OrdinalIgnoreCase);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Debug("读取允许 FF 处理参数失败: {0}", ex.Message);
                 return false;
             }

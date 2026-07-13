@@ -1,14 +1,11 @@
-namespace MediaInfoKeeper.Options.UIBaseClasses.Views
-{
-    using System.Threading.Tasks;
-    using MediaBrowser.Model.Plugins.UI.Views;
+using System.Threading.Tasks;
+using MediaBrowser.Model.Plugins.UI.Views;
 
-    internal abstract class PluginPageView : PluginViewBase, IPluginPageView
-    {
+namespace MediaInfoKeeper.Options.UIBaseClasses.Views {
+    internal abstract class PluginPageView : PluginViewBase, IPluginPageView {
         protected PluginPageView(string pluginId)
-            : base(pluginId)
-        {
-            this.PluginId = pluginId;
+            : base(pluginId) {
+            PluginId = pluginId;
         }
 
         public bool ShowSave { get; set; } = true;
@@ -19,8 +16,7 @@ namespace MediaInfoKeeper.Options.UIBaseClasses.Views
 
         public bool AllowBack { get; set; } = true;
 
-        public virtual Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data)
-        {
+        public virtual Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data) {
             return Task.FromResult((IPluginUIView)this);
         }
     }

@@ -8,20 +8,13 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 在 Emby 首次 Default 刷新新条目时屏蔽远程元数据和远程图片提供器。
-    /// 插件后续主动发起的 FullRefresh 不在该作用域内，仍按媒体库配置执行远程刮削。
+    ///     在 Emby 首次 Default 刷新新条目时屏蔽远程元数据和远程图片提供器。
+    ///     插件后续主动发起的 FullRefresh 不在该作用域内，仍按媒体库配置执行远程刮削。
     /// </summary>
-    public static class FirstRefreshRemoteBlock
-    {
-        private sealed class FirstRefreshScopeState
-        {
-            public BaseItem PreviousItem { get; set; }
-        }
-
-        private static readonly AsyncLocal<BaseItem> CurrentFirstRefreshItem = new AsyncLocal<BaseItem>();
+    public static class FirstRefreshRemoteBlock {
+        private static readonly AsyncLocal<BaseItem> CurrentFirstRefreshItem = new();
         private static Harmony harmony;
         private static MethodInfo refreshSingleItem;
         private static MethodInfo canRefreshMetadata;
@@ -34,27 +27,18 @@ namespace MediaInfoKeeper.Patch
                                       canRefreshMetadata != null &&
                                       canRefreshImage != null;
 
-        public static void Initialize(ILogger pluginLogger, bool enabled)
-        {
+        public static void Initialize(ILogger pluginLogger, bool enabled) {
             configuredEnabled = enabled;
 
-            if (harmony != null)
-            {
-                return;
-            }
+            if (harmony != null) return;
 
             logger = pluginLogger;
-            if (!enabled)
-            {
-                return;
-            }
+            if (!enabled) return;
 
-            try
-            {
+            try {
                 var embyProviders = Assembly.Load("Emby.Providers");
                 var providerManagerType = embyProviders?.GetType("Emby.Providers.Manager.ProviderManager");
-                if (providerManagerType == null)
-                {
+                if (providerManagerType == null) {
                     PatchLog.InitFailed(logger, nameof(FirstRefreshRemoteBlock), "未找到 ProviderManager 类型");
                     return;
                 }
@@ -64,8 +48,7 @@ namespace MediaInfoKeeper.Patch
                 canRefreshMetadata = ResolveCanRefreshMetadata(providerManagerType, assemblyVersion);
                 canRefreshImage = ResolveCanRefreshImage(providerManagerType, assemblyVersion);
 
-                if (refreshSingleItem == null || canRefreshMetadata == null || canRefreshImage == null)
-                {
+                if (refreshSingleItem == null || canRefreshMetadata == null || canRefreshImage == null) {
                     PatchLog.InitFailed(logger, nameof(FirstRefreshRemoteBlock), "ProviderManager 首次刷新远程屏蔽目标方法缺失");
                     return;
                 }
@@ -74,8 +57,8 @@ namespace MediaInfoKeeper.Patch
                 PatchLog.Patched(logger, nameof(FirstRefreshRemoteBlock), refreshSingleItem);
                 harmony.Patch(
                     refreshSingleItem,
-                    prefix: new HarmonyMethod(typeof(FirstRefreshRemoteBlock), nameof(EnterFirstRefreshScopePrefix)),
-                    postfix: new HarmonyMethod(typeof(FirstRefreshRemoteBlock), nameof(ExitFirstRefreshScopePostfix)));
+                    new HarmonyMethod(typeof(FirstRefreshRemoteBlock), nameof(EnterFirstRefreshScopePrefix)),
+                    new HarmonyMethod(typeof(FirstRefreshRemoteBlock), nameof(ExitFirstRefreshScopePostfix)));
 
                 PatchLog.Patched(logger, nameof(FirstRefreshRemoteBlock), canRefreshMetadata);
                 harmony.Patch(
@@ -87,8 +70,7 @@ namespace MediaInfoKeeper.Patch
                     canRefreshImage,
                     postfix: new HarmonyMethod(typeof(FirstRefreshRemoteBlock), nameof(BlockRemoteImagePostfix)));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 logger?.Error("首次刷新远程刮削屏蔽补丁初始化失败");
                 logger?.Error(ex.Message);
                 logger?.Error(ex.ToString());
@@ -96,17 +78,14 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enabled)
-        {
+        public static void Configure(bool enabled) {
             configuredEnabled = enabled;
         }
 
-        private static MethodInfo ResolveRefreshSingleItem(Type providerManagerType, Version assemblyVersion)
-        {
+        private static MethodInfo ResolveRefreshSingleItem(Type providerManagerType, Version assemblyVersion) {
             var itemUpdateType = Assembly.Load("MediaBrowser.Controller")
                 ?.GetType("MediaBrowser.Controller.Library.ItemUpdateType");
-            if (itemUpdateType == null)
-            {
+            if (itemUpdateType == null) {
                 PatchLog.InitFailed(logger, nameof(FirstRefreshRemoteBlock), "未找到 ItemUpdateType");
                 return null;
             }
@@ -114,13 +93,11 @@ namespace MediaInfoKeeper.Patch
             return PatchMethodResolver.Resolve(
                 providerManagerType,
                 assemblyVersion,
-                new MethodSignatureProfile
-                {
+                new MethodSignatureProfile {
                     Name = "refresh-single-item-exact",
                     MethodName = "RefreshSingleItem",
                     BindingFlags = BindingFlags.Instance | BindingFlags.Public,
-                    ParameterTypes = new[]
-                    {
+                    ParameterTypes = new[] {
                         typeof(BaseItem),
                         typeof(MetadataRefreshOptions),
                         typeof(BaseItem[]),
@@ -134,18 +111,15 @@ namespace MediaInfoKeeper.Patch
                 "FirstRefreshRemoteBlock.ProviderManager.RefreshSingleItem");
         }
 
-        private static MethodInfo ResolveCanRefreshMetadata(Type providerManagerType, Version assemblyVersion)
-        {
+        private static MethodInfo ResolveCanRefreshMetadata(Type providerManagerType, Version assemblyVersion) {
             return PatchMethodResolver.Resolve(
                 providerManagerType,
                 assemblyVersion,
-                new MethodSignatureProfile
-                {
+                new MethodSignatureProfile {
                     Name = "can-refresh-metadata-exact",
                     MethodName = "CanRefresh",
                     BindingFlags = BindingFlags.Static | BindingFlags.NonPublic,
-                    ParameterTypes = new[]
-                    {
+                    ParameterTypes = new[] {
                         typeof(IMetadataProvider),
                         typeof(BaseItem),
                         typeof(LibraryOptions),
@@ -160,18 +134,15 @@ namespace MediaInfoKeeper.Patch
                 "FirstRefreshRemoteBlock.ProviderManager.CanRefreshMetadata");
         }
 
-        private static MethodInfo ResolveCanRefreshImage(Type providerManagerType, Version assemblyVersion)
-        {
+        private static MethodInfo ResolveCanRefreshImage(Type providerManagerType, Version assemblyVersion) {
             return PatchMethodResolver.Resolve(
                 providerManagerType,
                 assemblyVersion,
-                new MethodSignatureProfile
-                {
+                new MethodSignatureProfile {
                     Name = "can-refresh-image-exact",
                     MethodName = "CanRefresh",
                     BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic,
-                    ParameterTypes = new[]
-                    {
+                    ParameterTypes = new[] {
                         typeof(IImageProvider),
                         typeof(BaseItem),
                         typeof(LibraryOptions),
@@ -186,34 +157,26 @@ namespace MediaInfoKeeper.Patch
                 "FirstRefreshRemoteBlock.ProviderManager.CanRefreshImage");
         }
 
-        private static void EnterFirstRefreshScopePrefix([HarmonyArgument(0)] BaseItem item, [HarmonyArgument(1)] MetadataRefreshOptions options, out FirstRefreshScopeState __state)
-        {
+        private static void EnterFirstRefreshScopePrefix([HarmonyArgument(0)] BaseItem item,
+            [HarmonyArgument(1)] MetadataRefreshOptions options, out FirstRefreshScopeState __state) {
             __state = null;
             if (!configuredEnabled ||
                 item == null ||
                 options == null ||
-                item.DateLastRefreshed != default(DateTimeOffset) ||
+                item.DateLastRefreshed != default ||
                 options.MetadataRefreshMode != MetadataRefreshMode.Default)
-            {
                 return;
-            }
 
-            __state = new FirstRefreshScopeState
-            {
+            __state = new FirstRefreshScopeState {
                 PreviousItem = CurrentFirstRefreshItem.Value
             };
             CurrentFirstRefreshItem.Value = item;
         }
 
-        private static void ExitFirstRefreshScopePostfix(ref object __result, FirstRefreshScopeState __state)
-        {
-            if (__state == null)
-            {
-                return;
-            }
+        private static void ExitFirstRefreshScopePostfix(ref object __result, FirstRefreshScopeState __state) {
+            if (__state == null) return;
 
-            if (__result is Task task)
-            {
+            if (__result is Task task) {
                 __result = WrapWithFirstRefreshScope(task, __state);
                 return;
             }
@@ -221,8 +184,7 @@ namespace MediaInfoKeeper.Patch
             CurrentFirstRefreshItem.Value = __state.PreviousItem;
         }
 
-        private static void BlockRemoteMetadataPostfix(IMetadataProvider provider, BaseItem item, ref bool __result)
-        {
+        private static void BlockRemoteMetadataPostfix(IMetadataProvider provider, BaseItem item, ref bool __result) {
             var scopedItem = CurrentFirstRefreshItem.Value;
             if (__result &&
                 configuredEnabled &&
@@ -231,13 +193,10 @@ namespace MediaInfoKeeper.Patch
                 scopedItem.InternalId == item.InternalId &&
                 provider is IRemoteMetadataProvider &&
                 !(provider is IForcedProvider))
-            {
                 __result = false;
-            }
         }
 
-        private static void BlockRemoteImagePostfix(IImageProvider provider, BaseItem item, ref bool __result)
-        {
+        private static void BlockRemoteImagePostfix(IImageProvider provider, BaseItem item, ref bool __result) {
             var scopedItem = CurrentFirstRefreshItem.Value;
             if (__result &&
                 configuredEnabled &&
@@ -245,21 +204,14 @@ namespace MediaInfoKeeper.Patch
                 item != null &&
                 scopedItem.InternalId == item.InternalId &&
                 provider is IRemoteImageProvider)
-            {
                 __result = false;
-            }
         }
 
-        private static object WrapWithFirstRefreshScope(Task task, FirstRefreshScopeState state)
-        {
+        private static object WrapWithFirstRefreshScope(Task task, FirstRefreshScopeState state) {
             var taskType = task.GetType();
-            if (taskType == typeof(Task))
-            {
-                return AwaitTask(task, state);
-            }
+            if (taskType == typeof(Task)) return AwaitTask(task, state);
 
-            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
-            {
+            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>)) {
                 var resultType = taskType.GetGenericArguments()[0];
                 var method = typeof(FirstRefreshRemoteBlock)
                     .GetMethod(nameof(AwaitGenericTask), BindingFlags.Static | BindingFlags.NonPublic)
@@ -270,28 +222,26 @@ namespace MediaInfoKeeper.Patch
             return task;
         }
 
-        private static async Task AwaitTask(Task task, FirstRefreshScopeState state)
-        {
-            try
-            {
+        private static async Task AwaitTask(Task task, FirstRefreshScopeState state) {
+            try {
                 await task.ConfigureAwait(false);
             }
-            finally
-            {
+            finally {
                 CurrentFirstRefreshItem.Value = state.PreviousItem;
             }
         }
 
-        private static async Task<T> AwaitGenericTask<T>(Task<T> task, FirstRefreshScopeState state)
-        {
-            try
-            {
+        private static async Task<T> AwaitGenericTask<T>(Task<T> task, FirstRefreshScopeState state) {
+            try {
                 return await task.ConfigureAwait(false);
             }
-            finally
-            {
+            finally {
                 CurrentFirstRefreshItem.Value = state.PreviousItem;
             }
+        }
+
+        private sealed class FirstRefreshScopeState {
+            public BaseItem PreviousItem { get; set; }
         }
     }
 }

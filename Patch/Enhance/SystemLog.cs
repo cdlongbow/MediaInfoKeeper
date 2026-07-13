@@ -1,19 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using HarmonyLib;
 using MediaBrowser.Model.Logging;
 
-namespace MediaInfoKeeper.Patch
-{
+namespace MediaInfoKeeper.Patch {
     /// <summary>
-    /// 按临时抑制标记过滤 NamedLogger 日志输出，并将特定噪音错误降级为 Debug。
+    ///     按临时抑制标记过滤 NamedLogger 日志输出，并将特定噪音错误降级为 Debug。
     /// </summary>
-    internal static class SystemLog
-    {
-        private static readonly AsyncLocal<int> suppressNextScopeCount = new AsyncLocal<int>();
+    internal static class SystemLog {
+        private static readonly AsyncLocal<int> suppressNextScopeCount = new();
         private static Harmony harmony;
         private static ILogger pluginLogger;
         private static MethodInfo namedLoggerLog;
@@ -22,13 +20,11 @@ namespace MediaInfoKeeper.Patch
         private static PropertyInfo namedLoggerNameProperty;
         private static bool isEnabled = true;
         private static bool isPatched;
-        private static HashSet<string> loggerNameBlacklist = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static HashSet<string> loggerNameBlacklist = new(StringComparer.OrdinalIgnoreCase);
         public static bool IsReady => harmony != null && isPatched;
 
-        public static void Initialize(ILogger logger, bool enable, string loggerNameBlacklistRaw)
-        {
-            if (harmony != null)
-            {
+        public static void Initialize(ILogger logger, bool enable, string loggerNameBlacklistRaw) {
+            if (harmony != null) {
                 Configure(enable, loggerNameBlacklistRaw);
                 return;
             }
@@ -37,16 +33,16 @@ namespace MediaInfoKeeper.Patch
             isEnabled = enable;
             UpdateLoggerNameBlacklist(loggerNameBlacklistRaw);
 
-            try
-            {
+            try {
                 var embyServerImplementationsAssembly = Assembly.Load("Emby.Server.Implementations");
-                var namedLoggerType = embyServerImplementationsAssembly.GetType("Emby.Server.Implementations.Logging.NamedLogger");
-                namedLoggerNameProperty = namedLoggerType?.GetProperty("Name", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var namedLoggerType =
+                    embyServerImplementationsAssembly.GetType("Emby.Server.Implementations.Logging.NamedLogger");
+                namedLoggerNameProperty = namedLoggerType?.GetProperty("Name",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 namedLoggerLog = PatchMethodResolver.Resolve(
                     namedLoggerType,
                     embyServerImplementationsAssembly.GetName().Version,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "namedlogger-log-exact",
                         MethodName = "Log",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -59,8 +55,7 @@ namespace MediaInfoKeeper.Patch
                 namedLoggerLogMemory = PatchMethodResolver.Resolve(
                     namedLoggerType,
                     embyServerImplementationsAssembly.GetName().Version,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "namedlogger-log-memory-exact",
                         MethodName = "Log",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -73,20 +68,19 @@ namespace MediaInfoKeeper.Patch
                 namedLoggerLogException = PatchMethodResolver.Resolve(
                     namedLoggerType,
                     embyServerImplementationsAssembly.GetName().Version,
-                    new MethodSignatureProfile
-                    {
+                    new MethodSignatureProfile {
                         Name = "namedlogger-logexception-exact",
                         MethodName = "LogException",
                         BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         IsStatic = false,
-                        ParameterTypes = new[] { typeof(LogSeverity), typeof(string), typeof(Exception), typeof(object[]) },
+                        ParameterTypes = new[]
+                            { typeof(LogSeverity), typeof(string), typeof(Exception), typeof(object[]) },
                         ReturnType = typeof(void)
                     },
                     pluginLogger,
                     "SystemLog.NamedLogger.LogException");
 
-                if (namedLoggerLog == null)
-                {
+                if (namedLoggerLog == null) {
                     InitFailed(pluginLogger, nameof(SystemLog), "NamedLogger.Log 未找到");
                     return;
                 }
@@ -94,8 +88,7 @@ namespace MediaInfoKeeper.Patch
                 harmony = new Harmony("mediainfokeeper.log");
                 Patch();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 pluginLogger?.Error("Log patch 初始化失败。");
                 pluginLogger?.Error(ex.Message);
                 pluginLogger?.Error(ex.ToString());
@@ -104,81 +97,60 @@ namespace MediaInfoKeeper.Patch
             }
         }
 
-        public static void Configure(bool enable, string loggerNameBlacklistRaw)
-        {
+        public static void Configure(bool enable, string loggerNameBlacklistRaw) {
             isEnabled = enable;
             UpdateLoggerNameBlacklist(loggerNameBlacklistRaw);
 
-            if (harmony == null)
-            {
-                return;
-            }
+            if (harmony == null) return;
 
             Patch();
         }
 
         /// <summary>
-        /// 临时抑制接下来通过 Log 输出的日志。
+        ///     临时抑制接下来通过 Log 输出的日志。
         /// </summary>
-        public static void SuppressNext(int count = 1)
-        {
-            if (count <= 0)
-            {
-                return;
-            }
+        public static void SuppressNext(int count = 1) {
+            if (count <= 0) return;
 
             suppressNextScopeCount.Value += count;
         }
 
-        private static bool TryConsumeSuppression()
-        {
+        private static bool TryConsumeSuppression() {
             var current = suppressNextScopeCount.Value;
-            if (current <= 0)
-            {
-                return false;
-            }
+            if (current <= 0) return false;
 
             suppressNextScopeCount.Value = current - 1;
             return true;
         }
 
-        private static bool IsBlockedMessage(LogSeverity severity, string message)
-        {
-            if (severity != LogSeverity.Error || string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
+        private static bool IsBlockedMessage(LogSeverity severity, string message) {
+            if (severity != LogSeverity.Error || string.IsNullOrWhiteSpace(message)) return false;
 
             return message.StartsWith("Error in ffprobe", StringComparison.OrdinalIgnoreCase) ||
-                   message.StartsWith("Error in Image Capture dynamic image provider", StringComparison.OrdinalIgnoreCase) ||
-                   message.StartsWith("Thumbnail-Filter extraction failed, will attempt standard way.", StringComparison.OrdinalIgnoreCase) ||
+                   message.StartsWith("Error in Image Capture dynamic image provider",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   message.StartsWith("Thumbnail-Filter extraction failed, will attempt standard way.",
+                       StringComparison.OrdinalIgnoreCase) ||
                    message.StartsWith("ffmpeg image extraction failed for", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void UpdateLoggerNameBlacklist(string raw)
-        {
+        private static void UpdateLoggerNameBlacklist(string raw) {
             loggerNameBlacklist = new HashSet<string>(
                 (raw ?? string.Empty)
-                    .Split(new[] { ',', ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(item => item.Trim())
-                    .Where(item => !string.IsNullOrWhiteSpace(item)),
+                .Split(new[] { ',', ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => item.Trim())
+                .Where(item => !string.IsNullOrWhiteSpace(item)),
                 StringComparer.OrdinalIgnoreCase);
         }
 
-        private static bool IsLoggerNameBlocked(object loggerInstance)
-        {
-            if (loggerNameBlacklist == null || loggerNameBlacklist.Count == 0 || loggerInstance == null || namedLoggerNameProperty == null)
-            {
+        private static bool IsLoggerNameBlocked(object loggerInstance) {
+            if (loggerNameBlacklist == null || loggerNameBlacklist.Count == 0 || loggerInstance == null ||
+                namedLoggerNameProperty == null)
                 return false;
-            }
 
-            try
-            {
+            try {
                 var loggerName = namedLoggerNameProperty.GetValue(loggerInstance) as string;
-                if (string.IsNullOrWhiteSpace(loggerName))
-                {
-                    return false;
-                }
+                if (string.IsNullOrWhiteSpace(loggerName)) return false;
 
                 loggerName = loggerName.Trim();
                 return loggerNameBlacklist.Any(rule =>
@@ -186,93 +158,61 @@ namespace MediaInfoKeeper.Patch
                     (string.Equals(loggerName, rule, StringComparison.OrdinalIgnoreCase) ||
                      loggerName.StartsWith(rule, StringComparison.OrdinalIgnoreCase)));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 pluginLogger?.Debug("SystemLog 读取 logger.Name 失败: {0}", ex.Message);
                 return false;
             }
         }
 
-        private static void Patch()
-        {
-            if (isPatched || harmony == null || namedLoggerLog == null)
-            {
-                return;
-            }
+        private static void Patch() {
+            if (isPatched || harmony == null || namedLoggerLog == null) return;
 
             harmony.Patch(namedLoggerLog,
-                prefix: new HarmonyMethod(typeof(SystemLog), nameof(NamedLoggerLogPrefix)));
+                new HarmonyMethod(typeof(SystemLog), nameof(NamedLoggerLogPrefix)));
             if (namedLoggerLogMemory != null)
-            {
                 harmony.Patch(namedLoggerLogMemory,
-                    prefix: new HarmonyMethod(typeof(SystemLog), nameof(NamedLoggerMemoryLogPrefix)));
-            }
+                    new HarmonyMethod(typeof(SystemLog), nameof(NamedLoggerMemoryLogPrefix)));
 
             if (namedLoggerLogException != null)
-            {
                 harmony.Patch(namedLoggerLogException,
-                    prefix: new HarmonyMethod(typeof(SystemLog), nameof(NamedLoggerLogExceptionPrefix)));
-            }
+                    new HarmonyMethod(typeof(SystemLog), nameof(NamedLoggerLogExceptionPrefix)));
 
             Patched(pluginLogger, nameof(SystemLog), namedLoggerLog);
             isPatched = true;
         }
 
         [HarmonyPrefix]
-        private static bool NamedLoggerLogPrefix(object __instance, [HarmonyArgument(0)] ref LogSeverity severity, [HarmonyArgument(1)] string message)
-        {
-            if (!isEnabled)
-            {
-                return true;
-            }
+        private static bool NamedLoggerLogPrefix(object __instance, [HarmonyArgument(0)] ref LogSeverity severity,
+            [HarmonyArgument(1)] string message) {
+            if (!isEnabled) return true;
 
-            if (TryConsumeSuppression())
-            {
-                return false;
-            }
+            if (TryConsumeSuppression()) return false;
 
-            if (IsBlockedMessage(severity, message))
-            {
-                severity = LogSeverity.Debug;
-            }
+            if (IsBlockedMessage(severity, message)) severity = LogSeverity.Debug;
 
             return !IsLoggerNameBlocked(__instance);
         }
 
         [HarmonyPrefix]
-        private static bool NamedLoggerMemoryLogPrefix(object __instance)
-        {
-            if (!isEnabled)
-            {
-                return true;
-            }
+        private static bool NamedLoggerMemoryLogPrefix(object __instance) {
+            if (!isEnabled) return true;
 
             return !TryConsumeSuppression() && !IsLoggerNameBlocked(__instance);
         }
 
         [HarmonyPrefix]
-        private static bool NamedLoggerLogExceptionPrefix(object __instance, [HarmonyArgument(0)] ref LogSeverity level, [HarmonyArgument(1)] string message)
-        {
-            if (!isEnabled)
-            {
-                return true;
-            }
+        private static bool NamedLoggerLogExceptionPrefix(object __instance, [HarmonyArgument(0)] ref LogSeverity level,
+            [HarmonyArgument(1)] string message) {
+            if (!isEnabled) return true;
 
-            if (TryConsumeSuppression())
-            {
-                return false;
-            }
+            if (TryConsumeSuppression()) return false;
 
-            if (IsBlockedMessage(level, message))
-            {
-                level = LogSeverity.Debug;
-            }
+            if (IsBlockedMessage(level, message)) level = LogSeverity.Debug;
 
             return !IsLoggerNameBlocked(__instance);
         }
 
-        public static void Waiting(ILogger logger, string module, string dependency, bool enabled)
-        {
+        public static void Waiting(ILogger logger, string module, string dependency, bool enabled) {
             if (TryConsumeSuppression()) return;
             logger?.Info(
                 "补丁等待：模块={0}，依赖={1}，启用={2}",
@@ -281,8 +221,7 @@ namespace MediaInfoKeeper.Patch
                 enabled);
         }
 
-        public static void InitFailed(ILogger logger, string module, string reason)
-        {
+        public static void InitFailed(ILogger logger, string module, string reason) {
             if (TryConsumeSuppression()) return;
             logger?.Warn(
                 "补丁初始化失败：模块={0}，原因={1}",
@@ -296,8 +235,7 @@ namespace MediaInfoKeeper.Patch
             string level,
             string profile,
             string method,
-            string dllVersion)
-        {
+            string dllVersion) {
             if (TryConsumeSuppression()) return;
             logger?.Debug(
                 "补丁解析：模块={0}，级别={1}，配置={2}，dll版本={3}，命中={4}",
@@ -314,8 +252,7 @@ namespace MediaInfoKeeper.Patch
             string level,
             string profile,
             string type,
-            string asmVersion)
-        {
+            string asmVersion) {
             if (TryConsumeSuppression()) return;
             logger?.Warn(
                 "补丁解析失败：模块={0}，级别={1}，配置={2}，类型={3}，dll版本={4}",
@@ -326,10 +263,8 @@ namespace MediaInfoKeeper.Patch
                 asmVersion ?? "<unknown>");
         }
 
-        public static void Patched(ILogger logger, string module, MethodInfo method)
-        {
-            if (method == null)
-            {
+        public static void Patched(ILogger logger, string module, MethodInfo method) {
+            if (method == null) {
                 Patched(logger, module, "<null>", null);
                 return;
             }
@@ -344,13 +279,11 @@ namespace MediaInfoKeeper.Patch
             Patched(logger, module, signature, dllVersion);
         }
 
-        public static void Patched(ILogger logger, string module, string method)
-        {
+        public static void Patched(ILogger logger, string module, string method) {
             Patched(logger, module, method, null);
         }
 
-        public static void Patched(ILogger logger, string module, string method, string dllVersion)
-        {
+        public static void Patched(ILogger logger, string module, string method, string dllVersion) {
             if (TryConsumeSuppression()) return;
             logger?.Debug(
                 "补丁安装：模块={0}，dll版本={1}，方法={2}",
@@ -359,8 +292,7 @@ namespace MediaInfoKeeper.Patch
                 method ?? "unknown");
         }
 
-        public static void Candidates(ILogger logger, string module, string candidates)
-        {
+        public static void Candidates(ILogger logger, string module, string candidates) {
             if (TryConsumeSuppression()) return;
             logger?.Debug(
                 "补丁候选：模块={0}，候选={1}",

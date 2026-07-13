@@ -1,28 +1,23 @@
-namespace MediaInfoKeeper.Options.View
-{
-    using System.Threading.Tasks;
-    using MediaBrowser.Model.Plugins;
-    using MediaBrowser.Model.Plugins.UI.Views;
-    using MediaInfoKeeper.Options;
-    using MediaInfoKeeper.Options.Store;
-    using MediaInfoKeeper.Options.UIBaseClasses.Views;
+using System.Threading.Tasks;
+using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Plugins.UI.Views;
+using MediaInfoKeeper.Options.Store;
+using MediaInfoKeeper.Options.UIBaseClasses.Views;
 
-    internal class GitHubPageView : PluginPageView
-    {
+namespace MediaInfoKeeper.Options.View {
+    internal class GitHubPageView : PluginPageView {
         private readonly GitHubOptionsStore store;
 
         public GitHubPageView(PluginInfo pluginInfo, GitHubOptionsStore store)
-            : base(pluginInfo.Id)
-        {
+            : base(pluginInfo.Id) {
             this.store = store;
-            this.ContentData = store.GetOptions();
+            ContentData = store.GetOptions();
         }
 
-        public GitHubOptions Options => this.ContentData as GitHubOptions;
+        public GitHubOptions Options => ContentData as GitHubOptions;
 
-        public override Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data)
-        {
-            this.store.SetOptions(this.Options);
+        public override Task<IPluginUIView> OnSaveCommand(string itemId, string commandId, string data) {
+            store.SetOptions(Options);
             return base.OnSaveCommand(itemId, commandId, data);
         }
     }

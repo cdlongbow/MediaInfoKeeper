@@ -20,7 +20,8 @@ namespace MediaInfoKeeper.ScheduledTask
     {
         private const BindingFlags MethodBindingFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
-        private static readonly string[] DefaultDllNameBlacklistPrefixes = { "Microsoft.", "System.", "netstandard", "mscorlib" };
+        private static readonly string[] DefaultDllNameBlacklistPrefixes =
+ { "Microsoft.", "System.", "netstandard", "mscorlib" };
 
         private readonly IApplicationHost applicationHost;
         private readonly ILogger logger;
@@ -439,8 +440,7 @@ namespace MediaInfoKeeper.ScheduledTask
                 assemblyPathMap = assemblyPaths
                     .Where(path => !string.IsNullOrWhiteSpace(path))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Select(path => new
-                    {
+                    .Select(path => new {
                         Name = Path.GetFileNameWithoutExtension(path),
                         Path = path
                     })
