@@ -8,6 +8,7 @@ using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
+using MediaInfoKeeper.Common;
 using MediaInfoKeeper.Options;
 using MediaInfoKeeper.Patch;
 
@@ -261,7 +262,8 @@ namespace MediaInfoKeeper.Services.IntroSkip {
         }
 
         private static bool IsMarkerAddedByMik(ChapterInfo chapter) {
-            return chapter.Name?.EndsWith(MarkerSuffix, StringComparison.Ordinal) == true;
+            return chapter.Name?.EndsWith(MarkerSuffix, StringComparison.Ordinal) == true ||
+                   IntroDbMarkerSource.IsProviderMarker(chapter);
         }
 
         private static ChapterInfo CreateManagedMarker(MarkerType markerType, long startPositionTicks) {

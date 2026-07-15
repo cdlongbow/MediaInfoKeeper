@@ -83,7 +83,7 @@ namespace MediaInfoKeeper.Options.View {
                 return RunScheduledTaskAsync<ScanRecentIntroTask>();
 
             if (string.Equals(commandId, SubmitTheIntroDbMarkersRunCommandId, StringComparison.Ordinal))
-                return RunScheduledTaskAsync<SubmitTheIntroDbMarkersTask>();
+                return RunScheduledTaskAsync<SubmitMarkersTask>();
 
             if (string.Equals(commandId, ExtractRecentMediaInfoRunCommandId, StringComparison.Ordinal))
                 return RunScheduledTaskAsync<ExtractRecentMediaInfoTask>();

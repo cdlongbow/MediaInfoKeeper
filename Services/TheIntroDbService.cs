@@ -14,7 +14,6 @@ using MediaInfoKeeper.Common;
 
 namespace MediaInfoKeeper.Services {
     internal static class TheIntroDbService {
-        private const string TheIntroDbMarkerSuffix = "#MIKTIDB";
         private const string DefaultBaseUrl = "https://api.theintrodb.org/v3";
         private const string MarkerCacheScope = "theintrodb-markers";
 
@@ -112,23 +111,26 @@ namespace MediaInfoKeeper.Services {
                     skippedAny = true;
                 }
                 else {
-                    if (creditsResult.RateLimited) return creditsResult;
-
                     lastFailure = creditsResult;
                 }
             }
 
-            if (submittedSegments > 0) {
-                InvalidateMarkerCache(item);
+            if (submittedSegments > 0) InvalidateMarkerCache(item);
+
+            if (lastFailure != null) {
+                lastFailure.SubmittedSegments = submittedSegments;
+                return lastFailure;
+            }
+
+            if (submittedSegments > 0)
                 return new MarkerSubmitResult {
                     Succeeded = true,
                     SubmittedSegments = submittedSegments
                 };
-            }
 
-            if (skippedAny && lastFailure == null) return SubmitSkipped("all submitted segments skipped");
-
-            return lastFailure ?? SubmitSkipped("no valid intro or credits markers");
+            return skippedAny
+                ? SubmitSkipped("all submitted segments skipped")
+                : SubmitSkipped("no valid intro or credits markers");
         }
 
         internal static string FormatItemForLog(BaseItem item) {
@@ -366,16 +368,12 @@ namespace MediaInfoKeeper.Services {
             if (chapters == null) return null;
 
             foreach (var chapter in chapters) {
-                if (chapter?.MarkerType != markerType || IsTheIntroDbMarker(chapter)) continue;
+                if (chapter?.MarkerType != markerType || IntroDbMarkerSource.IsProviderMarker(chapter)) continue;
 
                 return chapter.StartPositionTicks;
             }
 
             return null;
-        }
-
-        private static bool IsTheIntroDbMarker(ChapterInfo chapter) {
-            return chapter?.Name?.IndexOf(TheIntroDbMarkerSuffix, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static bool TryBuildSegmentRequest(

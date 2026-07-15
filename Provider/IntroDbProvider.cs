@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
@@ -16,14 +15,12 @@ using MediaInfoKeeper.Patch;
 using MediaInfoKeeper.Services;
 
 namespace MediaInfoKeeper.Provider {
-    public sealed class TheIntroDbProvider :
-        IRemoteMetadataProvider<Movie, MovieInfo>,
+    public sealed class IntroDbProvider :
         IRemoteMetadataProvider<Episode, EpisodeInfo>,
-        ICustomMetadataProvider<Movie>,
         ICustomMetadataProvider<Episode>,
         IHasOrder {
-        public const string ProviderName = "TheIntroDB";
-        public const int DefaultOrder = int.MaxValue - 10;
+        public const string ProviderName = "IntroDB";
+        public const int DefaultOrder = int.MaxValue - 9;
 
         public async Task<ItemUpdateType> FetchAsync(
             MetadataResult<Episode> itemResult,
@@ -33,19 +30,7 @@ namespace MediaInfoKeeper.Provider {
             var item = itemResult?.Item;
             if (!ShouldFetch(itemResult, libraryOptions)) return ItemUpdateType.None;
 
-            var result = await TheIntroDbService.GetMarkersAsync(item, cancellationToken).ConfigureAwait(false);
-            return ApplyMarkers(itemResult, result);
-        }
-
-        public async Task<ItemUpdateType> FetchAsync(
-            MetadataResult<Movie> itemResult,
-            MetadataRefreshOptions options,
-            LibraryOptions libraryOptions,
-            CancellationToken cancellationToken) {
-            var item = itemResult?.Item;
-            if (!ShouldFetch(itemResult, libraryOptions)) return ItemUpdateType.None;
-
-            var result = await TheIntroDbService.GetMarkersAsync(item, cancellationToken).ConfigureAwait(false);
+            var result = await IntroDbService.GetMarkersAsync(item, cancellationToken).ConfigureAwait(false);
             return ApplyMarkers(itemResult, result);
         }
 
@@ -64,23 +49,12 @@ namespace MediaInfoKeeper.Provider {
 
         public string Name => ProviderName;
 
-        public Task<MetadataResult<Movie>> GetMetadata(MovieInfo info, CancellationToken cancellationToken) {
-            return Task.FromResult(new MetadataResult<Movie> {
-                Item = new Movie()
-            });
-        }
-
-        public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo,
-            CancellationToken cancellationToken) {
-            return Task.FromResult<IEnumerable<RemoteSearchResult>>(Array.Empty<RemoteSearchResult>());
-        }
-
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken) {
             return Task.FromResult<HttpResponseInfo>(null);
         }
 
-        private static bool ShouldFetch(BaseMetadataResult itemResult, LibraryOptions libraryOptions) {
-            var item = itemResult?.BaseItem;
+        private static bool ShouldFetch(MetadataResult<Episode> itemResult, LibraryOptions libraryOptions) {
+            var item = itemResult?.Item;
             return item != null &&
                    libraryOptions != null &&
                    item.IsMetadataFetcherEnabled(libraryOptions, ProviderName) &&
@@ -88,9 +62,9 @@ namespace MediaInfoKeeper.Provider {
                    IntroDbMarkerSource.MarkerSegments.None;
         }
 
-        private static ItemUpdateType ApplyMarkers(BaseMetadataResult itemResult,
-            TheIntroDbService.MarkerLookupResult result) {
-            var item = itemResult?.BaseItem;
+        private static ItemUpdateType ApplyMarkers(MetadataResult<Episode> itemResult,
+            IntroDbService.MarkerLookupResult result) {
+            var item = itemResult?.Item;
             if (item == null || result?.Found != true) return ItemUpdateType.None;
 
             var missingSegments = IntroDbMarkerSource.GetMissingSegments(itemResult);
@@ -144,7 +118,7 @@ namespace MediaInfoKeeper.Provider {
                 (hasIntro ? IntroDbMarkerSource.MarkerSegments.Intro : IntroDbMarkerSource.MarkerSegments.None) |
                 (hasCredits ? IntroDbMarkerSource.MarkerSegments.Credits : IntroDbMarkerSource.MarkerSegments.None);
             IntroDbMarkerSource.MarkSegmentsFilled(itemResult, filledSegments);
-            Plugin.Instance.Logger.Info("TheIntroDB 标记写入成功: {0}", TheIntroDbService.FormatItemForLog(item));
+            Plugin.Instance.Logger.Info("IntroDB 标记写入成功: {0}", IntroDbService.FormatItemForLog(item));
             return ItemUpdateType.MetadataImport;
         }
     }

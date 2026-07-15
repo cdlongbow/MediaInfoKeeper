@@ -435,6 +435,8 @@ namespace MediaInfoKeeper {
                 var node = JsonNode.Parse(json);
                 RedactSecret(node, nameof(MainPageOptions.UpdatePluginTaskEditorOptions.GitHubToken));
                 RedactSecret(node, nameof(NetWorkOptions.AlternativeTmdbApiKey));
+                RedactSecret(node, nameof(IntroSkipOptions.TheIntroDbApiKey));
+                RedactSecret(node, nameof(IntroSkipOptions.IntroDbApiKey));
                 Logger.Debug("{0} 配置{1}: {2}", Name, action,
                     node?.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) ??
                     string.Empty);
