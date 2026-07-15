@@ -23,8 +23,7 @@ jobs:
     steps:
       - name: Cleanup prereleases covered by latest stable
         if: |
-          github.event_name == 'workflow_dispatch' ||
-          github.event_name == 'workflow_call' ||
+          github.event_name != 'release' ||
           (
             github.event_name == 'release' &&
             github.event.release.draft == false &&

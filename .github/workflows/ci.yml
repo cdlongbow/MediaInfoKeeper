@@ -69,19 +69,40 @@ jobs:
         shell: bash
         run: |
           before_sha="${{ github.event.before }}"
-          current_sha="${{ github.sha }}"
-          release_channel="beta"
+          current_version="$app_version"
+          release_channel=""
+
+          if [[ ! "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid current AssemblyVersion: $current_version" >&2
+            exit 1
+          fi
 
           if [[ "$before_sha" =~ ^0+$ ]]; then
-            if git show "$current_sha:MediaInfoKeeper.csproj" >/dev/null 2>&1; then
-              release_channel="stable"
+            release_channel="stable"
+          else
+            if ! git cat-file -e "${before_sha}^{commit}" 2>/dev/null; then
+              if ! git fetch --no-tags origin "$before_sha"; then
+                echo "Unable to fetch push before SHA: $before_sha" >&2
+                exit 1
+              fi
             fi
-          elif git diff --name-only "$before_sha" "$current_sha" -- MediaInfoKeeper.csproj | grep -q '^MediaInfoKeeper\.csproj$'; then
-            before_version="$(git show "$before_sha:MediaInfoKeeper.csproj" | sed -nE 's/.*<AssemblyVersion>([^<]+)<\/AssemblyVersion>.*/\1/p')"
-            current_version="$(sed -nE 's/.*<AssemblyVersion>([^<]+)<\/AssemblyVersion>.*/\1/p' MediaInfoKeeper.csproj)"
 
-            if [[ -n "$current_version" && "$before_version" != "$current_version" ]]; then
+            if ! git cat-file -e "${before_sha}^{commit}" 2>/dev/null; then
+              echo "Unable to resolve push before SHA: $before_sha" >&2
+              exit 1
+            fi
+
+            before_version="$(git show "$before_sha:MediaInfoKeeper.csproj" | sed -nE 's/.*<AssemblyVersion>([^<]+)<\/AssemblyVersion>.*/\1/p')"
+
+            if [[ ! "$before_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Invalid previous AssemblyVersion at $before_sha: $before_version" >&2
+              exit 1
+            fi
+
+            if [[ "$before_version" != "$current_version" ]]; then
               release_channel="stable"
+            else
+              release_channel="beta"
             fi
           fi
 
