@@ -57,27 +57,27 @@ namespace MediaInfoKeeper.Patch {
             try {
                 var embyProvidersAssembly = Assembly.Load("Emby.Providers");
                 var mediaBrowserModelAssembly = Assembly.Load("MediaBrowser.Model");
-                var ffProbeVideoInfoType = embyProvidersAssembly?.GetType("Emby.Providers.MediaInfo.FFProbeVideoInfo");
+                var ffProbeProviderType = embyProvidersAssembly?.GetType("Emby.Providers.MediaInfo.FFProbeProvider");
                 var mediaProtocolType =
                     mediaBrowserModelAssembly?.GetType("MediaBrowser.Model.MediaInfo.MediaProtocol");
 
-                if (ffProbeVideoInfoType == null || mediaProtocolType == null) {
+                if (ffProbeProviderType == null || mediaProtocolType == null) {
                     PatchLog.InitFailed(logger, nameof(IsoProbeSupport), "关键运行时类型缺失");
                     return;
                 }
 
                 isSupportedMethod = PatchMethodResolver.Resolve(
-                    ffProbeVideoInfoType,
+                    ffProbeProviderType,
                     embyProvidersAssembly.GetName().Version,
                     new MethodSignatureProfile {
-                        Name = "ffprobevideoinfo-issupported-exact",
+                        Name = "ffprobeprovider-issupported-exact",
                         MethodName = "IsSupported",
                         BindingFlags = BindingFlags.Static | BindingFlags.Public,
                         ParameterTypes = new[] { typeof(string), mediaProtocolType },
                         ReturnType = typeof(bool)
                     },
                     logger,
-                    "IsoProbeSupport.FFProbeVideoInfo.IsSupported");
+                    "IsoProbeSupport.FFProbeProvider.IsSupported");
 
                 if (isSupportedMethod == null) {
                     PatchLog.InitFailed(logger, nameof(IsoProbeSupport), "未命中 IsSupported");

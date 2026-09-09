@@ -8,7 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VERSION_READER_SCRIPT="${VERSION_READER_SCRIPT:-${SCRIPT_DIR}/read_assembly_version.py}"
-EMBY_DOCS_DIR="${EMBY_DOCS_DIR:-emby_4.9.5.0}"
+EMBY_DOCS_DIR="${EMBY_DOCS_DIR:-emby_4.10.0.40}"
 DLL_ROOT="${DLL_ROOT:-${HOME}/Documents/Emby/dlls}"
 DLL_DIR="${DLL_DIR:-}"
 EMBY_VERSION="${EMBY_VERSION:-}"
@@ -25,8 +25,8 @@ Usage:
   bash Scripts/decompile Emby.Providers.dll MediaBrowser.Controller.dll
   bash Scripts/decompile --overwrite
   bash Scripts/decompile --dll-root ~/Documents/Emby/dlls
-  bash Scripts/decompile --emby-version 4.9.5.0
-  bash Scripts/decompile --dll-dir ~/Documents/Emby/dlls/4.9.5.0 --source-root ~/Documents/Emby/dlls/4.9.5.0/source
+  bash Scripts/decompile --emby-version 4.10.0.40
+  bash Scripts/decompile --dll-dir ~/Documents/Emby/dlls/4.10.0.40 --source-root ~/Documents/Emby/dlls/4.10.0.40/source
 
 Options:
   --dll-root <path>        Root directory that contains versioned Emby DLL folders.
@@ -39,7 +39,7 @@ Options:
   --help, -h               Show this help.
 
 Environment:
-  EMBY_DOCS_DIR            Default version tag. Default: emby_4.9.5.0.
+  EMBY_DOCS_DIR            Default version tag. Default: emby_4.10.0.40.
   ILSPYCMD                 Override the ilspycmd executable path.
   DLL_ROOT                 Same as --dll-root. Default: ~/Documents/Emby/dlls.
 EOF

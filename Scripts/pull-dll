@@ -40,7 +40,7 @@ Usage:
   bash Scripts/pull-dll Emby.Providers.dll MovieDb.dll
   bash Scripts/pull-dll /system/Emby.Providers.dll /system/plugins/MovieDb.dll
   bash Scripts/pull-dll --host root@192.168.33.100 --container emby --local-dir ~/Documents/Emby/dlls Emby.Sqlite.dll
-  bash Scripts/pull-dll --emby-version 4.9.5.0 Emby.Sqlite.dll
+  bash Scripts/pull-dll --emby-version 4.10.0.40 Emby.Sqlite.dll
   bash Scripts/pull-dll --overwrite Emby.Providers.dll
   bash Scripts/pull-dll --list
 

@@ -16,16 +16,16 @@ print_usage() {
 Usage:
   bash Scripts/pull-methods
   bash Scripts/pull-methods --overwrite
-  bash Scripts/pull-methods --emby-version 4.9.5.0
-  bash Scripts/pull-methods --emby-docs-dir emby_4.9.5.0
-  bash Scripts/pull-methods --local-dir ~/Documents/Emby/dlls --emby-version 4.9.5.0
+  bash Scripts/pull-methods --emby-version 4.10.0.40
+  bash Scripts/pull-methods --emby-docs-dir emby_4.10.0.40
+  bash Scripts/pull-methods --local-dir ~/Documents/Emby/dlls --emby-version 4.10.0.40
 
 Options:
   --host <ssh-target>         SSH target. Default: ${NAS_HOST}
   --remote-dir <path>         Remote directory containing emby_*/*_methods.txt snapshots.
                                Default: ${REMOTE_DIR}
   --local-dir <path>          Local DLL root directory. Default: ${LOCAL_DIR}
-  --emby-version <version>    Local version folder. Default: derived from --emby-docs-dir or emby_4.9.5.0.
+  --emby-version <version>    Local version folder. Default: derived from --emby-docs-dir or emby_4.10.0.40.
   --emby-docs-dir <name>      Remote version folder. Default: emby_<emby-version>.
   --target-dir <path>         Exact local target directory. Default: <local-dir>/<emby-version>
   --all                       Pull all remote emby_* folders into <local-dir>/<version>.
@@ -115,7 +115,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ -z "${EMBY_VERSION}" ] && [ -z "${EMBY_DOCS_DIR}" ]; then
-  EMBY_DOCS_DIR="emby_4.9.5.0"
+  EMBY_DOCS_DIR="emby_4.10.0.40"
 fi
 
 if [ -z "${EMBY_VERSION}" ]; then

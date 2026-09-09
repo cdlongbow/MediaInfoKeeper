@@ -8,8 +8,8 @@
 ## Source Of Truth
 
 - `EMBY_DOCS_DIR` selects the active method-signature snapshot under `~/Documents/Emby/dlls/<emby_version>/`.
-- Default: `emby_4.9.5.0`
-- Default version suffix comes from `EMBY_DOCS_DIR`, for example `emby_4.9.5.0` -> `4.9.5.0`
+- Default: `emby_4.10.0.40`
+- Default version suffix comes from `EMBY_DOCS_DIR`, for example `emby_4.10.0.40` -> `4.10.0.40`
 - Signature source of truth: `~/Documents/Emby/dlls/<emby_version>/`
 - Primary inputs: `*_methods.txt`
 
@@ -76,9 +76,9 @@ bash Scripts/decompile Emby.Providers.dll
 ## High-Value Decompiled Entry Points
 
 - External subtitle scanning usually starts from:
-    - `~/Documents/Emby/dlls/4.9.5.0/source/Emby.Providers_4.9.5.0/Emby.Providers.MediaInfo/BaseTrackResolver.cs`
-    - `~/Documents/Emby/dlls/4.9.5.0/source/Emby.Providers_4.9.5.0/Emby.Providers.MediaInfo/SubtitleResolver.cs`
-    - `~/Documents/Emby/dlls/4.9.5.0/source/Emby.Providers_4.9.5.0/Emby.Providers.MediaInfo/FFProbeSubtitleInfo.cs`
+    - `~/Documents/Emby/dlls/4.10.0.40/source/Emby.Providers_4.10.0.40/Emby.Providers.MediaInfo/BaseTrackResolver.cs`
+    - `~/Documents/Emby/dlls/4.10.0.40/source/Emby.Providers_4.10.0.40/Emby.Providers.MediaInfo/SubtitleResolver.cs`
+    - `~/Documents/Emby/dlls/4.10.0.40/source/Emby.Providers_4.10.0.40/Emby.Providers.MediaInfo/FFProbeSubtitleInfo.cs`
 
 ## Project Map
 

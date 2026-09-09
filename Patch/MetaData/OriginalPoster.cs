@@ -154,6 +154,7 @@ namespace MediaInfoKeeper.Patch {
                     IsStatic = false,
                     ParameterTypes = new[] {
                         typeof(string),
+                        typeof(bool),
                         typeof(string),
                         typeof(CancellationToken)
                     }
@@ -250,7 +251,10 @@ namespace MediaInfoKeeper.Patch {
                     ensureMethod = movieDbEnsureSeriesInfo;
                 }
 
-                var task = ensureMethod.Invoke(provider, new object[] { tmdbId, null, cancellationToken }) as Task;
+                var arguments = string.Equals(mediaType, "movie", StringComparison.OrdinalIgnoreCase)
+                    ? new object[] { tmdbId, true, null, cancellationToken }
+                    : new object[] { tmdbId, null, cancellationToken };
+                var task = ensureMethod.Invoke(provider, arguments) as Task;
                 task?.GetAwaiter().GetResult();
                 return NormalizeLanguage(GetOriginalLanguageFromTaskResult(mediaType, task));
             }

@@ -1,10 +1,10 @@
 {
   "latest": {
-    "minEmbyVersion": "4.9.3.0",
+    "minEmbyVersion": "4.10.0.40",
     "maxEmbyVersion": "4.10.99.99"
   },
   "beta": {
-    "minEmbyVersion": "4.9.3.0",
+    "minEmbyVersion": "4.10.0.40",
     "maxEmbyVersion": "4.10.99.99"
   }
 }
